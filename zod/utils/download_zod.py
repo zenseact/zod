@@ -168,8 +168,9 @@ def download_zod(
     url = url.replace("hdl", "h?dl")
     shared_link = dropbox.files.SharedLink(url=url)
     res = dbx.files_list_folder(path="/single_frames", shared_link=shared_link)
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(osp.join(output_dir, "downloads"), exist_ok=True)
+    if not dry_run:
+        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(osp.join(output_dir, "downloads"), exist_ok=True)
 
     files_to_download = [
         ExtractInfo(
