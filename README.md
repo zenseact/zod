@@ -2,6 +2,18 @@
 
 TODO: Move over stuff from the old README
 
+## Installation
+
+To install the full devkit, including the CLI, run:
+```bash
+pip install zod[cli]
+```
+
+Else, to install the library only, run:
+```bash
+pip install zod
+```
+
 ## Download
 
 nice little trick to download only mini version from cluster

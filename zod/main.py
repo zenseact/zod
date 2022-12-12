@@ -1,7 +1,12 @@
 from pathlib import Path
 from typing import Tuple
 
-import typer
+
+try:
+    import typer
+except ImportError:
+    print('zod is installed without the CLI dependencies: pip install "zod[cli]"')
+    exit(1)
 
 from zod.frames.generate_coco_json import convert_to_coco
 from zod.utils.download_zod import download_zod
