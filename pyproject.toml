@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "zod"
+version = "0.0.1"
+description = "Zenseact Open Dataset"
+authors = ["Zenseact <opendataset@zenseact.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.scripts]
+zod = "zod.main:app"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tqdm = "^4.60"
+scipy = "^1.8"
+typer = {extras = ["all"], version = "^0.7.0"}
+h5py = "^3.6.0"
+pyquaternion = "^0.9.5"
+dataclass-wizard = "^0.22.2"
+importlib-metadata = { version = "~=1.0", python = "<3.8" }
+# dropbox = "^11.36.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+pre-commit = "^2.20.0"
+ruff = "^0.0.166"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+lines_after_imports = 2
+line_length = 100
+py_version = "38"
+known_zod = "zod"
+known_torch = ["torch", "torchvision"]
+sections = [
+    "FUTURE",
+    "STDLIB",
+    "THIRDPARTY",
+    # Separate out torch for convenience
+    "TORCH",
+    "ZOD",
+    "FIRSTPARTY",
+    "LOCALFOLDER",
+]

@@ -1,0 +1,11 @@
+This code has been copied from the official nuscenes-dev kit avaialble at https://github.com/nutonomy/nuscenes-devkit,
+and modified to fit the current module. More specifically, the following foldes have been copied:
+- nuscenes-devkit/python-sdk/nuscenes/eval/detection
+- nuscenes-devkit/python-sdk/nuscenes/eval/common
+
+In accordance with the "Apache License, Version 2.0" we hereby list the modifications made to the original code:
+- Refactored the imports to fit the current module.
+- Reformatted files to fit the current code style.
+- Removed unused files in the common directory.
+- Renamed the nuscenes classes to fit our annotations
+- Deleted unused files
