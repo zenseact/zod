@@ -5,15 +5,15 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-import typer
 from tqdm import tqdm
 
 
 try:
     import dropbox
     import dropbox.files
-except:
-    print("Please install dropbox: pip install dropbox")
+    import typer
+except ImportError:
+    print('zod is installed without the CLI dependencies: pip install "zod[cli]"')
     exit(1)
 
 
