@@ -45,6 +45,7 @@ class FilterSettings:
     images: bool
     lidar: bool
     oxts: bool
+    calibrations: bool
     num_scans_before: int
     num_scans_after: int
 
@@ -138,6 +139,8 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
         return False
     if not settings.oxts and "oxts" in entry.name:
         return False
+    if not settings.calibrations and "calibrations" in entry.name:
+        return False
     if "lidar" in entry.name:
         if not settings.lidar:
             return False
@@ -164,6 +167,7 @@ def download_zod(
         0, help="Number of later lidar scans to download (-1 == all)"
     ),
     oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
+    calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
     rm: bool = typer.Option(False, help="Whether to remove the downloaded archives"),
     dry_run: bool = typer.Option(
         False, help="Whether to only print the files that would be downloaded"
@@ -179,6 +183,7 @@ def download_zod(
         images=images,
         lidar=lidar,
         oxts=oxts,
+        calibrations=calibrations,
         num_scans_before=num_scans_before,
         num_scans_after=num_scans_after,
     )
