@@ -41,6 +41,7 @@ class FilterSettings:
 
     mini: bool
     test: bool
+    annotations: bool
     images: bool
     lidar: bool
     oxts: bool
@@ -103,7 +104,8 @@ def _download_and_extract(dbx: dropbox.Dropbox, info: ExtractInfo):
     download_path = osp.join(info.output_dir, "downloads", osp.basename(info.file_path))
     if not osp.exists(download_path):
         if info.dry_run:
-            typer.echo(f"Would download {info.file_path} to {download_path}")
+            typer.echo(f"Would download and extract {info.file_path} to {download_path}")
+            return
         else:
             _download(download_path, dbx, info)
     else:
@@ -112,6 +114,7 @@ def _download_and_extract(dbx: dropbox.Dropbox, info: ExtractInfo):
     if info.extract:
         if info.dry_run:
             typer.echo(f"Would extract {download_path} to {info.output_dir}")
+            return
         else:
             _extract(download_path, info.output_dir)
 
@@ -136,13 +139,10 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
     if "lidar" in entry.name:
         if not settings.lidar:
             return False
-        if "after" in entry.name and (
-            int(entry.name.split("_")[2][:-5]) > settings.num_scans_after
-        ):
+        distance = entry.name.split("_")[2][:2]
+        if "after" in entry.name and (int(distance) > settings.num_scans_after):
             return False
-        if "before" in entry.name and (
-            int(entry.name.split("_")[2][:-5]) > settings.num_scans_before
-        ):
+        if "before" in entry.name and (int(distance) > settings.num_scans_before):
             return False
     return True
 
@@ -152,6 +152,7 @@ def download_zod(
     output_dir: str = typer.Option(..., help="The output directory"),
     mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
     test: bool = typer.Option(False, help="Whether to download the test files"),
+    annotations: bool = typer.Option(True, help="Whether to download the annotations"),
     images: bool = typer.Option(True, help="Whether to download the images"),
     lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
     num_scans_before: int = typer.Option(
@@ -172,6 +173,7 @@ def download_zod(
     filter_settings = FilterSettings(
         mini=mini,
         test=test,
+        annotations=annotations,
         images=images,
         lidar=lidar,
         oxts=oxts,
