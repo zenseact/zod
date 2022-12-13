@@ -1,7 +1,10 @@
 """This script is to be used to download the zenseact open dataset."""
+import contextlib
 import os
 import os.path as osp
+import subprocess
 import tarfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
@@ -11,6 +14,7 @@ from tqdm import tqdm
 try:
     import dropbox
     import dropbox.files
+    import dropbox.sharing
     import typer
 except ImportError:
     print('zod is installed without the CLI dependencies: pip install "zod[cli]"')
@@ -20,6 +24,7 @@ except ImportError:
 APP_KEY = "kcvokw7c7votepo"
 REFRESH_TOKEN = "z2h_5rjphJEAAAAAAAAAAUWtQlltCYlMbZ2WqMgtymELhiSuKIksxAYeArubKnZV"
 CHUNK_SIZE = 1024 * 1024  # 1 MB
+TIMEOUT = 60 * 60  # 1 hour
 
 
 @dataclass
@@ -50,13 +55,33 @@ class FilterSettings:
     num_scans_after: int
 
 
-def _print_final_msg(pbar: tqdm, total_size: float, basename: str):
+class ResumableDropbox(dropbox.Dropbox):
+    """A patched dropbox client that allows to resume downloads."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._headers = {} if self._headers is None else self._headers
+        self._lock = threading.Lock()
+
+    def sharing_get_shared_link_file(self, url, path=None, link_password=None, start=0):
+        """
+        Download the shared link's file from a user's Dropbox.
+        """
+        # Need to lock here because the headers are shared between all requests
+        with self._lock:
+            self._headers["Range"] = f"bytes={start}-"
+            res = super().sharing_get_shared_link_file(url, path=path, link_password=link_password)
+            del self._headers["Range"]
+        return res
+
+
+def _print_final_msg(pbar: tqdm, basename: str):
     """Print a final message for each downloaded file, with stats and nice padding."""
-    msg = "Downloaded " + basename + " " * (40 - len(basename))
+    msg = "Downloaded " + basename + " " * (45 - len(basename))
 
     # Print various download stats
     total_time = pbar.format_dict["elapsed"]
-    size_in_mb = total_size / 1024 / 1024
+    size_in_mb = pbar.n / 1024 / 1024
     speed = size_in_mb / total_time
     for name, val, unit in [
         ("time", total_time, "s"),
@@ -64,53 +89,78 @@ def _print_final_msg(pbar: tqdm, total_size: float, basename: str):
         ("speed", speed, "MB/s"),
     ]:
         val = f"{val:.2f}{unit}"
-        msg += f"{name}: {val}" + " " * (10 - len(val))
+        msg += f"{name}: {val}" + " " * (14 - len(val))
 
     tqdm.write(msg)
 
 
-def _download(download_path: str, dbx: dropbox.Dropbox, info: ExtractInfo):
-    # Perform request
-    _, response = dbx.sharing_get_shared_link_file(url=info.url, path=info.file_path)
-    # Stream request content
-    total_size = int(response.headers.get("content-length", 0))
+def _download(download_path: str, dbx: ResumableDropbox, info: ExtractInfo):
+    current_size = 0
+    if osp.exists(download_path):
+        current_size = osp.getsize(download_path)
     basename = osp.basename(info.file_path)
     pbar = tqdm(
-        total=total_size, unit="iB", unit_scale=True, desc=f"Downloading {basename}...", leave=False
+        total=info.size,
+        unit="iB",
+        unit_scale=True,
+        desc=f"Downloading {basename}...",
+        leave=False,
+        initial=current_size,
     )
-    with open(download_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            size = f.write(chunk)
-            pbar.update(size)
+    # Retry download if partial file exists (e.g. due to network error)
+    while pbar.n < info.size:
+        if pbar.n > 0:
+            # this means we are retrying or resuming a previously interrupted download
+            tqdm.write(f"Resuming download of {download_path} from {current_size} bytes.")
+        _, response = dbx.sharing_get_shared_link_file(
+            url=info.url, path=info.file_path, start=pbar.n
+        )
+        with open(download_path, "ab") as f:
+            with contextlib.closing(response):
+                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        size = f.write(chunk)
+                        pbar.update(size)
     # Final checks and printouts
-    assert response.status_code == 200
-    _print_final_msg(pbar, total_size, basename)
+    assert osp.getsize(download_path) == info.size
+    _print_final_msg(pbar, basename)
 
 
 def _extract(tar_path: str, output_dir: str):
     """Extract a tar file to a directory."""
-    with tarfile.open(name=tar_path) as tar:
-        for member in tqdm(
-            iterable=tar.getmembers(),
-            total=len(tar.getmembers()),
-            desc=f"Extracting {osp.basename(tar_path)}...",
-            leave=False,
-        ):
-            tar.extract(member=member, path=output_dir)
-    tqdm.write("Extracted " + osp.basename(tar_path))
+    pbar = tqdm(desc=f"Extracting {osp.basename(tar_path)}...", leave=False)
+    # Check if system has tar installed (pipe stderr to None to avoid printing)
+    if os.system("tar --version > /dev/null 2>&1") == 0:
+        with subprocess.Popen(
+            ["tar", "-xvf", tar_path, "-C", output_dir],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        ) as tar:
+            for line in tar.stdout:
+                pbar.update(1)
+        # check if tar exited with error
+        if tar.returncode != 0:
+            tqdm.write(f"Error extracting {tar_path} with tar.")
+    else:
+        # Fallback to python tarfile
+        with tarfile.open(name=tar_path) as tar:
+            # pbar.total = len(tar.getmembers())
+            for member in tar.getmembers():
+                tar.extract(member=member, path=output_dir)
+                pbar.update(1)
+    tqdm.write(f"Extracted {pbar.n} files from {osp.basename(tar_path)}.")
 
 
-def _download_and_extract(dbx: dropbox.Dropbox, info: ExtractInfo):
+def _download_and_extract(dbx: ResumableDropbox, info: ExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
     download_path = osp.join(info.output_dir, "downloads", osp.basename(info.file_path))
-    if not osp.exists(download_path):
-        if info.dry_run:
-            typer.echo(f"Would download and extract {info.file_path} to {download_path}")
-            return
-        else:
-            _download(download_path, dbx, info)
+    if osp.exists(download_path) and osp.getsize(download_path) == info.size:
+        tqdm.write(f"File {download_path} already exists. Skipping download.")
+    elif info.dry_run:
+        typer.echo(f"Would download and extract {info.file_path} to {download_path}")
+        return
     else:
-        typer.echo(f"File {download_path} already exists. Skipping download.")
+        _download(download_path, dbx, info)
 
     if info.extract:
         if info.dry_run:
@@ -187,8 +237,7 @@ def download_zod(
         num_scans_before=num_scans_before,
         num_scans_after=num_scans_after,
     )
-
-    dbx = dropbox.Dropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN)
+    dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
     url = url.replace("hdl", "h?dl")
     shared_link = dropbox.files.SharedLink(url=url)
     res = dbx.files_list_folder(path="/single_frames", shared_link=shared_link)
@@ -209,6 +258,9 @@ def download_zod(
         for entry in res.entries
         if _filter_entry(entry, filter_settings)
     ]
+    if not files_to_download:
+        typer.echo("No files to download. Perhaps you specified too many filters?")
+        return
 
     if parallel:
         with ThreadPoolExecutor() as pool:
