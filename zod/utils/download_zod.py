@@ -1,7 +1,7 @@
 """This script is to be used to download the zenseact open dataset."""
 import os
 import os.path as osp
-import shutil
+import tarfile
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
@@ -85,22 +85,37 @@ def _download(download_path: str, dbx: dropbox.Dropbox, info: ExtractInfo):
     _print_final_msg(pbar, total_size, basename)
 
 
+def _extract(tar_path: str, output_dir: str):
+    """Extract a tar file to a directory."""
+    with tarfile.open(name=tar_path) as tar:
+        for member in tqdm(
+            iterable=tar.getmembers(),
+            total=len(tar.getmembers()),
+            desc=f"Extracting {osp.basename(tar_path)}...",
+            leave=False,
+        ):
+            tar.extract(member=member, path=output_dir)
+    tqdm.write("Extracted " + osp.basename(tar_path))
+
+
 def _download_and_extract(dbx: dropbox.Dropbox, info: ExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
     download_path = osp.join(info.output_dir, "downloads", osp.basename(info.file_path))
     if not osp.exists(download_path):
         if info.dry_run:
             typer.echo(f"Would download {info.file_path} to {download_path}")
-            return
         else:
             _download(download_path, dbx, info)
     else:
         typer.echo(f"File {download_path} already exists. Skipping download.")
 
     if info.extract:
-        shutil.unpack_archive(download_path, info.output_dir)
+        if info.dry_run:
+            typer.echo(f"Would extract {download_path} to {info.output_dir}")
+        else:
+            _extract(download_path, info.output_dir)
 
-    if info.rm:
+    if info.rm and not info.dry_run:
         os.remove(download_path)
 
 
