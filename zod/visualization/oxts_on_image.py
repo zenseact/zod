@@ -517,6 +517,52 @@ def generate_odometry(oxts, frame_time_utc, pitch_from_points=False):
     odometry = odometry_from_oxts(oxts_path_points, oxts_0)
     return odometry
 
+def _ecef_to_ref_frame_transform(
+    lat_deg, lon_deg, heading_deg, pitch_deg, roll_deg, ecef_x, ecef_y, ecef_z
+):
+    """Compute 4x4 transformation from ECEF to OXTS reference frame."""
+    ecef_xyz = np.stack([ecef_x, ecef_y, ecef_z], axis=-1)
+    enu_R_ecef = ecef_to_enu_rotation(lat_deg, lon_deg)
+    ref_R_enu = enu_to_ref_frame_rotation(heading_deg, pitch_deg, roll_deg)
+    ref_R_ecef = ref_R_enu @ enu_R_ecef
+    ecef_t_ref = ecef_xyz
+    ref_t_ecef = -matvec(ref_R_ecef, ecef_t_ref)
+    return T_from_R_t(ref_R_ecef, ref_t_ecef)
+
+
+def _odometry_from_oxts(oxts, oxts_0=None):
+    """Compute 4x4 odometry transform matrices relative to reference position.
+
+    If `oxts_0` is a pandas.Series like a row in `oxts` dataframe, then it
+    will be used as the reference position. If it's `None`, the first row
+    `oxts.iloc[0]` will be used for that.
+
+    """
+    if oxts_0 is None:
+        oxts_0 = oxts.iloc[0]
+
+    ref_T_ecef = _ecef_to_ref_frame_transform(
+        oxts.pos_lat,
+        oxts.pos_lon,
+        oxts.heading,
+        oxts.pitch,
+        oxts.roll,
+        oxts.ecef_x,
+        oxts.ecef_y,
+        oxts.ecef_z,
+    )
+    ref0_T_ecef = _ecef_to_ref_frame_transform(
+        oxts_0.pos_lat,
+        oxts_0.pos_lon,
+        oxts_0.heading,
+        oxts_0.pitch,
+        oxts_0.roll,
+        oxts_0.ecef_x,
+        oxts_0.ecef_y,
+        oxts_0.ecef_z,
+    )
+    ref0_T_ref = ref0_T_ecef @ T_inv(ref_T_ecef)
+    return ref0_T_ref
 
 def get_path_from_oxts(oxts_h5: np.ndarray, frame_time_utc: datetime):
     """Demonstrate how to get a HP GT path from only a frame_id.

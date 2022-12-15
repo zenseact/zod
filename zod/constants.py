@@ -39,6 +39,7 @@ EVALUATION_CLASSES = [
 
 # dataset paths
 SINGLE_FRAMES = "single_frames"
+DB_DATE_STRING_FORMAT_W_MICROSECONDS= "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # train-val splits
 TRAIN = "train"
@@ -60,3 +61,6 @@ SIZE_MAX = 7
 OPACITY_LEVEL = 1
 DEFAULT_COLOR = "red"
 DEFAULT_SIZE = 1
+
+# Usefull constants
+MICROSEC_PER_SEC = 1e6
