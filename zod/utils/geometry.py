@@ -1,9 +1,12 @@
 """Geometry utility functions."""
-from typing import Union
-import numpy as np
-from zod.constants import CAMERAS, EGO, LIDARS
+from typing import Union, List
 
-from zod.utils.zod_dataclasses import Calibration
+from datetime import datetime
+
+import numpy as np
+
+from zod.constants import CAMERAS, EGO, LIDARS
+from zod.utils.zod_dataclasses import Calibration, OXTSData
 
 
 def project_3d_to_2d_kannala(
@@ -83,6 +86,22 @@ def unproject_2d_to_3d_kannala(
     out[:, 2] = np.cos(theta) * depth
 
     return out
+
+def _interpolate_oxts_data(
+    oxts: OXTSData, oxts_timestamps: List[datetime], interp_timestamps: List[datetime]
+) -> OXTSData:
+    oxts_idx = np.searchsorted(oxts_timestamps, interp_timestamps)
+
+    interp_oxts = None
+    # interpolate oxts data
+    this_time = interp_timestamps
+    prev_time = oxts_timestamps[oxts_idx-1]
+    next_time = oxts_timestamps[oxts_idx]
+    alpha = (this_time - next_time) / (prev_time - next_time)
+    alpha = alpha.astype(np.float32)
+    interp_oxts = oxts.get_idx(oxts_idx - 1).array_mul(alpha) + oxts.get_idx(oxts_idx).array_mul(1-alpha)
+
+    return interp_oxts
 
 
 def _transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:

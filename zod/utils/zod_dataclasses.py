@@ -10,6 +10,7 @@ from dataclass_wizard import JSONSerializable
 from pyquaternion import Quaternion
 
 from zod.constants import CAMERA_FRONT, LIDAR_VELODYNE
+
 from zod.utils.utils import parse_timestamp_from_filename
 
 
@@ -79,6 +80,230 @@ class OXTSData:
     def get_ego_pose(self, timestamp: datetime) -> Pose:
         return Pose(np.eye(4, 4))
 
+    def __len__(self) -> int:
+        return len(self.time_gps)
+
+    def array_mul(self, array):
+        return OXTSData(
+            acceleration_x=self.acceleration_x * array,
+            acceleration_y=self.acceleration_y * array,
+            acceleration_z=self.acceleration_z * array,
+            angular_rate_x=self.angular_rate_x * array,
+            angular_rate_y=self.angular_rate_y * array,
+            angular_rate_z=self.angular_rate_z * array,
+            ecef_x=self.ecef_x * array,
+            ecef_y=self.ecef_y * array,
+            ecef_z=self.ecef_z * array,
+            heading=self.heading * array,
+            leap_seconds=self.leap_seconds * array,
+            pitch=self.pitch * array,
+            pos_alt=self.pos_alt * array,
+            pos_lat=self.pos_lat * array,
+            pos_lon=self.pos_lon * array,
+            roll=self.roll * array,
+            std_dev_pos_east=self.std_dev_pos_east * array,
+            std_dev_pos_north=self.std_dev_pos_north * array,
+            time_gps=self.time_gps * array,
+            traveled=self.traveled * array,
+            vel_down=self.vel_down * array,
+            vel_forward=self.vel_forward * array,
+            vel_lateral=self.vel_lateral * array,
+        )
+
+    def __mul__(self, other: Union[float, np.ndarray]) -> "OXTSData":
+        return OXTSData(
+            acceleration_x=self.acceleration_x * other,
+            acceleration_y=self.acceleration_y * other,
+            acceleration_z=self.acceleration_z * other,
+            angular_rate_x=self.angular_rate_x * other,
+            angular_rate_y=self.angular_rate_y * other,
+            angular_rate_z=self.angular_rate_z * other,
+            ecef_x=self.ecef_x * other,
+            ecef_y=self.ecef_y * other,
+            ecef_z=self.ecef_z * other,
+            heading=self.heading * other,
+            leap_seconds=self.leap_seconds * other,
+            pitch=self.pitch * other,
+            pos_alt=self.pos_alt * other,
+            pos_lat=self.pos_lat * other,
+            pos_lon=self.pos_lon * other,
+            roll=self.roll * other,
+            std_dev_pos_east=self.std_dev_pos_east * other,
+            std_dev_pos_north=self.std_dev_pos_north * other,
+            time_gps=self.time_gps * other,
+            traveled=self.traveled * other,
+            vel_down=self.vel_down * other,
+            vel_forward=self.vel_forward * other,
+            vel_lateral=self.vel_lateral * other,
+        )
+
+    def __rmul__(self, other: float) -> "OXTSData":
+        return self.__mul__(other)
+
+    def __add__(self, other: "OXTSData") -> "OXTSData":
+        return OXTSData(
+            acceleration_x=self.acceleration_x + other.acceleration_x,
+            acceleration_y=self.acceleration_y + other.acceleration_y,
+            acceleration_z=self.acceleration_z + other.acceleration_z,
+            angular_rate_x=self.angular_rate_x + other.angular_rate_x,
+            angular_rate_y=self.angular_rate_y + other.angular_rate_y,
+            angular_rate_z=self.angular_rate_z + other.angular_rate_z,
+            ecef_x=self.ecef_x + other.ecef_x,
+            ecef_y=self.ecef_y + other.ecef_y,
+            ecef_z=self.ecef_z + other.ecef_z,
+            heading=self.heading + other.heading,
+            leap_seconds=self.leap_seconds + other.leap_seconds,
+            pitch=self.pitch + other.pitch,
+            pos_alt=self.pos_alt + other.pos_alt,
+            pos_lat=self.pos_lat + other.pos_lat,
+            pos_lon=self.pos_lon + other.pos_lon,
+            roll=self.roll + other.roll,
+            std_dev_pos_east=self.std_dev_pos_east + other.std_dev_pos_east,
+            std_dev_pos_north=self.std_dev_pos_north + other.std_dev_pos_north,
+            time_gps=self.time_gps + other.time_gps,
+            traveled=self.traveled + other.traveled,
+            vel_down=self.vel_down + other.vel_down,
+            vel_forward=self.vel_forward + other.vel_forward,
+            vel_lateral=self.vel_lateral + other.vel_lateral,
+        )
+
+    def __sub__(self, other: "OXTSData") -> "OXTSData":
+        return OXTSData(
+            acceleration_x=self.acceleration_x - other.acceleration_x,
+            acceleration_y=self.acceleration_y - other.acceleration_y,
+            acceleration_z=self.acceleration_z - other.acceleration_z,
+            angular_rate_x=self.angular_rate_x - other.angular_rate_x,
+            angular_rate_y=self.angular_rate_y - other.angular_rate_y,
+            angular_rate_z=self.angular_rate_z - other.angular_rate_z,
+            ecef_x=self.ecef_x - other.ecef_x,
+            ecef_y=self.ecef_y - other.ecef_y,
+            ecef_z=self.ecef_z - other.ecef_z,
+            heading=self.heading - other.heading,
+            leap_seconds=self.leap_seconds - other.leap_seconds,
+            pitch=self.pitch - other.pitch,
+            pos_alt=self.pos_alt - other.pos_alt,
+            pos_lat=self.pos_lat - other.pos_lat,
+            pos_lon=self.pos_lon - other.pos_lon,
+            roll=self.roll - other.roll,
+            std_dev_pos_east=self.std_dev_pos_east - other.std_dev_pos_east,
+            std_dev_pos_north=self.std_dev_pos_north - other.std_dev_pos_north,
+            time_gps=self.time_gps - other.time_gps,
+            traveled=self.traveled - other.traveled,
+            vel_down=self.vel_down - other.vel_down,
+            vel_forward=self.vel_forward - other.vel_forward,
+            vel_lateral=self.vel_lateral - other.vel_lateral,
+        )
+
+    def __truediv__(self, other: float) -> "OXTSData":
+        return OXTSData(
+            acceleration_x=self.acceleration_x / other,
+            acceleration_y=self.acceleration_y / other,
+            acceleration_z=self.acceleration_z / other,
+            angular_rate_x=self.angular_rate_x / other,
+            angular_rate_y=self.angular_rate_y / other,
+            angular_rate_z=self.angular_rate_z / other,
+            ecef_x=self.ecef_x / other,
+            ecef_y=self.ecef_y / other,
+            ecef_z=self.ecef_z / other,
+            heading=self.heading / other,
+            leap_seconds=self.leap_seconds / other,
+            pitch=self.pitch / other,
+            pos_alt=self.pos_alt / other,
+            pos_lat=self.pos_lat / other,
+            pos_lon=self.pos_lon / other,
+            roll=self.roll / other,
+            std_dev_pos_east=self.std_dev_pos_east / other,
+            std_dev_pos_north=self.std_dev_pos_north / other,
+            time_gps=self.time_gps / other,
+            traveled=self.traveled / other,
+            vel_down=self.vel_down / other,
+            vel_forward=self.vel_forward / other,
+            vel_lateral=self.vel_lateral / other,
+        )
+
+    def append(self, other: "OXTSData") -> "OXTSData":
+        self.acceleration_x = np.append(self.acceleration_x, other.acceleration_x)
+        self.acceleration_y = np.append(self.acceleration_y, other.acceleration_y)
+        self.acceleration_z = np.append(self.acceleration_z, other.acceleration_z)
+        self.angular_rate_x = np.append(self.angular_rate_x, other.angular_rate_x)
+        self.angular_rate_y = np.append(self.angular_rate_y, other.angular_rate_y)
+        self.angular_rate_z = np.append(self.angular_rate_z, other.angular_rate_z)
+        self.ecef_x = np.append(self.ecef_x, other.ecef_x)
+        self.ecef_y = np.append(self.ecef_y, other.ecef_y)
+        self.ecef_z = np.append(self.ecef_z, other.ecef_z)
+        self.heading = np.append(self.heading, other.heading)
+        self.leap_seconds = np.append(self.leap_seconds, other.leap_seconds)
+        self.pitch = np.append(self.pitch, other.pitch)
+        self.pos_alt = np.append(self.pos_alt, other.pos_alt)
+        self.pos_lat = np.append(self.pos_lat, other.pos_lat)
+        self.pos_lon = np.append(self.pos_lon, other.pos_lon)
+        self.roll = np.append(self.roll, other.roll)
+        self.std_dev_pos_east = np.append(self.std_dev_pos_east, other.std_dev_pos_east)
+        self.std_dev_pos_north = np.append(self.std_dev_pos_north, other.std_dev_pos_north)
+        self.time_gps = np.append(self.time_gps, other.time_gps)
+        self.traveled = np.append(self.traveled, other.traveled)
+        self.vel_down = np.append(self.vel_down, other.vel_down)
+        self.vel_forward = np.append(self.vel_forward, other.vel_forward)
+        self.vel_lateral = np.append(self.vel_lateral, other.vel_lateral)
+        return self
+
+    def get_idx(self, start_idx, end_idx=None) -> "OXTSData":
+        if end_idx is None:
+            end_idx = start_idx + 1
+
+        if type(start_idx) == int:
+            return OXTSData(
+                acceleration_x=self.acceleration_x[start_idx:end_idx],
+                acceleration_y=self.acceleration_y[start_idx:end_idx],
+                acceleration_z=self.acceleration_z[start_idx:end_idx],
+                angular_rate_x=self.angular_rate_x[start_idx:end_idx],
+                angular_rate_y=self.angular_rate_y[start_idx:end_idx],
+                angular_rate_z=self.angular_rate_z[start_idx:end_idx],
+                ecef_x=self.ecef_x[start_idx:end_idx],
+                ecef_y=self.ecef_y[start_idx:end_idx],
+                ecef_z=self.ecef_z[start_idx:end_idx],
+                heading=self.heading[start_idx:end_idx],
+                leap_seconds=self.leap_seconds[start_idx:end_idx],
+                pitch=self.pitch[start_idx:end_idx],
+                pos_alt=self.pos_alt[start_idx:end_idx],
+                pos_lat=self.pos_lat[start_idx:end_idx],
+                pos_lon=self.pos_lon[start_idx:end_idx],
+                roll=self.roll[start_idx:end_idx],
+                std_dev_pos_east=self.std_dev_pos_east[start_idx:end_idx],
+                std_dev_pos_north=self.std_dev_pos_north[start_idx:end_idx],
+                time_gps=self.time_gps[start_idx:end_idx],
+                traveled=self.traveled[start_idx:end_idx],
+                vel_down=self.vel_down[start_idx:end_idx],
+                vel_forward=self.vel_forward[start_idx:end_idx],
+                vel_lateral=self.vel_lateral[start_idx:end_idx],
+            )
+        else:
+            return OXTSData(
+                acceleration_x=self.acceleration_x[start_idx],
+                acceleration_y=self.acceleration_y[start_idx],
+                acceleration_z=self.acceleration_z[start_idx],
+                angular_rate_x=self.angular_rate_x[start_idx],
+                angular_rate_y=self.angular_rate_y[start_idx],
+                angular_rate_z=self.angular_rate_z[start_idx],
+                ecef_x=self.ecef_x[start_idx],
+                ecef_y=self.ecef_y[start_idx],
+                ecef_z=self.ecef_z[start_idx],
+                heading=self.heading[start_idx],
+                leap_seconds=self.leap_seconds[start_idx],
+                pitch=self.pitch[start_idx],
+                pos_alt=self.pos_alt[start_idx],
+                pos_lat=self.pos_lat[start_idx],
+                pos_lon=self.pos_lon[start_idx],
+                roll=self.roll[start_idx],
+                std_dev_pos_east=self.std_dev_pos_east[start_idx],
+                std_dev_pos_north=self.std_dev_pos_north[start_idx],
+                time_gps=self.time_gps[start_idx],
+                traveled=self.traveled[start_idx],
+                vel_down=self.vel_down[start_idx],
+                vel_forward=self.vel_forward[start_idx],
+                vel_lateral=self.vel_lateral[start_idx],
+            )
+
     @classmethod
     def from_hdf5(cls, file: h5py.Group) -> "OXTSData":
         return cls(
@@ -108,6 +333,19 @@ class OXTSData:
         )
 
 
+def transform_points(points: np.ndarray, pose: Pose) -> np.ndarray:
+    """Transform points from the ego vehicle frame to the global frame.
+
+    Args:
+        points: points in the ego vehicle frame to transform, shape: (N, 3)
+        pose: ego vehicle pose at the timestamp of the points
+
+    Returns:
+        points in the global frame, shape: (N, 3)
+    """
+    return points @ pose.rotation_matrix.T + pose.translation
+
+
 @dataclass
 class LidarData:
     """A class describing the lidar data."""
@@ -116,7 +354,6 @@ class LidarData:
     timestamps: np.ndarray  # (N,) int64 epoch time in microseconds
     intensity: np.ndarray  # (N,) uint8
     diode_idx: np.ndarray  # (N,) uint8
-
     @classmethod
     def from_npy(cls, path: str) -> "LidarData":
         """Load lidar data from a .npy file."""
@@ -131,6 +368,34 @@ class LidarData:
             diode_idx=data["diode_index"],
         )
 
+    def transform(self, pose: Pose) -> "LidarData":
+        from zod.utils.geometry import _transform_points
+        """Transform the lidar data to a new pose.
+
+        Args:
+            pose: The new pose to transform the lidar data to.
+
+        Returns:
+            The transformed lidar data.
+        """
+        self.points = _transform_points(self.points, pose.transform)
+        return self
+
+    def append(self, other: "LidarData") -> "LidarData":
+        """Append another LidarData object to this one.
+
+        Args:
+            other: The other LidarData object to append.
+
+        Returns:
+            The appended LidarData object.
+        """
+        self.points = np.vstack((self.points, other.points))
+        self.timestamps = np.hstack((self.timestamps, other.timestamps))
+        self.intensity = np.hstack((self.intensity, other.intensity))
+        self.diode_idx = np.hstack((self.diode_idx, other.diode_idx))
+        return self
+
 
 @dataclass
 class LidarCalibration:
@@ -144,7 +409,7 @@ class CameraCalibration:
     distortion: np.ndarray  # 4 vector
     undistortion: np.ndarray  # 4 vector
     image_dimensions: np.ndarray  # width, height
-    field_of_view: np.ndarray  # vertical, horizontal (degrees)
+    field_of_view: np.ndarray  # horizontal, vertical (degrees)
 
 
 @dataclass

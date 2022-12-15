@@ -1,40 +1,56 @@
 """Module to perform Lidar extraction and visualization of projections on image plane."""
 
+from typing import Tuple, Union
+
 import cv2
 import numpy as np
-from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
-from colorlabeler import ColorLabeler, create_matplotlib_colormap
+#from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
+from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
+from zod.utils.zod_dataclasses import Calibration, Pose, transform_points, LidarData
+from zod.constants import LIDAR_VELODYNE, CAMERA_FRONT
+from zod.visualization.oxts_on_image import kannala_project
 
-from constants import FOV
+# from constants import FOV
+
+def get_3d_transform_camera_lidar(calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT) -> Pose:
+    """Get 3D transformation between lidar and camera."""
+    t_refframe_to_frame = calib.lidars[lidar_name].extrinsics
+    t_refframe_from_frame = calib.cameras[camera_name].extrinsics
+
+    t_from_frame_refframe = t_refframe_from_frame.inverse
+    t_from_frame_to_frame = Pose(t_from_frame_refframe.transform @ t_refframe_to_frame.transform)
+
+    return t_from_frame_to_frame
 
 
-def project_lidar_to_image(xyz_data, calib: dict) -> np.ndarray:
+def project_lidar_to_image(lidar_data: LidarData, calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT) -> np.ndarray:
     """Project lidar pointcloud to camera."""
     t_lidar_to_camera = get_3d_transform_camera_lidar(calib)
 
-    camera_data = rigid_transform_3d(xyz_data, t_lidar_to_camera)
+    camera_data = transform_points(lidar_data.points, t_lidar_to_camera)
     positive_depth = camera_data[:, 2] > 0
     camera_data = camera_data[positive_depth]
     if not camera_data.any():
         return camera_data
-    camera_data = get_points_in_camera_fov(calib[FOV][0], camera_data)
-
-    camera_info = CameraInfo.create_instance_from_config(calib)
-    xyd_array = camera_info.project(camera_data, True)
+    camera_data = get_points_in_camera_fov(calib.cameras[camera_name].field_of_view, camera_data)
+    
+    xy_array = kannala_project(camera_data, calib.cameras[camera_name].intrinsics[...,:3], calib.cameras[camera_name].distortion)
+    xyd_array = np.concatenate([xy_array, camera_data[:, 2:3]], axis=1)
     return xyd_array
 
 
-def get_points_in_camera_fov(horizontal_fov: int, camera_data: np.ndarray) -> np.ndarray:
+def get_points_in_camera_fov(fov: np.ndarray, camera_data: np.ndarray) -> np.ndarray:
     """Get points that are present in camera field of view.
 
     Args:
-        horizontal_fov: horizontal camera field of view
+        fov: camera field of view
         camera_data: data to filter inside the camera field of view
 
     Returns:
         points only visible in the camera
 
     """
+    horizontal_fov, vertical_fov = fov
     if horizontal_fov == 0:
         return camera_data
     angles = np.rad2deg(np.arctan2(camera_data[:, 0], camera_data[:, 2]))
@@ -84,7 +100,7 @@ def draw_projection_as_jet_circles(
         image : image with projected lidar points as colored circles with specified radius
 
     """
-    color_labeler = ColorLabeler()
+    color_labeler = ColorLabeler(map_type="coolwarm", map_creator=create_matplotlib_colormap)
     if points.shape[0]:
         normed_depths = points[:, 2] - points[:, 2].min()
         if clip_to:
@@ -98,7 +114,7 @@ def draw_projection_as_jet_circles(
     return image
 
 
-def visualize_lidar_on_image(lidar_data: np.ndarray, calib: dict, image: np.ndarray):
+def visualize_lidar_on_image(lidar_data: LidarData, calib: Calibration, image: np.ndarray):
     """Visualize GPS track on image."""
     xyd = project_lidar_to_image(lidar_data, calib)
     image = draw_projection_as_jet_circles(image, xyd, radius=2)
