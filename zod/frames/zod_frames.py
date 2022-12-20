@@ -11,12 +11,19 @@ import numpy as np
 from pytz import utc
 from tqdm.contrib.concurrent import process_map
 
-from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
 from zod import constants
+from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
 from zod.utils.geometry import _interpolate_oxts_data
 from zod.utils.objects import AnnotatedObject
 from zod.utils.utils import gps_time_to_datetime, parse_timestamp_from_filename
-from zod.utils.zod_dataclasses import Calibration, FrameInformation, LidarData, OXTSData, Pose
+from zod.utils.zod_dataclasses import (
+    Calibration,
+    FrameInformation,
+    LidarData,
+    MetaData,
+    OXTSData,
+    Pose,
+)
 from zod.visualization.oxts_on_image import _odometry_from_oxts
 
 
@@ -160,6 +167,12 @@ class ZodFrames(object):
         with open(self._frames[frame_id].calibration_path) as f:
             calib = json.load(f)
         return Calibration.from_dict(calib)
+
+    def read_meta_data(self, frame_id: str) -> MetaData:
+        """Read meta data files from json format."""
+        with open(self._frames[frame_id].metadata_path) as f:
+            meta_data = json.load(f)
+        return MetaData.from_dict(meta_data)
 
     def read_oxts(self, frame_id: str) -> OXTSData:
         """Read OXTS files from hdf5 format."""

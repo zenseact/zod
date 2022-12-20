@@ -10,7 +10,6 @@ from dataclass_wizard import JSONSerializable
 from pyquaternion import Quaternion
 
 from zod.constants import CAMERA_FRONT, LIDAR_VELODYNE
-
 from zod.utils.utils import parse_timestamp_from_filename
 
 
@@ -354,6 +353,7 @@ class LidarData:
     timestamps: np.ndarray  # (N,) int64 epoch time in microseconds
     intensity: np.ndarray  # (N,) uint8
     diode_idx: np.ndarray  # (N,) uint8
+
     @classmethod
     def from_npy(cls, path: str) -> "LidarData":
         """Load lidar data from a .npy file."""
@@ -370,6 +370,7 @@ class LidarData:
 
     def transform(self, pose: Pose) -> "LidarData":
         from zod.utils.geometry import _transform_points
+
         """Transform the lidar data to a new pose.
 
         Args:
@@ -435,6 +436,34 @@ class Calibration:
             ),
         }
         return cls(lidars=lidars, cameras=cameras)
+
+
+@dataclass
+class MetaData:
+    """A class describing the metadata of a frame."""
+
+    frame_id: str
+    timestamp: datetime
+    country_code: str
+    scraped_weather: str
+    collection_car: str
+    road_type: str
+    road_condition: str
+    time_of_day: str
+    num_lane_instances: int
+    num_vehicles: int
+    num_vulnerable_vehicles: int
+    num_pedestrians: int
+    num_traffic_lights: int
+    num_traffic_signs: int
+    longitude: float
+    latitude: float
+    solar_angle_elevation: float
+
+    @classmethod
+    def from_dict(cls, meta_dict: Dict[str, Any]):
+        """Create a MetaData object from a dictionary."""
+        return cls(**meta_dict)
 
 
 @dataclass

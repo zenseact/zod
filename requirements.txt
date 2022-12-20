@@ -1,0 +1,14 @@
+numpy
+pyquaternion
+opencv_python
+Pillow
+matplotlib
+h5py
+pytz
+tqdm
+ipykernel
+dataclass_wizard
+pandas
+pyproj
+plotly
+nbformat
