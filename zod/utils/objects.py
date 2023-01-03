@@ -15,7 +15,6 @@ from zod.constants import (
 )
 from zod.utils.geometry import (
     project_3d_to_2d_kannala,
-    transform_points,
     unproject_2d_to_3d_kannala,
 )
 from zod.utils.zod_dataclasses import Calibration, Pose
@@ -340,11 +339,10 @@ class Box2D:
 
         # transform the frustum to the selected frame if needed
         if frame is not None:
-            frustum = transform_points(
+            frustum = calibration.transform_points(
                 points=frustum,
                 from_frame=CAMERA_FRONT,
                 to_frame=frame,
-                calibration=calibration,
             )
 
         return frustum

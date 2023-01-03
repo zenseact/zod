@@ -1,11 +1,13 @@
 """Module to perform OxTS extraction and visualize GPS track projection on image plane."""
-from datetime import datetime
+from datetime import datetime, timezone
 
 import cv2
 import numpy as np
 import pandas as pd
 import pyproj
-from pytz import utc
+
+from zod.utils.oxts import EgoMotion
+
 
 DEFAULT_COL_VALUES = {
     "pitchMissalignment": (0, 0, 0, b"Radians"),
@@ -31,7 +33,7 @@ OXTS_COLS = [
 # pylint: disable=C0103
 ECEF = pyproj.Proj(proj="geocent", ellps="WGS84", datum="WGS84")
 LLA = pyproj.Proj(proj="latlong", ellps="WGS84", datum="WGS84")
-GPS_EPOCH = datetime(1980, 1, 6, tzinfo=utc)
+GPS_EPOCH = datetime(1980, 1, 6, tzinfo=timezone.utc)
 PATH_POINTS = np.arange(5, 201, 5)
 
 
@@ -517,6 +519,7 @@ def generate_odometry(oxts, frame_time_utc, pitch_from_points=False):
     odometry = odometry_from_oxts(oxts_path_points, oxts_0)
     return odometry
 
+
 def _ecef_to_ref_frame_transform(
     lat_deg, lon_deg, heading_deg, pitch_deg, roll_deg, ecef_x, ecef_y, ecef_z
 ):
@@ -564,6 +567,7 @@ def _odometry_from_oxts(oxts, oxts_0=None):
     ref0_T_ref = ref0_T_ecef @ T_inv(ref_T_ecef)
     return ref0_T_ref
 
+
 def get_path_from_oxts(oxts_h5: np.ndarray, frame_time_utc: datetime):
     """Demonstrate how to get a HP GT path from only a frame_id.
 
@@ -594,9 +598,10 @@ def _get_path_in_cam(path: np.ndarray, calib: dict):
 
 
 def visualize_gps_on_image(
-    oxts_data: np.ndarray, frame_time: datetime, calib: dict, image: np.ndarray
+    ego_motion: EgoMotion, frame_time: datetime, calib: dict, image: np.ndarray
 ):
     """Visualize GPS track on image."""
+    raise NotImplementedError("This function got broken, need to fix to work with EgoMotion")
     path_3d = get_path_from_oxts(oxts_data, frame_time)
     path_on_image = _get_path_in_cam(path_3d, calib)
     image = draw_line(image, path_on_image, (50, 100, 200))

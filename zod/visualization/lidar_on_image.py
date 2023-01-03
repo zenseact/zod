@@ -1,10 +1,9 @@
 """Module to perform Lidar extraction and visualization of projections on image plane."""
 
-from typing import Tuple, Union
-
 import cv2
 import numpy as np
-#from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
+
+# from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
 from zod.utils.zod_dataclasses import Calibration, Pose, transform_points, LidarData
 from zod.constants import LIDAR_VELODYNE, CAMERA_FRONT
@@ -12,7 +11,10 @@ from zod.visualization.oxts_on_image import kannala_project
 
 # from constants import FOV
 
-def get_3d_transform_camera_lidar(calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT) -> Pose:
+
+def get_3d_transform_camera_lidar(
+    calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT
+) -> Pose:
     """Get 3D transformation between lidar and camera."""
     t_refframe_to_frame = calib.lidars[lidar_name].extrinsics
     t_refframe_from_frame = calib.cameras[camera_name].extrinsics
@@ -23,7 +25,12 @@ def get_3d_transform_camera_lidar(calib: Calibration, lidar_name: str = LIDAR_VE
     return t_from_frame_to_frame
 
 
-def project_lidar_to_image(lidar_data: LidarData, calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT) -> np.ndarray:
+def project_lidar_to_image(
+    lidar_data: LidarData,
+    calib: Calibration,
+    lidar_name: str = LIDAR_VELODYNE,
+    camera_name: str = CAMERA_FRONT,
+) -> np.ndarray:
     """Project lidar pointcloud to camera."""
     t_lidar_to_camera = get_3d_transform_camera_lidar(calib)
 
@@ -33,8 +40,12 @@ def project_lidar_to_image(lidar_data: LidarData, calib: Calibration, lidar_name
     if not camera_data.any():
         return camera_data
     camera_data = get_points_in_camera_fov(calib.cameras[camera_name].field_of_view, camera_data)
-    
-    xy_array = kannala_project(camera_data, calib.cameras[camera_name].intrinsics[...,:3], calib.cameras[camera_name].distortion)
+
+    xy_array = kannala_project(
+        camera_data,
+        calib.cameras[camera_name].intrinsics[..., :3],
+        calib.cameras[camera_name].distortion,
+    )
     xyd_array = np.concatenate([xy_array, camera_data[:, 2:3]], axis=1)
     return xyd_array
 

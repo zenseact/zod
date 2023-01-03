@@ -39,7 +39,7 @@ EVALUATION_CLASSES = [
 
 # dataset paths
 SINGLE_FRAMES = "single_frames"
-DB_DATE_STRING_FORMAT_W_MICROSECONDS= "%Y-%m-%dT%H:%M:%S.%fZ"
+DB_DATE_STRING_FORMAT_W_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 # train-val splits
 TRAIN = "train"

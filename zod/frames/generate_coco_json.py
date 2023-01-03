@@ -13,7 +13,7 @@ from tqdm.contrib.concurrent import process_map
 from zod.frames.zod_frames import ZodFrames
 from zod.constants import ALL_CLASSES, BLUR, CAMERA_FRONT, DNAT
 from zod.utils.objects import AnnotatedObject
-from zod.utils.zod_dataclasses import FrameInformation
+from zod.frames.info import FrameInformation
 
 
 # Map classes to categories, starting from 1
