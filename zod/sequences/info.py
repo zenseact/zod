@@ -2,7 +2,7 @@
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
 
@@ -13,7 +13,7 @@ from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
 class SequenceInformation(JSONSerializable):
     """Class to store frame information."""
 
-    frame_id: str
+    sequence_id: str
     start_time: datetime
     end_time: datetime
 
@@ -34,3 +34,22 @@ class SequenceInformation(JSONSerializable):
         for camera_frames in self.camera_frames.values():
             for sensor_frame in camera_frames:
                 sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
+
+    def get_camera_lidar_map(
+        self, camera: str, lidar: str
+    ) -> Iterator[Tuple[CameraFrame, SensorFrame]]:
+        """Iterate over all camera frames and their corresponding lidar frames."""
+        assert (
+            camera in self.camera_frames
+        ), f"Camera {camera} not found. Available cameras: {self.camera_frames.keys()}"
+        assert (
+            lidar in self.lidar_frames
+        ), f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
+
+        for camera_frame in self.camera_frames[camera]:
+            # get the closest lidar frame in time
+            lidar_frame = min(
+                self.lidar_frames[lidar],
+                key=lambda lidar_frame: abs(lidar_frame.timestamp - camera_frame.timestamp),
+            )
+            yield camera_frame, lidar_frame
