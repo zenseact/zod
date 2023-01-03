@@ -4,6 +4,7 @@ from typing import List, Optional, Sequence
 import json
 import numpy as np
 import plotly.express as px
+from zod.utils.oxts import EgoMotion
 
 from ..constants import (
     DEFAULT_COLOR,
@@ -77,13 +78,14 @@ def plot_gps(
         fig.show()
 
 
-def plot_gps_track_from_dataset_sequence(oxts_values: np.ndarray):
+def plot_gps_track_from_dataset_sequence(ego_motion: EgoMotion):
     """Plot GPS track on the map from dataset sequence.
 
     Args:
         oxts_values : OxTS values
 
     """
+    raise NotImplementedError("This function got broken, need to fix to work with EgoMotion")
     longs, lats = oxts_values.pos_lon, oxts_values.pos_lat
     colors = ["blue"] * len(longs)
     sizes = [1] * len(longs)

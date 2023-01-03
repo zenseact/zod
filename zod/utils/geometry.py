@@ -1,12 +1,7 @@
 """Geometry utility functions."""
-from typing import Union, List
-
-from datetime import datetime
+from typing import Union
 
 import numpy as np
-
-from zod.constants import CAMERAS, EGO, LIDARS
-from zod.utils.zod_dataclasses import Calibration, OXTSData
 
 
 def project_3d_to_2d_kannala(
@@ -49,7 +44,7 @@ def unproject_2d_to_3d_kannala(
     points_2d: np.ndarray,
     camera_matrix: np.ndarray,
     undistorion_coefs: np.ndarray,
-    depth: Union[np.array, float],
+    depth: Union[np.ndarray, float],
 ) -> np.ndarray:
     """Unproject 2d points to 3d using Kannala-Brandt model.
 
@@ -87,24 +82,8 @@ def unproject_2d_to_3d_kannala(
 
     return out
 
-def _interpolate_oxts_data(
-    oxts: OXTSData, oxts_timestamps: List[datetime], interp_timestamps: List[datetime]
-) -> OXTSData:
-    oxts_idx = np.searchsorted(oxts_timestamps, interp_timestamps)
 
-    interp_oxts = None
-    # interpolate oxts data
-    this_time = interp_timestamps
-    prev_time = oxts_timestamps[oxts_idx-1]
-    next_time = oxts_timestamps[oxts_idx]
-    alpha = (this_time - next_time) / (prev_time - next_time)
-    alpha = alpha.astype(np.float32)
-    interp_oxts = oxts.get_idx(oxts_idx - 1).array_mul(alpha) + oxts.get_idx(oxts_idx).array_mul(1-alpha)
-
-    return interp_oxts
-
-
-def _transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
+def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     """Transform points from one frame to another.
 
     Args:
@@ -118,39 +97,3 @@ def _transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     # Remove the last dimension
     transformed_points = transformed_points[:, :3]
     return transformed_points
-
-
-def transform_points(
-    points: np.ndarray, from_frame: str, to_frame: str, calibration: Calibration
-) -> np.ndarray:
-    """Transform points from one frame to another.
-
-    Args:
-        points: Points in shape (N, 3).
-        from_frame: Name of the frame the points are in.
-        to_frame: Name of the frame to transform the points to.
-        calibration: Calibration object.
-
-    Returns:
-        Transformed points in shape (N, 3).
-    """
-    assert to_frame in (*LIDARS, *CAMERAS, EGO)
-    assert from_frame in (*LIDARS, *CAMERAS, EGO)
-    if from_frame == to_frame:
-        return points
-
-    if from_frame == EGO:
-        from_transform = np.eye(4)
-    elif from_frame in LIDARS:
-        from_transform = calibration.lidars[from_frame].extrinsics.transform
-    elif from_frame in CAMERAS:
-        from_transform = calibration.cameras[from_frame].extrinsics.transform
-
-    if to_frame == EGO:
-        to_transform = np.eye(4)
-    elif to_frame in LIDARS:
-        to_transform = np.linalg.pinv(calibration.lidars[to_frame].extrinsics.transform)
-    elif to_frame in CAMERAS:
-        to_transform = np.linalg.pinv(calibration.cameras[to_frame].extrinsics.transform)
-
-    return _transform_points(points, to_transform @ from_transform)

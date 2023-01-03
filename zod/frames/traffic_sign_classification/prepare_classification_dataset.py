@@ -14,10 +14,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import cv2
 from tqdm.contrib.concurrent import process_map
 
-from zod.frames import annotation_parser as ap
-from zod.frames.zod_frames import ZodFrames
 from zod import constants
-from zod.utils.zod_dataclasses import FrameInformation
+from zod.frames import annotation_parser as ap
+from zod.frames.info import FrameInformation
+from zod.frames.zod_frames import ZodFrames
+
 
 SUMMARY = """
 Finished creating dataset.
