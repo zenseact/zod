@@ -128,7 +128,7 @@ class LidarData:
         translations = pose[..., :3, 3]
         self.points = (
             self.points[..., None, :] @ rotations.swapaxes(-2, -1) + translations[..., None, :]
-        )
+        ).squeeze(-2)
 
     def append(self, other: "LidarData") -> "LidarData":
         """Append another LidarData object to this one.
