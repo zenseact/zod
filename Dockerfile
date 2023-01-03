@@ -15,4 +15,5 @@ RUN pip install tqdm \
     matplotlib \
     plotly \
     ipykernel \
-    pandas
+    pandas \
+    dataclass_wizard

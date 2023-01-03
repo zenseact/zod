@@ -44,11 +44,7 @@ def motion_compensate_pointwise(
     # project to ego vehicle frame using calib
     lidar_data.transform(calibration.extrinsics)
     # project to center frame using odometry
-    rotations = odometry[:, :3, :3]
-    translations = odometry[:, :3, 3]
-    lidar_data.points = (
-        lidar_data.points[..., None, :] @ rotations.swapaxes(-2, -1) + translations[..., None, :]
-    ).squeeze(1)
+    lidar_data.transform(odometry)
     # project back to lidar frame using calib
     lidar_data.transform(calibration.extrinsics.inverse)
 

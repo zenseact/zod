@@ -17,7 +17,7 @@ class EgoMotion:
     acceleration: np.ndarray  # Nx3
     angular_rate: np.ndarray  # Nx3
     timestamp: np.ndarray  # N - epoch time in seconds (float64)
-    origin_lat_lon: Tuple[float, float]  # (lat, lon) of the origin (which pose is relative to)
+    origin_lat_lon: Tuple[float, float]  # (lat, lon) of the origin (which poses are relative to)
 
     def __len__(self) -> int:
         return len(self.timestamp)
@@ -56,7 +56,7 @@ class EgoMotion:
                 [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
             ),
             timestamp=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
-            origin_lat_lon=(file["lat"][0], file["lon"][0]),
+            origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
         )
 
     @classmethod
