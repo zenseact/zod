@@ -1,12 +1,14 @@
 """ZOD single-frames information."""
+import json
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Union
 
 from dataclass_wizard import JSONSerializable
+from zod.utils.oxts import EgoMotion
 
-from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
+from zod.utils.zod_dataclasses import Calibration, CameraFrame, MetaData, SensorFrame
 
 
 @dataclass
@@ -68,3 +70,22 @@ class FrameInformation(JSONSerializable):
                 sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
         for sensor_frame in self.camera_frame.values():
             sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
+
+    def get_metadata(self) -> MetaData:
+        """Get the metadata of the frame."""
+        with open(self.metadata_path, "r") as f:
+            meta_dict = json.load(f)
+        return MetaData.from_dict(meta_dict)
+
+    def get_calibration(self) -> Calibration:
+        """Get the calibration of the frame."""
+        with open(self.calibration_path, "r") as f:
+            calib_dict = json.load(f)
+        return Calibration.from_dict(calib_dict)
+
+    def get_ego_motion(self, from_json: bool = False) -> EgoMotion:
+        """Get the ego motion of the frame."""
+        if from_json:
+            raise NotImplementedError
+        else:
+            return EgoMotion.from_frame_oxts(self.oxts_path)
