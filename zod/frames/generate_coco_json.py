@@ -13,7 +13,7 @@ from tqdm.contrib.concurrent import process_map
 from zod.frames.zod_frames import ZodFrames
 from zod.constants import ALL_CLASSES, BLUR, CAMERA_FRONT, DNAT
 from zod.utils.objects import AnnotatedObject
-from zod.frames.info import FrameInformation
+from zod.frames.info import FrameInfo
 
 
 # Map classes to categories, starting from 1
@@ -30,7 +30,7 @@ class Anonymization(str, enum.Enum):
 
 
 def _convert_frame(
-    frame_info: FrameInformation, classes: List[str], anonymization: Anonymization, use_png: bool
+    frame_info: FrameInfo, classes: List[str], anonymization: Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
     with open(frame_info.object_detection_annotation_path) as f:
         objs = json.load(f)

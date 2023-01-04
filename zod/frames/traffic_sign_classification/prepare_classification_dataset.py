@@ -16,7 +16,7 @@ from tqdm.contrib.concurrent import process_map
 
 from zod import constants
 from zod.frames import annotation_parser as ap
-from zod.frames.info import FrameInformation
+from zod.frames.info import FrameInfo
 from zod.frames.zod_frames import ZodFrames
 
 
@@ -88,9 +88,7 @@ def _parse_args():
     return Args(**vars(args))
 
 
-def _process_frame(
-    frame: FrameInformation, args: Args, train_ids: Set[str]
-) -> List[Dict[str, Any]]:
+def _process_frame(frame: FrameInfo, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
     if frame.traffic_sign_annotation_path is None:
         return []
