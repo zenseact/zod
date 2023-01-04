@@ -1,4 +1,4 @@
-"""Sequence Information."""
+from itertools import chain
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
@@ -6,35 +6,37 @@ from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
 
-from zod.dataclasses.zod_dataclasses import CameraFrame, SensorFrame
+from zod.dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
 
 
 @dataclass
-class ZodSequenceInfo(JSONSerializable):
-    """Class to store frame information."""
+class Information(JSONSerializable):
+    """Base class for frame and sequence information."""
 
-    sequence_id: str
+    id: str
     start_time: datetime
     end_time: datetime
+    keyframe_time: datetime
 
-    # these are chronologicaly ordered
-    lidar_frames: Dict[str, List[SensorFrame]]
-    camera_frames: Dict[str, List[CameraFrame]]
-    oxts_path: str
-    ego_motion_path: str
     calibration_path: str
+    ego_motion_path: str
     metadata_path: str
+    oxts_path: str
+
+    annotation_frames: Dict[str, List[AnnotationFrame]]
+    camera_frames: Dict[str, List[CameraFrame]]
+    lidar_frames: Dict[str, List[SensorFrame]]
 
     def convert_paths_to_absolute(self, root_path: str):
-        self.oxts_path = osp.join(root_path, self.oxts_path)
         self.calibration_path = osp.join(root_path, self.calibration_path)
-        self.metadata_path = osp.join(root_path, self.metadata_path)
         self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
-        for lidar_frames in self.lidar_frames.values():
-            for sensor_frame in lidar_frames:
-                sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
-        for camera_frames in self.camera_frames.values():
-            for sensor_frame in camera_frames:
+        self.metadata_path = osp.join(root_path, self.metadata_path)
+        self.oxts_path = osp.join(root_path, self.oxts_path)
+
+        for frame in chain(
+            self.lidar_frames.values(), self.camera_frames.values(), self.annotation_frames.values()
+        ):
+            for sensor_frame in frame:
                 sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
 
     def get_camera_lidar_map(
@@ -62,3 +64,25 @@ class ZodSequenceInfo(JSONSerializable):
                 key=lambda lidar_frame: abs(lidar_frame.time - camera_frame.time),
             )
             yield camera_frame, lidar_frame
+
+    def get_keyframe_annotation(self, project: str) -> AnnotationFrame:
+        raise NotImplementedError
+
+    def get_keyframe_camera_frame(
+        self, camera: str = "front", anonymization_mode: str = "blur"
+    ) -> CameraFrame:
+        raise NotImplementedError
+
+    def get_keyframe_lidar_frame(self, lidar: str = "lidar_velodyne") -> SensorFrame:
+        raise NotImplementedError
+
+    def get_annotation(self, project: str, time: datetime) -> AnnotationFrame:
+        raise NotImplementedError
+
+    def get_camera_frame(
+        self, time: datetime, camera: str = "front", anonymization_mode: str = "blur"
+    ) -> CameraFrame:
+        raise NotImplementedError
+
+    def get_lidar_frame(self, time: datetime, lidar: str = "lidar_velodyne") -> SensorFrame:
+        raise NotImplementedError

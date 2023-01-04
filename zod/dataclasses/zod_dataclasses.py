@@ -244,3 +244,10 @@ class CameraFrame(SensorFrame):
 
     height: int = 2168
     width: int = 3848
+
+
+@dataclass
+class AnnotationFrame(SensorFrame):
+    """Class to store sensor information."""
+
+    project: str

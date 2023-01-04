@@ -4,7 +4,7 @@ from typing import List, Optional, Sequence
 import json
 import numpy as np
 import plotly.express as px
-from zod.utils.oxts import EgoMotion
+from zod.dataclasses.oxts import EgoMotion
 
 from ..constants import (
     DEFAULT_COLOR,

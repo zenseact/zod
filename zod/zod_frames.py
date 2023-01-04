@@ -12,7 +12,7 @@ from zod.frames.frame import ZodFrame
 from zod.frames.info import FrameInfo
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
 from zod.utils.utils import zfill_id
-from zod.utils.zod_dataclasses import LidarData
+from zod.dataclasses.zod_dataclasses import LidarData
 
 
 def _create_frame(frame: dict, dataset_root: str) -> FrameInfo:

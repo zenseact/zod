@@ -3,10 +3,10 @@ from typing import List
 
 from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
 from zod.frames.info import FrameInfo
-from zod.utils.metadata import FrameMetaData, SequenceMetadata
+from zod.dataclasses.metadata import FrameMetaData
 from zod.utils.objects import AnnotatedObject
-from zod.utils.oxts import EgoMotion
-from zod.utils.zod_dataclasses import Calibration
+from zod.dataclasses.oxts import EgoMotion
+from zod.dataclasses.zod_dataclasses import Calibration
 
 
 class ZodFrame:
@@ -15,7 +15,7 @@ class ZodFrame:
         self._ego_motion: EgoMotion = None
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
-        self._metadata: SequenceMetadata = None
+        self._metadata: FrameMetaData = None
 
     @property
     def ego_motion(self) -> EgoMotion:

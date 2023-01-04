@@ -5,7 +5,7 @@ import numpy as np
 
 # from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
-from zod.utils.zod_dataclasses import Calibration, Pose, transform_points, LidarData
+from zod.dataclasses.zod_dataclasses import Calibration, Pose, transform_points, LidarData
 from zod.constants import LIDAR_VELODYNE, CAMERA_FRONT
 from zod.visualization.oxts_on_image import kannala_project
 

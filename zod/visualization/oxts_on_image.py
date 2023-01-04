@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pyproj
 
-from zod.utils.oxts import EgoMotion
+from zod.dataclasses.oxts import EgoMotion
 
 
 DEFAULT_COL_VALUES = {
