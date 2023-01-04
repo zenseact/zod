@@ -78,9 +78,8 @@ class EgoMotion:
                 accelerations=np.stack(
                     [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
                 ),
-                # TODO: figure out what order should be here,
                 velocities=np.stack(
-                    [file["velDown"], file["velForward"], file["velLateral"]], axis=1
+                    [file["velForward"], file["velLateral"], -file["velDown"]], axis=1
                 ),
                 angular_rates=np.stack(
                     [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
@@ -98,9 +97,8 @@ class EgoMotion:
                 accelerations=np.stack(
                     [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
                 ),
-                # TODO: figure out what order should be here,
                 velocities=np.stack(
-                    [file["velDown"], file["velForward"], file["velLateral"]], axis=1
+                    [file["velForward"], file["velLateral"], -file["velDown"]], axis=1
                 ),
                 angular_rates=np.stack(
                     [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
