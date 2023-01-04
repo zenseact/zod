@@ -6,9 +6,10 @@ from datetime import datetime
 from typing import Dict, List, Union
 
 from dataclass_wizard import JSONSerializable
+from zod.utils.metadata import FrameMetaData
 from zod.utils.oxts import EgoMotion
 
-from zod.utils.zod_dataclasses import Calibration, CameraFrame, MetaData, SensorFrame
+from zod.utils.zod_dataclasses import Calibration, CameraFrame, SensorFrame
 
 
 @dataclass
@@ -71,11 +72,9 @@ class FrameInformation(JSONSerializable):
         for sensor_frame in self.camera_frame.values():
             sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
 
-    def get_metadata(self) -> MetaData:
+    def get_metadata(self) -> FrameMetaData:
         """Get the metadata of the frame."""
-        with open(self.metadata_path, "r") as f:
-            meta_dict = json.load(f)
-        return MetaData.from_dict(meta_dict)
+        return FrameMetaData.from_json(self.metadata_path)
 
     def get_calibration(self) -> Calibration:
         """Get the calibration of the frame."""
