@@ -8,16 +8,16 @@ from typing import Dict, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.sequences.info import SequenceInformation
+from zod.sequences.info import ZodSequenceInformation
 from zod.sequences.zod_sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 
-def _create_sequence(sequence_folder: str, dataset_root: str) -> SequenceInformation:
+def _create_sequence(sequence_folder: str, dataset_root: str) -> ZodSequenceInformation:
     with open(osp.join(sequence_folder, "sequence_info.json"), "r") as f:
         sequence_info = json.load(f)
 
-    sequence_info = SequenceInformation.from_dict(sequence_info)
+    sequence_info = ZodSequenceInformation.from_dict(sequence_info)
     sequence_info.convert_paths_to_absolute(dataset_root)
     return sequence_info
 
@@ -30,7 +30,7 @@ class ZodSequences:
             version in constants.VERSIONS
         ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
         self._train_sequences, self._val_sequences = self._load_sequences()
-        self._sequences: Dict[str, SequenceInformation] = {
+        self._sequences: Dict[str, ZodSequenceInformation] = {
             **self._train_sequences,
             **self._val_sequences,
         }
