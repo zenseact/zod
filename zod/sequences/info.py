@@ -6,6 +6,7 @@ from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
 
+from zod.utils.oxts import EgoMotion
 from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
 
 
@@ -50,6 +51,13 @@ class SequenceInformation(JSONSerializable):
             # get the closest lidar frame in time
             lidar_frame = min(
                 self.lidar_frames[lidar],
-                key=lambda lidar_frame: abs(lidar_frame.timestamp - camera_frame.timestamp),
+                key=lambda lidar_frame: abs(lidar_frame.time - camera_frame.time),
             )
             yield camera_frame, lidar_frame
+
+    def get_ego_motion(self, from_json: bool = True) -> EgoMotion:
+        """Get the oxts file."""
+        if from_json:
+            raise NotImplementedError
+        else:
+            return EgoMotion.from_sequence_oxts(self.oxts_path)
