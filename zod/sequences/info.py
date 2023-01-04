@@ -88,3 +88,6 @@ class SequenceInformation(JSONSerializable):
         """
         with open(self.calibration_path, "r") as f:
             return Calibration.from_dict(json.load(f))
+
+    def get_metadata(self):
+        raise NotImplementedError("Not implemented yet")
