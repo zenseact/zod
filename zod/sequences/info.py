@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
+from zod.utils.metadata import SequenceMetadata
 
 from zod.utils.oxts import EgoMotion
 from zod.utils.zod_dataclasses import Calibration, CameraFrame, SensorFrame
@@ -89,5 +90,5 @@ class SequenceInformation(JSONSerializable):
         with open(self.calibration_path, "r") as f:
             return Calibration.from_dict(json.load(f))
 
-    def get_metadata(self):
+    def get_metadata(self) -> SequenceMetadata:
         raise NotImplementedError("Not implemented yet")
