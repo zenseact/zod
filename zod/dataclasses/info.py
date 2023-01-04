@@ -1,7 +1,7 @@
-from itertools import chain
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
+from itertools import chain
 from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable

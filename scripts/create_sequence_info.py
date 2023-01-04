@@ -1,13 +1,15 @@
-from datetime import datetime
 import json
 import os
+from datetime import datetime
 from typing import Tuple
-from tqdm.contrib.concurrent import process_map
 
 from dataclass_wizard import JSONWizard
+from tqdm.contrib.concurrent import process_map
+
 from zod.constants import DB_DATE_STRING_FORMAT_W_MICROSECONDS
 from zod.dataclasses.zod_dataclasses import SensorFrame
 from zod.sequences.info import ZodSequenceInfo
+
 
 DATASET_ROOT = "/staging/dataset_donation/round_2/sequences"
 FILE_NAME = "sequence_info.json"
@@ -55,7 +57,8 @@ def create_sequence_info(sequence_folder: str) -> ZodSequenceInfo:
         if filename.endswith(".jpg")
     ]
 
-    sequence_info = ZodSequenceInfo(
+    # TODO: fix this
+    sequence_info = Information(
         sequence_id=sequence_folder,
         start_time=camera_frames[0].time,
         end_time=camera_frames[-1].time,
@@ -82,4 +85,5 @@ def main():
 
 
 if __name__ == "__main__":
+    main()
     main()
