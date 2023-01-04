@@ -1,8 +1,7 @@
 from zod.sequences.info import ZodSequenceInfo
-from zod.utils.metadata import SequenceMetadata
-
-from zod.utils.oxts import EgoMotion
-from zod.utils.zod_dataclasses import Calibration
+from zod.dataclasses.metadata import SequenceMetadata
+from zod.dataclasses.oxts import EgoMotion
+from zod.dataclasses.zod_dataclasses import Calibration
 
 
 class ZodSequence:

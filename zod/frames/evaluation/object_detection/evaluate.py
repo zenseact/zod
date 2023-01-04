@@ -24,7 +24,7 @@ from zod.frames.evaluation.object_detection.nuscenes_eval.detection.data_classes
 from zod.frames.evaluation.object_detection.utils import NUSCENES_DEFAULT_SETTINGS
 from zod.constants import EVALUATION_CLASSES
 from zod.utils.objects import AnnotatedObject, PredictedObject
-from zod.utils.zod_dataclasses import Calibration
+from zod.dataclasses.zod_dataclasses import Calibration
 
 
 VALID_TP_METRICS = ["trans_err", "scale_err", "orient_err"]
