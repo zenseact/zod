@@ -228,7 +228,7 @@ class MetaData:
     """A class describing the metadata of a frame."""
 
     frame_id: str
-    timestamp: datetime
+    time: datetime
     country_code: str
     scraped_weather: str
     collection_car: str
