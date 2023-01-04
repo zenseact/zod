@@ -17,8 +17,8 @@ def main(
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
     # color the pointcloud according to the timestamp
-    # color = (timestamps - timestamps.min()) / (timestamps.max() - timestamps.min())
-    color = (intensities - intensities.min()) / (intensities.max() - intensities.min())
+    color = (timestamps - timestamps.min()) / (timestamps.max() - timestamps.min())
+    # color = (intensities - intensities.min()) / (intensities.max() - intensities.min())
     # use a nice colormap
     pcd.colors = o3d.utility.Vector3dVector(cm.get_cmap("jet")(color)[:, :3])
     # Draw coordinate frame

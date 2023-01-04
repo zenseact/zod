@@ -11,14 +11,14 @@ import typer
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
-from zod.utils.compensation import motion_compensate_pointwise
+from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
 from zod.utils.oxts import EgoMotion
 from zod.utils.utils import parse_datetime_from_filename
 from zod.utils.zod_dataclasses import Calibration, LidarData
 
 
 OLD_LIDAR_FOLDER = "lidar_velodyne"
-NEW_LIDAR_FOLDER = "lidar_velodyne_compensated"
+COMPENSATED_LIDAR_FOLDER = "lidar_velodyne_compensated"
 GLOBAL_LIDAR_FOLDER = "lidar_velodyne_global"
 KEYFRAME_LIDAR_FOLDER = "lidar_velodyne_keyframe"
 OXTS_FOLDER = "oxts"
@@ -60,56 +60,49 @@ def main(
             calibration = Calibration.from_dict(json.load(f))
         calibration = calibration.lidars["lidar_velodyne"]
 
-        if compensate_to_keyframe and not (
-            os.path.exists(osp.join(sequence_dir, KEYFRAME_LIDAR_FOLDER))
-            and os.listdir(osp.join(sequence_dir, KEYFRAME_LIDAR_FOLDER))
+        if compensate_to_keyframe and not _get_num_files(
+            osp.join(sequence_dir, KEYFRAME_LIDAR_FOLDER)
         ):
             compensate_to_keyframe_cloud(
                 sequence, sequence_dir, lidar_files, ego_motion, calibration
             )
+        if _get_num_files(osp.join(sequence_dir, COMPENSATED_LIDAR_FOLDER)) != len(lidar_files):
+            comp_func = partial(
+                compensate_single_cloud,
+                sequence_dir=sequence_dir,
+                ego_motion=ego_motion,
+                calibration=calibration,
+            )
+            process_map(comp_func, lidar_files, chunksize=1, desc=f"Compensating {sequence}...")
         if save_global:
-            save_global_cloud(sequence, sequence_dir, lidar_files, ego_motion, calibration)
-        # skip if all clouds are already compensated
-        if os.path.exists(osp.join(sequence_dir, NEW_LIDAR_FOLDER)) and len(
-            os.listdir(osp.join(sequence_dir, NEW_LIDAR_FOLDER))
-        ) == len(lidar_files):
-            continue
-        comp_func = partial(
-            compensate_single_cloud,
-            sequence_dir=sequence_dir,
-            ego_motion=ego_motion,
-            calibration=calibration,
-        )
-        process_map(comp_func, lidar_files, chunksize=1, desc=f"Compensating {sequence}...")
+            save_global_cloud(sequence, sequence_dir, ego_motion, calibration)
 
 
 def compensate_single_cloud(lidar_file, sequence_dir, ego_motion, calibration):
     """Extract and compensate a single lidar point."""
-    lidar_timestamp, lidar = _read_lidar(sequence_dir, lidar_file)
+    lidar_timestamp, lidar = _read_lidar(osp.join(sequence_dir, OLD_LIDAR_FOLDER), lidar_file)
     new_lidar = motion_compensate_pointwise(lidar, ego_motion, calibration, lidar_timestamp)
-    new_lidar_path = osp.join(sequence_dir, NEW_LIDAR_FOLDER, lidar_file)
+    new_lidar_path = osp.join(sequence_dir, COMPENSATED_LIDAR_FOLDER, lidar_file)
     os.makedirs(osp.dirname(new_lidar_path), exist_ok=True)
     new_lidar.to_npy(new_lidar_path)
 
 
-def save_global_cloud(sequence, sequence_dir, lidar_files, ego_motion, calibration):
+def save_global_cloud(sequence, sequence_dir, ego_motion, calibration):
     """Aggregate all lidar point clouds into one global cloud."""
-    global_timestamp = None
     global_lidar = LidarData.empty()
     # Extract and compensate lidar point clouds
+    lidar_dir = osp.join(sequence_dir, OLD_LIDAR_FOLDER)
+    lidar_files = os.listdir(lidar_dir)
+    global_ts = parse_datetime_from_filename(lidar_files[len(lidar_files) // 2]).timestamp()
     for lidar_file in tqdm(
         lidar_files, desc=f"Storing global cloud for {sequence}...", leave=False
     ):
-        lidar_timestamp, lidar = _read_lidar(sequence_dir, lidar_file)
-        if not global_timestamp:
-            global_timestamp = lidar_timestamp
-        global_lidar.append(
-            motion_compensate_pointwise(lidar, ego_motion, calibration, global_timestamp)
-        )
-        # Write each time which is not ideal but it's a one-time script
-        global_lidar_path = osp.join(sequence_dir, GLOBAL_LIDAR_FOLDER, f"{global_timestamp}.npy")
-        os.makedirs(osp.dirname(global_lidar_path), exist_ok=True)
-        global_lidar.to_npy(global_lidar_path)
+        _, lidar = _read_lidar(lidar_dir, lidar_file)
+        global_lidar.append(motion_compensate_scanwise(lidar, ego_motion, calibration, global_ts))
+    # Write each time which is not ideal but it's a one-time script
+    global_lidar_path = osp.join(sequence_dir, GLOBAL_LIDAR_FOLDER, f"{global_ts}_noncomp.npy")
+    os.makedirs(osp.dirname(global_lidar_path), exist_ok=True)
+    global_lidar.to_npy(global_lidar_path)
 
 
 def compensate_to_keyframe_cloud(sequence, sequence_dir, lidar_files, ego_motion, calibration):
@@ -122,7 +115,7 @@ def compensate_to_keyframe_cloud(sequence, sequence_dir, lidar_files, ego_motion
     nearest_lidar = min(
         lidar_files, key=lambda x: abs(parse_datetime_from_filename(x) - keyframe_datetime)
     )
-    _, lidar = _read_lidar(sequence_dir, nearest_lidar)
+    _, lidar = _read_lidar(osp.join(sequence_dir, OLD_LIDAR_FOLDER), nearest_lidar)
     pbar = tqdm(total=1, desc=f"Compensating to keyframe for {sequence}...", leave=False)
     new_lidar = motion_compensate_pointwise(
         lidar, ego_motion, calibration, keyframe_datetime.timestamp()
@@ -136,12 +129,19 @@ def compensate_to_keyframe_cloud(sequence, sequence_dir, lidar_files, ego_motion
     pbar.close()
 
 
-def _read_lidar(sequence_dir, lidar_file) -> Tuple[float, LidarData]:
-    lidar_path = osp.join(sequence_dir, OLD_LIDAR_FOLDER, lidar_file)
+def _read_lidar(lidar_dir, lidar_file) -> Tuple[float, LidarData]:
+    lidar_path = osp.join(lidar_dir, lidar_file)
     lidar_datetime = parse_datetime_from_filename(lidar_path)
     lidar_timestamp = lidar_datetime.timestamp()
     lidar = LidarData.from_npy(lidar_path)
     return lidar_timestamp, lidar
+
+
+def _get_num_files(folder: str) -> int:
+    """Return number of files if folder exists, otherwise 0."""
+    if os.path.exists(folder):
+        return len(os.listdir(folder))
+    return 0
 
 
 if __name__ == "__main__":
