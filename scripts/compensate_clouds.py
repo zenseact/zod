@@ -6,7 +6,6 @@ import os.path as osp
 from functools import partial
 from typing import Tuple
 
-import h5py
 import typer
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
@@ -32,6 +31,9 @@ def main(
     compensate_to_keyframe: bool = typer.Option(True, help="Whether to compensate to keyframe"),
     partitions: int = typer.Option(1, help="Number of partitions to split the data into"),
     current_partition: int = typer.Option(0, help="Current partition to process"),
+    clouds_in_global: int = typer.Option(
+        -1, help="Number of clouds around keyframe to use for global compensation"
+    ),
 ):
     sequences = sorted(list(os.listdir(sequences_dir)))
     for sequence in tqdm(sequences[current_partition::partitions], desc="Processing sequences..."):
@@ -51,8 +53,7 @@ def main(
         # TODO: maybe wipe this folder instead of continuing above
         # Extract ego motion
         oxts_file = sorted(oxts_file)[-1]
-        with h5py.File(osp.join(sequence_dir, OXTS_FOLDER, oxts_file), "r") as f:
-            ego_motion = EgoMotion.from_sequence_oxts(f)
+        ego_motion = EgoMotion.from_sequence_oxts(osp.join(sequence_dir, OXTS_FOLDER, oxts_file))
 
         # Extract calibration
         calibration_file = calibration_file[0]
@@ -75,7 +76,7 @@ def main(
             )
             process_map(comp_func, lidar_files, chunksize=1, desc=f"Compensating {sequence}...")
         if save_global:
-            save_global_cloud(sequence, sequence_dir, ego_motion, calibration)
+            save_global_cloud(sequence, sequence_dir, ego_motion, calibration, clouds_in_global)
 
 
 def compensate_single_cloud(lidar_file, sequence_dir, ego_motion, calibration):
@@ -87,12 +88,16 @@ def compensate_single_cloud(lidar_file, sequence_dir, ego_motion, calibration):
     new_lidar.to_npy(new_lidar_path)
 
 
-def save_global_cloud(sequence, sequence_dir, ego_motion, calibration):
+def save_global_cloud(sequence, sequence_dir, ego_motion, calibration, clouds_in_global):
     """Aggregate all lidar point clouds into one global cloud."""
     global_lidar = LidarData.empty()
     # Extract and compensate lidar point clouds
-    lidar_dir = osp.join(sequence_dir, OLD_LIDAR_FOLDER)
-    lidar_files = os.listdir(lidar_dir)
+    lidar_dir = osp.join(sequence_dir, COMPENSATED_LIDAR_FOLDER)
+    lidar_files = sorted(os.listdir(lidar_dir))
+    if clouds_in_global != -1:
+        lidar_files = lidar_files[
+            len(lidar_files) // 2 - clouds_in_global : len(lidar_files) // 2 + clouds_in_global
+        ]
     global_ts = parse_datetime_from_filename(lidar_files[len(lidar_files) // 2]).timestamp()
     for lidar_file in tqdm(
         lidar_files, desc=f"Storing global cloud for {sequence}...", leave=False
@@ -100,7 +105,7 @@ def save_global_cloud(sequence, sequence_dir, ego_motion, calibration):
         _, lidar = _read_lidar(lidar_dir, lidar_file)
         global_lidar.append(motion_compensate_scanwise(lidar, ego_motion, calibration, global_ts))
     # Write each time which is not ideal but it's a one-time script
-    global_lidar_path = osp.join(sequence_dir, GLOBAL_LIDAR_FOLDER, f"{global_ts}_noncomp.npy")
+    global_lidar_path = osp.join(sequence_dir, GLOBAL_LIDAR_FOLDER, f"{global_ts}.npy")
     os.makedirs(osp.dirname(global_lidar_path), exist_ok=True)
     global_lidar.to_npy(global_lidar_path)
 
