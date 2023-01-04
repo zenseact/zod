@@ -256,7 +256,7 @@ class SensorFrame(JSONSerializable):
     """Class to store sensor information."""
 
     filepath: str
-    timestamp: datetime
+    time: datetime
 
 
 @dataclass
