@@ -1,4 +1,5 @@
 """Sequence Information."""
+import json
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
@@ -7,7 +8,7 @@ from typing import Dict, Iterator, List, Tuple
 from dataclass_wizard import JSONSerializable
 
 from zod.utils.oxts import EgoMotion
-from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
+from zod.utils.zod_dataclasses import Calibration, CameraFrame, SensorFrame
 
 
 @dataclass
@@ -24,12 +25,10 @@ class SequenceInformation(JSONSerializable):
     oxts_path: str
     ego_motion_path: str
     calibration_path: str
-    metadata_path: str
 
     def convert_paths_to_absolute(self, root_path: str):
         self.oxts_path = osp.join(root_path, self.oxts_path)
         self.calibration_path = osp.join(root_path, self.calibration_path)
-        self.metadata_path = osp.join(root_path, self.metadata_path)
         self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
         for lidar_frames in self.lidar_frames.values():
             for sensor_frame in lidar_frames:
@@ -78,3 +77,12 @@ class SequenceInformation(JSONSerializable):
             return EgoMotion.from_json(self.ego_motion_path)
         else:
             return EgoMotion.from_sequence_oxts(self.oxts_path)
+
+    def get_calibration(self) -> Calibration:
+        """Get the calibration file.
+
+        Returns:
+            The calibration.
+        """
+        with open(self.calibration_path, "r") as f:
+            return Calibration.from_dict(json.load(f))
