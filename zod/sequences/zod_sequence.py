@@ -1,4 +1,4 @@
-from zod.sequences.info import SequenceInformation
+from zod.sequences.info import ZodSequenceInformation
 from zod.utils.metadata import SequenceMetadata
 
 from zod.utils.oxts import EgoMotion
@@ -6,8 +6,8 @@ from zod.utils.zod_dataclasses import Calibration
 
 
 class ZodSequence:
-    def __init__(self, info: SequenceInformation):
-        self.info: SequenceInformation = info
+    def __init__(self, info: ZodSequenceInformation):
+        self.info: ZodSequenceInformation = info
         self._ego_motion: EgoMotion = None
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
