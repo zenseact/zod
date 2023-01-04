@@ -22,6 +22,7 @@ class SequenceInformation(JSONSerializable):
     lidar_frames: Dict[str, List[SensorFrame]]
     camera_frames: Dict[str, List[CameraFrame]]
     oxts_path: str
+    ego_motion_path: str
     calibration_path: str
     metadata_path: str
 
@@ -29,6 +30,7 @@ class SequenceInformation(JSONSerializable):
         self.oxts_path = osp.join(root_path, self.oxts_path)
         self.calibration_path = osp.join(root_path, self.calibration_path)
         self.metadata_path = osp.join(root_path, self.metadata_path)
+        self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
         for lidar_frames in self.lidar_frames.values():
             for sensor_frame in lidar_frames:
                 sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
@@ -39,7 +41,14 @@ class SequenceInformation(JSONSerializable):
     def get_camera_lidar_map(
         self, camera: str, lidar: str
     ) -> Iterator[Tuple[CameraFrame, SensorFrame]]:
-        """Iterate over all camera frames and their corresponding lidar frames."""
+        """Iterate over all camera frames and their corresponding lidar frames.
+
+        Args:
+            camera: The camera to use. e.g., camera_front_blur
+            lidar: The lidar to use. e.g., lidar_velodyne
+        Yields:
+            A tuple of the camera frame and the closest lidar frame.
+        """
         assert (
             camera in self.camera_frames
         ), f"Camera {camera} not found. Available cameras: {self.camera_frames.keys()}"
@@ -56,8 +65,16 @@ class SequenceInformation(JSONSerializable):
             yield camera_frame, lidar_frame
 
     def get_ego_motion(self, from_json: bool = True) -> EgoMotion:
-        """Get the oxts file."""
+        """Get the oxts file.
+
+        Args:
+            from_json: If true, the ego motion is loaded from the json file. Otherwise, it is
+                loaded from the oxts file. The json file is faster to load, but only contains the
+                ego-motion for the timestamps that are present in either the lidar or camera.
+        Returns:
+            The ego motion.
+        """
         if from_json:
-            raise NotImplementedError
+            return EgoMotion.from_json(self.ego_motion_path)
         else:
             return EgoMotion.from_sequence_oxts(self.oxts_path)

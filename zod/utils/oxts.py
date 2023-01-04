@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
 from typing import Tuple, Union
 
 import h5py
 import numpy as np
+from scipy.interpolate import interp1d
 import quaternion
 
 
@@ -46,7 +48,13 @@ class EgoMotion:
         )
 
     def interpolate(self, timestamps: np.ndarray) -> "EgoMotion":
-        """Interpolate ego motion to find ego motion for each target timestamp."""
+        """Interpolate ego motion to find ego motion for each target timestamp.
+
+        Args:
+            timestamps: [N] timestamps for which to find ego motion by interpolation.
+        Return:
+            EgoMotion object with interpolated ego motion for each timestamp.
+        """
         poses = self.get_poses(timestamps)
         velocities = interpolate_vectors(self.velocities, self.timestamps, timestamps)
         accelerations = interpolate_vectors(self.accelerations, self.timestamps, timestamps)
@@ -63,6 +71,7 @@ class EgoMotion:
 
     @classmethod
     def from_sequence_oxts(cls, oxts_path: str) -> "EgoMotion":
+        """Load ego motion from a sequence oxts file."""
         with h5py.File(oxts_path, "r") as file:
             return cls(
                 poses=file["poses"][()],
@@ -81,27 +90,50 @@ class EgoMotion:
             )
 
     @classmethod
-    def from_frame_oxts(cls, file: h5py.Group) -> "EgoMotion":
-        return cls(
-            poses=get_poses_from_oxts(file),
-            accelerations=np.stack(
-                [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
-            ),
-            # TODO: figure out what order should be here,
-            velocities=np.stack([file["velDown"], file["velForward"], file["velLateral"]], axis=1),
-            angular_rates=np.stack(
-                [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
-            ),
-            timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
-            origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
-        )
+    def from_frame_oxts(cls, oxts_path: str) -> "EgoMotion":
+        """Load ego motion from a frame oxts file."""
+        with h5py.File(oxts_path, "r") as file:
+            return cls(
+                poses=get_poses_from_oxts(file),
+                accelerations=np.stack(
+                    [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
+                ),
+                # TODO: figure out what order should be here,
+                velocities=np.stack(
+                    [file["velDown"], file["velForward"], file["velLateral"]], axis=1
+                ),
+                angular_rates=np.stack(
+                    [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
+                ),
+                timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
+                origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
+            )
 
     @classmethod
-    def from_json(cls, json: dict) -> "EgoMotion":
-        raise NotImplementedError("generate these first")
+    def from_json(cls, json_path: str) -> "EgoMotion":
+        """Load ego motion from a json file."""
+        with open(json_path, "r") as file:
+            data = json.load(file)
+
+        return cls(
+            poses=np.array(data["poses"]),
+            velocities=np.array(data["velocities"]),
+            accelerations=np.array(data["accelerations"]),
+            angular_rates=np.array(data["angular_rates"]),
+            timestamps=np.array(data["timestamps"]),
+            origin_lat_lon=np.array(data["origin_lat_lon"]),
+        )
 
     def to_json(self) -> dict:
-        raise NotImplementedError("generate these first")
+        """Save ego motion to a json file."""
+        return {
+            "poses": self.poses.tolist(),
+            "velocities": self.velocities.tolist(),
+            "accelerations": self.accelerations.tolist(),
+            "angular_rates": self.angular_rates.tolist(),
+            "timestamps": self.timestamps.tolist(),
+            "origin_lat_lon": self.origin_lat_lon,
+        }
 
 
 def interpolate_transforms(transform_1: np.ndarray, transform_2: np.ndarray, fractions: np.ndarray):
@@ -137,16 +169,23 @@ def interpolate_transforms(transform_1: np.ndarray, transform_2: np.ndarray, fra
 
 
 def interpolate_vectors(
-    values: np.ndarray, timestamps: np.ndarray, target_timestamps: np.ndarray
+    values: np.ndarray, source_timestamps: np.ndarray, target_timestamps: np.ndarray
 ) -> np.ndarray:
-    """Interpolate vectors to find vector"""
-    assert np.all(
-        timestamps >= np.min(target_timestamps)
-    ), "target timestamps must be within timestamps"
-    assert np.all(
-        timestamps <= np.max(target_timestamps)
-    ), "target timestamps must be within timestamps"
-    return np.interp(target_timestamps, timestamps, values, left=values[0], right=values[-1])
+    """Interpolate vectors to find vector for each (sorted) target timestamp.
+
+    Args:
+        values: [N, X] array of values.
+        source_timestamps: [N] array of timestamps.
+        target_timestamps: [M] array of timestamps.
+    Returns:
+        [M, X] array of interpolated values.
+    """
+    source_min_ts, source_max_ts = np.min(source_timestamps), np.max(source_timestamps)
+    target_min_ts, target_max_ts = np.min(target_timestamps), np.max(target_timestamps)
+    assert source_min_ts <= target_min_ts, "Target timestamps must be after source timestamps"
+    assert source_max_ts >= target_max_ts, "Target timestamps must be before source timestamps"
+
+    return interp1d(source_timestamps, values, axis=0)(target_timestamps)
 
 
 def get_poses_from_oxts(file: h5py.Group) -> np.ndarray:
