@@ -1,6 +1,7 @@
 """Top-level package for Zenseact Open Dataset (ZOD)."""
 
-from .frames.zod_frames import ZodFrames as ZodFrames
+from .zod_frames import ZodFrames as ZodFrames
+from .zod_sequences import ZodSequences as ZodSequences
 
 
 try:
