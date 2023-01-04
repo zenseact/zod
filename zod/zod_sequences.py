@@ -9,7 +9,7 @@ from tqdm.contrib.concurrent import process_map
 
 from zod import constants
 from zod.sequences.info import ZodSequenceInfo
-from zod.sequences.sequence import ZodSequence
+from zod.dataclasses.sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 
