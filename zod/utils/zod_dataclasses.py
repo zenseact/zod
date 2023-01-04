@@ -224,34 +224,6 @@ class Calibration:
 
 
 @dataclass
-class MetaData:
-    """A class describing the metadata of a frame."""
-
-    frame_id: str
-    time: datetime
-    country_code: str
-    scraped_weather: str
-    collection_car: str
-    road_type: str
-    road_condition: str
-    time_of_day: str
-    num_lane_instances: int
-    num_vehicles: int
-    num_vulnerable_vehicles: int
-    num_pedestrians: int
-    num_traffic_lights: int
-    num_traffic_signs: int
-    longitude: float
-    latitude: float
-    solar_angle_elevation: float
-
-    @classmethod
-    def from_dict(cls, meta_dict: Dict[str, Any]):
-        """Create a MetaData object from a dictionary."""
-        return cls(**meta_dict)
-
-
-@dataclass
 class SensorFrame(JSONSerializable):
     """Class to store sensor information."""
 

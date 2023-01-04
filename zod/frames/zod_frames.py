@@ -12,10 +12,11 @@ from zod import constants
 from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
 from zod.frames.info import FrameInformation
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
+from zod.utils.metadata import FrameMetaData
 from zod.utils.objects import AnnotatedObject
 from zod.utils.oxts import EgoMotion
 from zod.utils.utils import zfill_id
-from zod.utils.zod_dataclasses import Calibration, LidarData, MetaData
+from zod.utils.zod_dataclasses import Calibration, LidarData
 
 
 def _create_frame(frame: dict, dataset_root: str) -> FrameInformation:
@@ -150,11 +151,9 @@ class ZodFrames(object):
         with open(self._frames[frame_id].calibration_path) as f:
             return Calibration.from_dict(json.load(f))
 
-    def read_meta_data(self, frame_id: str) -> MetaData:
+    def read_meta_data(self, frame_id: str) -> FrameMetaData:
         """Read meta data files from json format."""
-        with open(self._frames[frame_id].metadata_path) as f:
-            meta_data = json.load(f)
-        return MetaData.from_dict(meta_data)
+        return FrameMetaData.from_json(self._frames[frame_id].metadata_path)
 
     def read_ego_motion(self, frame_id: str) -> EgoMotion:
         """Read ego motion from npy format."""
