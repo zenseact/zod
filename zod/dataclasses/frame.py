@@ -1,12 +1,12 @@
 import json
 from typing import List
 
-from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
-from zod.frames.info import FrameInfo
 from zod.dataclasses.metadata import FrameMetaData
-from zod.utils.objects import AnnotatedObject
 from zod.dataclasses.oxts import EgoMotion
 from zod.dataclasses.zod_dataclasses import Calibration
+from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
+from zod.frames.info import FrameInfo
+from zod.utils.objects import AnnotatedObject
 
 
 class ZodFrame:
@@ -62,4 +62,12 @@ class ZodFrame:
         raise NotImplementedError
 
     def get_road_condition_annotation(self):
+        raise NotImplementedError
+
+    def get_aggregated_point_cloud(self):
+        # TODO: adjust core timestamp so that it always points "forward"
+        # like this: 0.75*timestamps.max()+0.25*timestamps.min()
+        # This is extra important since zodframe scans are not pointwise compensated
+        # Or maybe even better to look at the angles of all points and find/interpolate
+        # the time that corresponds to -pi/2
         raise NotImplementedError
