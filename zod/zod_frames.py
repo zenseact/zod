@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.frames.frame import ZodFrame
+from zod.dataclasses.frame import ZodFrame
 from zod.frames.info import FrameInfo
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
 from zod.utils.utils import zfill_id
