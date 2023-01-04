@@ -25,10 +25,12 @@ class SequenceInformation(JSONSerializable):
     oxts_path: str
     ego_motion_path: str
     calibration_path: str
+    metadata_path: str
 
     def convert_paths_to_absolute(self, root_path: str):
         self.oxts_path = osp.join(root_path, self.oxts_path)
         self.calibration_path = osp.join(root_path, self.calibration_path)
+        self.metadata_path = osp.join(root_path, self.metadata_path)
         self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
         for lidar_frames in self.lidar_frames.values():
             for sensor_frame in lidar_frames:
