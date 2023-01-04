@@ -14,7 +14,7 @@ class FrameInformation(JSONSerializable):
     """Class to store frame information."""
 
     frame_id: str
-    timestamp: datetime
+    time: datetime
 
     traffic_sign_annotation_path: Union[str, None]
     ego_road_annotation_path: Union[str, None]
