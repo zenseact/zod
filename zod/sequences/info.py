@@ -1,15 +1,12 @@
 """Sequence Information."""
-import json
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
-from zod.utils.metadata import SequenceMetadata
 
-from zod.utils.oxts import EgoMotion
-from zod.utils.zod_dataclasses import Calibration, CameraFrame, SensorFrame
+from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
 
 
 @dataclass
@@ -65,30 +62,3 @@ class SequenceInformation(JSONSerializable):
                 key=lambda lidar_frame: abs(lidar_frame.time - camera_frame.time),
             )
             yield camera_frame, lidar_frame
-
-    def get_ego_motion(self, from_json: bool = True) -> EgoMotion:
-        """Get the oxts file.
-
-        Args:
-            from_json: If true, the ego motion is loaded from the json file. Otherwise, it is
-                loaded from the oxts file. The json file is faster to load, but only contains the
-                ego-motion for the timestamps that are present in either the lidar or camera.
-        Returns:
-            The ego motion.
-        """
-        if from_json:
-            return EgoMotion.from_json(self.ego_motion_path)
-        else:
-            return EgoMotion.from_sequence_oxts(self.oxts_path)
-
-    def get_calibration(self) -> Calibration:
-        """Get the calibration file.
-
-        Returns:
-            The calibration.
-        """
-        with open(self.calibration_path, "r") as f:
-            return Calibration.from_dict(json.load(f))
-
-    def get_metadata(self) -> SequenceMetadata:
-        raise NotImplementedError("Not implemented yet")

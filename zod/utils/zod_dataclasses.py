@@ -1,4 +1,5 @@
 """ZOD dataclasses."""
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Union
@@ -189,6 +190,12 @@ class Calibration:
             ),
         }
         return cls(lidars=lidars, cameras=cameras)
+
+    @classmethod
+    def from_json(cls, json_path: str) -> "Calibration":
+        with open(json_path) as f:
+            calib_dict = json.load(f)
+        return cls.from_dict(calib_dict)
 
     def transform_points(self, points: np.ndarray, from_frame: str, to_frame: str) -> np.ndarray:
         """Transform points from one frame to another.

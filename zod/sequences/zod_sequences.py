@@ -1,14 +1,15 @@
+import json
 import os
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
 from typing import Dict, Union
-import json
 
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
 from zod.sequences.info import SequenceInformation
+from zod.sequences.zod_sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 
@@ -51,10 +52,10 @@ class ZodSequences:
             s.sequence_id: s for s in sequences[900:]
         }
 
-    def __getitem__(self, sequence_id: Union[int, str]) -> SequenceInformation:
+    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
         """Get sequence by id, which is zero-padded number."""
         sequence_id = zfill_id(sequence_id)
-        return self._sequences[sequence_id]
+        return ZodSequence(self._sequences[sequence_id])
 
     def __len__(self) -> int:
         return len(self._sequences)
