@@ -1,19 +1,16 @@
 """ZOD single-frames information."""
-import json
 import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Union
 
 from dataclass_wizard import JSONSerializable
-from zod.utils.metadata import FrameMetaData
-from zod.utils.oxts import EgoMotion
 
-from zod.utils.zod_dataclasses import Calibration, CameraFrame, SensorFrame
+from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
 
 
 @dataclass
-class FrameInformation(JSONSerializable):
+class FrameInfo(JSONSerializable):
     """Class to store frame information."""
 
     frame_id: str
@@ -37,6 +34,7 @@ class FrameInformation(JSONSerializable):
 
     oxts_path: str
     calibration_path: str
+    ego_motion_path: str
 
     metadata_path: str
 
@@ -72,19 +70,15 @@ class FrameInformation(JSONSerializable):
         for sensor_frame in self.camera_frame.values():
             sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
 
-    def get_metadata(self) -> FrameMetaData:
-        """Get the metadata of the frame."""
-        return FrameMetaData.from_json(self.metadata_path)
+    def get_camera_frame(
+        self, anonymization_method: str = "blur", camera: str = "front"
+    ) -> CameraFrame:
+        """Get camera frame with anonymization_method either "blur"
+        or "dnat" from camera "front" or *not yet available*"""
+        if anonymization_method not in ("blur", "dnat"):
+            raise ValueError("Not a valid anonymization method")
 
-    def get_calibration(self) -> Calibration:
-        """Get the calibration of the frame."""
-        with open(self.calibration_path, "r") as f:
-            calib_dict = json.load(f)
-        return Calibration.from_dict(calib_dict)
+        if camera not in ("front",):
+            raise ValueError("Not a valid camera")
 
-    def get_ego_motion(self, from_json: bool = False) -> EgoMotion:
-        """Get the ego motion of the frame."""
-        if from_json:
-            raise NotImplementedError
-        else:
-            return EgoMotion.from_frame_oxts(self.oxts_path)
+        return self.camera_frame["camera_" + camera + "_" + anonymization_method]

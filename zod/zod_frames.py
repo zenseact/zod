@@ -5,22 +5,18 @@ from itertools import repeat
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-import h5py
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
-from zod.frames.info import FrameInformation
+from zod.frames.frame import ZodFrame
+from zod.frames.info import FrameInfo
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
-from zod.utils.metadata import FrameMetaData
-from zod.utils.objects import AnnotatedObject
-from zod.utils.oxts import EgoMotion
 from zod.utils.utils import zfill_id
-from zod.utils.zod_dataclasses import Calibration, LidarData
+from zod.utils.zod_dataclasses import LidarData
 
 
-def _create_frame(frame: dict, dataset_root: str) -> FrameInformation:
-    frame_info = FrameInformation.from_dict(frame)
+def _create_frame(frame: dict, dataset_root: str) -> FrameInfo:
+    frame_info = FrameInfo.from_dict(frame)
     frame_info.convert_paths_to_absolute(dataset_root)
     return frame_info
 
@@ -52,17 +48,17 @@ class ZodFrames(object):
             version in constants.VERSIONS
         ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
         self._train_frames, self._val_frames = self._load_frames()
-        self._frames: Dict[str, FrameInformation] = {**self._train_frames, **self._val_frames}
+        self._frames: Dict[str, FrameInfo] = {**self._train_frames, **self._val_frames}
 
     def __len__(self) -> int:
         return len(self._frames)
 
-    def __getitem__(self, frame_id: Union[int, str]) -> FrameInformation:
+    def __getitem__(self, frame_id: Union[int, str]) -> ZodFrame:
         """Get frame by id, which is zero-padded frame number."""
         frame_id = zfill_id(frame_id)
-        return self._frames[frame_id]
+        return ZodFrame(self._frames[frame_id])
 
-    def _load_frames(self) -> Tuple[Dict[str, FrameInformation], Dict[str, FrameInformation]]:
+    def _load_frames(self) -> Tuple[Dict[str, FrameInfo], Dict[str, FrameInfo]]:
         """Load frames for the given version."""
         filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SINGLE_FRAMES[self._version]
 
@@ -100,71 +96,9 @@ class ZodFrames(object):
                 f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
             )
 
-    def get_all_frames(self) -> Dict[str, FrameInformation]:
+    def get_all_frame_infos(self) -> Dict[str, FrameInfo]:
         """Get all frames."""
         return self._frames
-
-    def get_camera_frame(
-        self, frame_id: Union[int, str], anonymization_method: str = "blur", camera: str = "front"
-    ) -> str:
-        """Get camera frame with anonymization_method either "blur"
-        or "dnat" from camera "front" or *not yet available*"""
-        frame_id = zfill_id(frame_id)
-        if anonymization_method not in ["blur", "dnat"]:
-            raise ValueError("Not a valid anonymization method")
-        return self._frames[frame_id].camera_frame["camera_" + camera + "_" + anonymization_method]
-
-    def get_image_path(
-        self, frame_id: Union[int, str], anonymization_method: str = "blur", camera: str = "front"
-    ) -> str:
-        """Get camera frame with anonymization_method either "blur"
-        or "dnat" from camera "front" or *not yet available*"""
-        if anonymization_method not in ["blur", "dnat"]:
-            raise ValueError("Not a valid anonymization method")
-        return (
-            self._frames[zfill_id(frame_id)]
-            .camera_frame["camera_" + camera + "_" + anonymization_method]
-            .filepath
-        )
-
-    def get_lane_markings_annotation_path(self, frame_id: Union[int, str]) -> str:
-        """Get the path to lane markings annotation"""
-        return self._frames[zfill_id(frame_id)].lane_markings_annotation_path
-
-    def get_ego_road_annotation_path(self, frame_id: Union[int, str]) -> str:
-        """Get the path to ego road annotation"""
-        return self._frames[zfill_id(frame_id)].ego_road_annotation_path
-
-    def get_timestamp(self, frame_id: Union[int, str]):
-        return self._frames[zfill_id(frame_id)].timestamp
-
-    def read_lane_markings_annotation(self, frame_id: Union[int, str]):
-        p = self.get_lane_markings_annotation_path(frame_id)
-        return parse_lane_markings_annotation(p)
-
-    def read_ego_road_annotation(self, frame_id: Union[int, str]):
-        p = self.get_ego_road_annotation_path(frame_id)
-        return parse_ego_road_annotation(p)
-
-    def read_calibration(self, frame_id: str) -> Calibration:
-        """Read calibration files from json format."""
-        with open(self._frames[frame_id].calibration_path) as f:
-            return Calibration.from_dict(json.load(f))
-
-    def read_meta_data(self, frame_id: str) -> FrameMetaData:
-        """Read meta data files from json format."""
-        return FrameMetaData.from_json(self._frames[frame_id].metadata_path)
-
-    def read_ego_motion(self, frame_id: str) -> EgoMotion:
-        """Read ego motion from npy format."""
-        with h5py.File(self._frames[frame_id].oxts_path, "r") as f:
-            return EgoMotion.from_frame_oxts(f)
-
-    def read_object_detection_annotation(self, frame_id: str) -> List[AnnotatedObject]:
-        """Read object detection annotation from json format."""
-        with open(self._frames[frame_id].object_detection_annotation_path) as f:
-            objs = json.load(f)
-        return [AnnotatedObject.from_dict(anno) for anno in objs]
 
     def motion_compensate_pointcloud(
         self, lidar_data: LidarData, frame_id: str, lidar_name: str
