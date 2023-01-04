@@ -10,7 +10,7 @@ from zod.utils.zod_dataclasses import CameraFrame, SensorFrame
 
 
 @dataclass
-class ZodSequenceInformation(JSONSerializable):
+class ZodSequenceInfo(JSONSerializable):
     """Class to store frame information."""
 
     sequence_id: str
