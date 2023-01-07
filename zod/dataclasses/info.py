@@ -66,6 +66,8 @@ class Information(JSONSerializable):
             )
             yield camera_frame, lidar_frame
 
+    ### Keyframe accessors ###
+
     def get_keyframe_annotation(self, project: AnnotationProject) -> AnnotationFrame:
         if len(self.annotation_frames[project.value]) == 1:
             return self.annotation_frames[project.value][0]
@@ -88,6 +90,8 @@ class Information(JSONSerializable):
 
     def get_keyframe_lidar_frame(self, lidar: Lidar = Lidar.velodyne) -> SensorFrame:
         return self.get_lidar_frame(self.keyframe_time, lidar)
+
+    ### Timestamp accessors ###
 
     def get_annotation(self, time: datetime, project: AnnotationProject) -> AnnotationFrame:
         return min(
@@ -112,3 +116,19 @@ class Information(JSONSerializable):
             self.lidar_frames[lidar.value],
             key=lambda lidar_frame: abs(lidar_frame.time - time),
         )
+
+    ### Full accessors ###
+
+    def get_annotations(self, project: AnnotationProject) -> List[AnnotationFrame]:
+        return self.annotation_frames[project.value]
+
+    def get_camera_frames(
+        self,
+        camera: Camera = Camera.front,
+        anonymization: Anonymization = Anonymization.blur,
+    ) -> List[CameraFrame]:
+        camera_name = f"{camera.value}_{anonymization.value}"
+        return self.camera_frames[camera_name]
+
+    def get_lidar_frames(self, lidar: Lidar = Lidar.velodyne) -> List[SensorFrame]:
+        return self.lidar_frames[lidar.value]
