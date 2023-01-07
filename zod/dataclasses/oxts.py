@@ -8,6 +8,8 @@ import numpy as np
 import quaternion
 from scipy.interpolate import interp1d
 
+from zod.visualization.oxts_on_image import T_inv, _ecef_to_ref_frame_transform
+
 
 OXTS_TIMESTAMP_OFFSET = datetime(1980, 1, 6, tzinfo=timezone.utc).timestamp()
 
@@ -70,56 +72,52 @@ class EgoMotion:
         )
 
     @classmethod
+    def _from_oxts(cls, file: h5py.File, poses: np.ndarray, time_field: str) -> "EgoMotion":
+        """Load ego motion from a sequence or frame oxts file."""
+        return cls(
+            poses=poses,
+            accelerations=np.stack(
+                [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
+            ),
+            velocities=np.stack(
+                [file["velForward"][()], file["velLateral"][()], -file["velDown"][()]], axis=1
+            ),
+            angular_rates=np.stack(
+                [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
+            ),
+            timestamps=OXTS_TIMESTAMP_OFFSET + file[time_field][()] + file["leapSeconds"][()],
+            origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
+        )
+
+    @classmethod
     def from_sequence_oxts(cls, oxts_path: str) -> "EgoMotion":
         """Load ego motion from a sequence oxts file."""
         with h5py.File(oxts_path, "r") as file:
-            return cls(
-                poses=file["poses"][()],
-                accelerations=np.stack(
-                    [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
-                ),
-                velocities=np.stack(
-                    [file["velForward"], file["velLateral"], -file["velDown"]], axis=1
-                ),
-                angular_rates=np.stack(
-                    [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
-                ),
-                timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
-                origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
-            )
+            return cls._from_oxts(file, file["poses"][()], "timestamps")
 
     @classmethod
     def from_frame_oxts(cls, oxts_path: str) -> "EgoMotion":
         """Load ego motion from a frame oxts file."""
         with h5py.File(oxts_path, "r") as file:
-            return cls(
-                poses=get_poses_from_oxts(file),
-                accelerations=np.stack(
-                    [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
-                ),
-                velocities=np.stack(
-                    [file["velForward"], file["velLateral"], -file["velDown"]], axis=1
-                ),
-                angular_rates=np.stack(
-                    [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
-                ),
-                timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
-                origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
-            )
+            if "poses" in h5py.File(oxts_path, "r"):
+                poses = file["poses"][()]
+            else:
+                print("Warning! poses field is missing, will be computed...")
+                poses = get_poses_from_oxts(file)
+            return cls._from_oxts(file, poses, "time_gps")
 
     @classmethod
-    def from_json(cls, json_path: str) -> "EgoMotion":
+    def from_json_path(cls, json_path: str) -> "EgoMotion":
         """Load ego motion from a json file."""
         with open(json_path, "r") as file:
             data = json.load(file)
-
         return cls(
             poses=np.array(data["poses"]),
             velocities=np.array(data["velocities"]),
             accelerations=np.array(data["accelerations"]),
             angular_rates=np.array(data["angular_rates"]),
             timestamps=np.array(data["timestamps"]),
-            origin_lat_lon=np.array(data["origin_lat_lon"]),
+            origin_lat_lon=tuple(data["origin_lat_lon"]),
         )
 
     def to_json(self) -> dict:
@@ -195,4 +193,25 @@ def get_poses_from_oxts(file: h5py.Group) -> np.ndarray:
     Returns:
         [N, 4, 4] array of poses.
     """
-    raise NotImplementedError
+    ref_T_ecef = _ecef_to_ref_frame_transform(
+        file["posLat"][()],
+        file["posLon"][()],
+        file["heading"][()],
+        file["pitch"][()],
+        file["roll"][()],
+        file["ecef_x"][()],
+        file["ecef_y"][()],
+        file["ecef_z"][()],
+    )
+    ref0_T_ecef = _ecef_to_ref_frame_transform(
+        file["posLat"][0],
+        file["posLon"][0],
+        file["heading"][0],
+        file["pitch"][0],
+        file["roll"][0],
+        file["ecef_x"][0],
+        file["ecef_y"][0],
+        file["ecef_z"][0],
+    )
+    ref0_T_ref = ref0_T_ecef @ T_inv(ref_T_ecef)
+    return ref0_T_ref

@@ -17,30 +17,30 @@ class ZodSequence:
     @property
     def ego_motion(self) -> EgoMotion:
         """Get the oxts file."""
-        if self.ego_motion is None:
-            self._ego_motion = EgoMotion.from_json(self.info.ego_motion_path)
-        return self.ego_motion
+        if self._ego_motion is None:
+            self._ego_motion = EgoMotion.from_json_path(self.info.ego_motion_path)
+        return self._ego_motion
 
     @property
     def oxts(self) -> EgoMotion:
         """Get the oxts."""
-        if self.oxts is None:
+        if self._oxts is None:
             self._oxts = EgoMotion.from_sequence_oxts(self.info.oxts_path)
-        return self.oxts
+        return self._oxts
 
     @property
     def calibration(self) -> Calibration:
         """Get the calibration."""
-        if self.calibration is None:
-            self._calibration = Calibration.from_json(self.info.calibration_path)
-        return self.calibration
+        if self._calibration is None:
+            self._calibration = Calibration.from_json_path(self.info.calibration_path)
+        return self._calibration
 
     @property
     def metadata(self) -> SequenceMetadata:
         """Get the metadata."""
-        if self.metadata is None:
-            self._metadata = SequenceMetadata.from_json(self.info.metadata_path)
-        return self.metadata
+        if self._metadata is None:
+            self._metadata = SequenceMetadata.from_json_path(self.info.metadata_path)
+        return self._metadata
 
     def get_annotation(self, project: AnnotationProject):
         """Get the annotation for a given project."""

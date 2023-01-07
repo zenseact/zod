@@ -1,4 +1,3 @@
-import json
 import os
 import os.path as osp
 from itertools import repeat
@@ -8,16 +7,13 @@ from typing import Dict, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.sequences.info import ZodSequenceInfo
+from zod.dataclasses.info import Information
 from zod.dataclasses.sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 
-def _create_sequence(sequence_folder: str, dataset_root: str) -> ZodSequenceInfo:
-    with open(osp.join(sequence_folder, "sequence_info.json"), "r") as f:
-        sequence_info = json.load(f)
-
-    sequence_info = ZodSequenceInfo.from_dict(sequence_info)
+def _create_sequence(sequence_folder: str, dataset_root: str) -> Information:
+    sequence_info = Information.from_json_path(osp.join(sequence_folder, "info.json"))
     sequence_info.convert_paths_to_absolute(dataset_root)
     return sequence_info
 
@@ -30,10 +26,22 @@ class ZodSequences:
             version in constants.VERSIONS
         ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
         self._train_sequences, self._val_sequences = self._load_sequences()
-        self._sequences: Dict[str, ZodSequenceInfo] = {
+        self._sequences: Dict[str, Information] = {
             **self._train_sequences,
             **self._val_sequences,
         }
+
+    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
+        """Get sequence by id, which is zero-padded number."""
+        sequence_id = zfill_id(sequence_id)
+        return ZodSequence(self._sequences[sequence_id])
+
+    def __len__(self) -> int:
+        return len(self._sequences)
+
+    def __iter__(self):
+        for frame_id in self._sequences:
+            yield self.__getitem__(frame_id)
 
     def _load_sequences(self):
         sequence_folder = osp.join(self._dataset_root, "sequences")
@@ -51,11 +59,3 @@ class ZodSequences:
         return {s.sequence_id: s for s in sequences[:900]}, {
             s.sequence_id: s for s in sequences[900:]
         }
-
-    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
-        """Get sequence by id, which is zero-padded number."""
-        sequence_id = zfill_id(sequence_id)
-        return ZodSequence(self._sequences[sequence_id])
-
-    def __len__(self) -> int:
-        return len(self._sequences)
