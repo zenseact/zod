@@ -1,17 +1,14 @@
-import json
-from typing import List
-
+from zod.constants import AnnotationProject
+from zod.dataclasses.info import Information
 from zod.dataclasses.metadata import FrameMetaData
 from zod.dataclasses.oxts import EgoMotion
 from zod.dataclasses.zod_dataclasses import Calibration
-from zod.frames.annotation_parser import parse_ego_road_annotation, parse_lane_markings_annotation
-from zod.frames.info import FrameInfo
-from zod.utils.objects import AnnotatedObject
+from zod.frames.annotation_parser import ANNOTATION_PARSERS
 
 
 class ZodFrame:
-    def __init__(self, info: FrameInfo):
-        self.info: FrameInfo = info
+    def __init__(self, info: Information):
+        self.info: Information = info
         self._ego_motion: EgoMotion = None
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
@@ -21,7 +18,7 @@ class ZodFrame:
     def ego_motion(self) -> EgoMotion:
         """Get the oxts file."""
         if self.ego_motion is None:
-            self.ego_motion = EgoMotion.from_json(self.info.ego_motion_path)
+            self._ego_motion = EgoMotion.from_json(self.info.ego_motion_path)
         return self.ego_motion
 
     @property
@@ -36,33 +33,20 @@ class ZodFrame:
     def calibration(self) -> Calibration:
         """Get the calibration."""
         if self.calibration is None:
-            self.calibration = Calibration.from_json(self.info.calibration_path)
+            self._calibration = Calibration.from_json(self.info.calibration_path)
         return self.calibration
 
     @property
     def metadata(self) -> FrameMetaData:
         """Get the metadata."""
         if self.metadata is None:
-            self.metadata = FrameMetaData.from_json(self.info.metadata_path)
+            self._metadata = FrameMetaData.from_json(self.info.metadata_path)
         return self.metadata
 
-    def get_lane_markings_annotation(self):
-        return parse_lane_markings_annotation(self.info.lane_markings_annotation_path)
-
-    def get_ego_road_annotation(self):
-        return parse_ego_road_annotation(self.info.ego_road_annotation_path)
-
-    def get_object_detection_annotation(self) -> List[AnnotatedObject]:
-        """Read object detection annotation from json format."""
-        with open(self.info.object_detection_annotation_path) as f:
-            objs = json.load(f)
-        return [AnnotatedObject.from_dict(anno) for anno in objs]
-
-    def get_traffic_sign_annotation(self):
-        raise NotImplementedError
-
-    def get_road_condition_annotation(self):
-        raise NotImplementedError
+    def get_annotation(self, project: AnnotationProject):
+        """Get the annotation for a given project."""
+        path = self.info.get_keyframe_annotation(project).filepath
+        return ANNOTATION_PARSERS[project](path)
 
     def get_aggregated_point_cloud(self):
         # TODO: adjust core timestamp so that it always points "forward"

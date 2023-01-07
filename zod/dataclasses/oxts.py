@@ -1,12 +1,12 @@
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import json
 from typing import Tuple, Union
 
 import h5py
 import numpy as np
-from scipy.interpolate import interp1d
 import quaternion
+from scipy.interpolate import interp1d
 
 
 OXTS_TIMESTAMP_OFFSET = datetime(1980, 1, 6, tzinfo=timezone.utc).timestamp()

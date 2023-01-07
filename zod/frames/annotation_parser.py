@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from zod.constants import CAMERA_FRONT
+from zod.constants import CAMERA_FRONT, AnnotationProject
 from zod.frames.traffic_sign_classification.class_map import get_class_idx
 from zod.utils.objects import AnnotatedObject, Box2D
 
@@ -94,6 +94,14 @@ def parse_ego_road_annotation(annotation_path: str, classes=["EgoRoad_Road"]):
                 polygons.append(annotation["geometry"]["coordinates"])
 
     return polygons
+
+
+ANNOTATION_PARSERS = {
+    AnnotationProject.LANE_MARKINGS: parse_lane_markings_annotation,
+    AnnotationProject.EGO_ROAD: parse_ego_road_annotation,
+    AnnotationProject.OBJECT_DETECTION: parse_object_detection_annotation,
+    AnnotationProject.TRAFFIC_SIGNS: parse_traffic_sign_annotation,
+}
 
 
 if __name__ == "__main__":
