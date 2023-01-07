@@ -6,6 +6,7 @@ from typing import Dict, Iterator, List, Tuple
 
 from dataclass_wizard import JSONSerializable
 
+from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 from zod.dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
 
 
@@ -65,24 +66,49 @@ class Information(JSONSerializable):
             )
             yield camera_frame, lidar_frame
 
-    def get_keyframe_annotation(self, project: str) -> AnnotationFrame:
-        raise NotImplementedError
+    def get_keyframe_annotation(self, project: AnnotationProject) -> AnnotationFrame:
+        if len(self.annotation_frames[project.value]) == 1:
+            return self.annotation_frames[project.value][0]
+        else:
+            return self.get_annotation(self.keyframe_time, project)
 
     def get_keyframe_camera_frame(
-        self, camera: str = "front", anonymization_mode: str = "blur"
+        self,
+        camera: Camera = Camera.front,
+        anonymization: Anonymization = Anonymization.blur,
     ) -> CameraFrame:
-        raise NotImplementedError
+        camera_name = f"{camera.value}_{anonymization.value}"
+        if len(self.camera_frames[camera_name]) == 1:
+            return self.camera_frames[camera_name][0]
+        else:
+            return min(
+                self.camera_frames[camera_name],
+                key=lambda camera_frame: abs(camera_frame.time - self.keyframe_time),
+            )
 
-    def get_keyframe_lidar_frame(self, lidar: str = "lidar_velodyne") -> SensorFrame:
-        raise NotImplementedError
+    def get_keyframe_lidar_frame(self, lidar: Lidar = Lidar.velodyne) -> SensorFrame:
+        return self.get_lidar_frame(self.keyframe_time, lidar)
 
-    def get_annotation(self, project: str, time: datetime) -> AnnotationFrame:
-        raise NotImplementedError
+    def get_annotation(self, time: datetime, project: AnnotationProject) -> AnnotationFrame:
+        return min(
+            self.annotation_frames[project.value],
+            key=lambda annotation_frame: abs(annotation_frame.time - time),
+        )
 
     def get_camera_frame(
-        self, time: datetime, camera: str = "front", anonymization_mode: str = "blur"
+        self,
+        time: datetime,
+        camera: Camera = Camera.front,
+        anonymization: Anonymization = Anonymization.blur,
     ) -> CameraFrame:
-        raise NotImplementedError
+        camera_name = f"{camera.value}_{anonymization.value}"
+        return min(
+            self.camera_frames[camera_name],
+            key=lambda camera_frame: abs(camera_frame.time - time),
+        )
 
-    def get_lidar_frame(self, time: datetime, lidar: str = "lidar_velodyne") -> SensorFrame:
-        raise NotImplementedError
+    def get_lidar_frame(self, time: datetime, lidar: Lidar = Lidar.velodyne) -> SensorFrame:
+        return min(
+            self.lidar_frames[lidar.value],
+            key=lambda lidar_frame: abs(lidar_frame.time - time),
+        )
