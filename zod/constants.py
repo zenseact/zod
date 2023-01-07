@@ -1,6 +1,9 @@
 """Relevant constants for the ZOD."""
 
 # sensor data
+from enum import Enum
+
+
 LIDAR_VELODYNE = "lidar_velodyne"
 CAMERA_FRONT = "camera_front"
 BLUR = "blur"
@@ -65,3 +68,25 @@ DEFAULT_SIZE = 1
 
 # Usefull constants
 MICROSEC_PER_SEC = 1e6
+
+
+class Camera(Enum):
+    front = "front"
+
+
+class Lidar(Enum):
+    velodyne = "velodyne"
+
+
+class Anonymization(Enum):
+    blur = BLUR
+    dnat = DNAT
+    original = "original"
+
+
+class AnnotationProject(Enum):
+    OBJECT_DETECTION = "object_detection"
+    LANE_MARKINGS = "lane_markings"
+    TRAFFIC_SIGNS = "traffic_signs"
+    EGO_ROAD = "ego_road"
+    ROAD_CONDITION = "road_condition"

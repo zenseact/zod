@@ -91,7 +91,6 @@ def _get_lidar_frames(id_, top_dir, dir_path) -> List[SensorFrame]:
         )
         for filename in lidar_files
     ]
-
     return lidar_frames
 
 
