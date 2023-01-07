@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Union
 
-from dataclass_wizard import JSONSerializable
+from zod.dataclasses import JSONSerializable
 
 from zod.dataclasses.zod_dataclasses import CameraFrame, SensorFrame
 

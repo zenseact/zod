@@ -1,6 +1,7 @@
 """ZOD Frames module."""
 import json
 import os
+import os.path as osp
 from itertools import repeat
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -9,16 +10,18 @@ from tqdm.contrib.concurrent import process_map
 
 from zod import constants
 from zod.dataclasses.frame import ZodFrame
-from zod.frames.info import FrameInfo
+from zod.dataclasses.info import Information
+from zod.dataclasses.zod_dataclasses import LidarData
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
 from zod.utils.utils import zfill_id
-from zod.dataclasses.zod_dataclasses import LidarData
 
 
-def _create_frame(frame: dict, dataset_root: str) -> FrameInfo:
-    frame_info = FrameInfo.from_dict(frame)
-    frame_info.convert_paths_to_absolute(dataset_root)
-    return frame_info
+def _create_frame(frame: dict, dataset_root: str) -> Information:
+    # TODO: this is a temporary workaround since we dont have the big json
+    path = osp.join(dataset_root, osp.dirname(frame["metadata_path"]), "info.json")
+    info = Information.from_json_path(path)
+    info.convert_paths_to_absolute(dataset_root)
+    return info
 
 
 def _get_lidar_frames_path(
@@ -48,7 +51,7 @@ class ZodFrames(object):
             version in constants.VERSIONS
         ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
         self._train_frames, self._val_frames = self._load_frames()
-        self._frames: Dict[str, FrameInfo] = {**self._train_frames, **self._val_frames}
+        self._frames: Dict[str, Information] = {**self._train_frames, **self._val_frames}
 
     def __len__(self) -> int:
         return len(self._frames)
@@ -58,7 +61,11 @@ class ZodFrames(object):
         frame_id = zfill_id(frame_id)
         return ZodFrame(self._frames[frame_id])
 
-    def _load_frames(self) -> Tuple[Dict[str, FrameInfo], Dict[str, FrameInfo]]:
+    def __iter__(self):
+        for frame_id in self._frames:
+            yield self.__getitem__(frame_id)
+
+    def _load_frames(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load frames for the given version."""
         filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SINGLE_FRAMES[self._version]
 
@@ -80,8 +87,8 @@ class ZodFrames(object):
             chunksize=50 if self._version == constants.FULL else 1,
         )
 
-        train_frames = {frame.frame_id: frame for frame in train_frames}
-        val_frames = {frame.frame_id: frame for frame in val_frames}
+        train_frames = {frame.id: frame for frame in train_frames}
+        val_frames = {frame.id: frame for frame in val_frames}
 
         return train_frames, val_frames
 
@@ -96,7 +103,7 @@ class ZodFrames(object):
                 f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
             )
 
-    def get_all_frame_infos(self) -> Dict[str, FrameInfo]:
+    def get_all_frame_infos(self) -> Dict[str, Information]:
         """Get all frames."""
         return self._frames
 

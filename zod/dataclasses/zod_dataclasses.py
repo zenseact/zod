@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import Any, Dict, Union
 
 import numpy as np
-from dataclass_wizard import JSONSerializable
 from pyquaternion import Quaternion
 
 from zod.constants import CAMERA_FRONT, CAMERAS, EGO, LIDAR_VELODYNE, LIDARS
+from zod.dataclasses import JSONSerializable
 from zod.utils.geometry import transform_points
 from zod.utils.utils import parse_datetime_from_filename
 
@@ -192,7 +192,7 @@ class Calibration:
         return cls(lidars=lidars, cameras=cameras)
 
     @classmethod
-    def from_json(cls, json_path: str) -> "Calibration":
+    def from_json_path(cls, json_path: str) -> "Calibration":
         with open(json_path) as f:
             calib_dict = json.load(f)
         return cls.from_dict(calib_dict)

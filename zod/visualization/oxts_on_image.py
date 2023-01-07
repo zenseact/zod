@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pyproj
 
-from zod.dataclasses.oxts import EgoMotion
+# from zod.dataclasses.oxts import EgoMotion
 
 
 DEFAULT_COL_VALUES = {
@@ -597,12 +597,12 @@ def _get_path_in_cam(path: np.ndarray, calib: dict):
     )
 
 
-def visualize_gps_on_image(
-    ego_motion: EgoMotion, frame_time: datetime, calib: dict, image: np.ndarray
-):
-    """Visualize GPS track on image."""
-    raise NotImplementedError("This function got broken, need to fix to work with EgoMotion")
-    path_3d = get_path_from_oxts(oxts_data, frame_time)
-    path_on_image = _get_path_in_cam(path_3d, calib)
-    image = draw_line(image, path_on_image, (50, 100, 200))
-    return image
+# def visualize_gps_on_image(
+#     ego_motion: EgoMotion, frame_time: datetime, calib: dict, image: np.ndarray
+# ):
+#     """Visualize GPS track on image."""
+#     raise NotImplementedError("This function got broken, need to fix to work with EgoMotion")
+#     path_3d = get_path_from_oxts(oxts_data, frame_time)
+#     path_on_image = _get_path_in_cam(path_3d, calib)
+#     image = draw_line(image, path_on_image, (50, 100, 200))
+#     return image

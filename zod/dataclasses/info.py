@@ -4,7 +4,7 @@ from datetime import datetime
 from itertools import chain
 from typing import Dict, Iterator, List, Tuple
 
-from dataclass_wizard import JSONSerializable
+from zod.dataclasses import JSONSerializable
 
 from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 from zod.dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
@@ -28,17 +28,22 @@ class Information(JSONSerializable):
     camera_frames: Dict[str, List[CameraFrame]]
     lidar_frames: Dict[str, List[SensorFrame]]
 
+    @property
+    def all_frames(self) -> Iterator[SensorFrame]:
+        """Iterate over all frames."""
+        return chain(
+            *self.lidar_frames.values(),
+            *self.camera_frames.values(),
+            *self.annotation_frames.values(),
+        )
+
     def convert_paths_to_absolute(self, root_path: str):
         self.calibration_path = osp.join(root_path, self.calibration_path)
         self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
         self.metadata_path = osp.join(root_path, self.metadata_path)
         self.oxts_path = osp.join(root_path, self.oxts_path)
-
-        for frame in chain(
-            self.lidar_frames.values(), self.camera_frames.values(), self.annotation_frames.values()
-        ):
-            for sensor_frame in frame:
-                sensor_frame.filepath = osp.join(root_path, sensor_frame.filepath)
+        for frame in self.all_frames:
+            frame.filepath = osp.join(root_path, frame.filepath)
 
     def get_camera_lidar_map(
         self, camera: str, lidar: str
