@@ -115,17 +115,18 @@ def _get_annotation_frames(id_, top_dir, dir_path) -> Dict[str, List[AnnotationF
 
 def _get_camera_frames(id_, top_dir, dir_path) -> Dict[str, List[SensorFrame]]:
     all_camera_frames = {}
-    for cameras in sorted(glob.glob(os.path.join(dir_path, "camera_*"))):
-        camera_files = sorted(os.listdir(cameras))
+    for camera in sorted(glob.glob(os.path.join(dir_path, "camera_*"))):
+        camera_files = sorted(os.listdir(camera))
+
         camera_frames = [
             SensorFrame(
-                filepath=os.path.join(top_dir, id_, cameras, filename),
+                filepath=os.path.join(top_dir, id_, osp.basename(camera), filename),
                 time=_split_filename(filename)[-1],
             )
             for filename in camera_files
             if filename.endswith(".jpg")
         ]
-        all_camera_frames[osp.basename(cameras).strip("camera_")] = camera_frames
+        all_camera_frames[osp.basename(camera).lstrip("camera_")] = camera_frames
     return all_camera_frames
 
 
