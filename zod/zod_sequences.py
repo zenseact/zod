@@ -45,7 +45,7 @@ class ZodSequences:
 
     def _load_sequences(self):
         sequence_folder = osp.join(self._dataset_root, "sequences")
-        folders = [osp.join(sequence_folder, f) for f in os.listdir(sequence_folder)]
+        folders = [osp.join(sequence_folder, f) for f in sorted(os.listdir(sequence_folder))]
 
         sequences = process_map(
             _create_sequence,
@@ -56,6 +56,4 @@ class ZodSequences:
         )
 
         # TODO: fix this
-        return {s.sequence_id: s for s in sequences[:900]}, {
-            s.sequence_id: s for s in sequences[900:]
-        }
+        return {s.id: s for s in sequences[:900]}, {s.id: s for s in sequences[900:]}
