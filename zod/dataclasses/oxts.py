@@ -93,7 +93,7 @@ class EgoMotion:
     def from_sequence_oxts(cls, oxts_path: str) -> "EgoMotion":
         """Load ego motion from a sequence oxts file."""
         with h5py.File(oxts_path, "r") as file:
-            return cls._from_oxts(file, file["poses"][()], "timestamps")
+            return cls._from_oxts(file, file["poses"][()], "timestamp")
 
     @classmethod
     def from_frame_oxts(cls, oxts_path: str) -> "EgoMotion":
