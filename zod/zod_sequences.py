@@ -2,7 +2,7 @@ import json
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from tqdm.contrib.concurrent import process_map
 
@@ -68,3 +68,14 @@ class ZodSequences:
         val_sequences = {s.id: s for s in val_sequences}
 
         return train_sequences, val_sequences
+
+    def get_split(self, split: str) -> List[str]:
+        """Get split by name (e.g. train / val)."""
+        if split == constants.TRAIN:
+            return list(self._train_sequences.keys())
+        elif split == constants.VAL:
+            return list(self._train_sequences.keys())
+        else:
+            raise ValueError(
+                f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
+            )
