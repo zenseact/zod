@@ -43,6 +43,7 @@ EVALUATION_CLASSES = [
 # dataset paths
 SINGLE_FRAMES = "single_frames"
 SEQUENCES = "sequences"
+DRIVES = "drives"
 DB_DATE_STRING_FORMAT_W_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 # train-val splits
@@ -55,6 +56,11 @@ SPLIT_TO_TRAIN_VAL_FILE_SINGLE_FRAMES = {
     FULL: f"{FULL}_train_val_{SINGLE_FRAMES}.json",
     MINI: f"{MINI}_train_val_{SINGLE_FRAMES}.json",
 }
+SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES = {
+    FULL: f"{FULL}_train_val_{SEQUENCES}.json",
+    MINI: f"{MINI}_train_val_{SEQUENCES}.json",
+}
+
 VERSIONS = (FULL, MINI)
 
 # keys in OxTS data

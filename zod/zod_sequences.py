@@ -1,4 +1,4 @@
-import os
+import json
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
@@ -12,10 +12,10 @@ from zod.dataclasses.sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 
-def _create_sequence(sequence_folder: str, dataset_root: str) -> Information:
-    sequence_info = Information.from_json_path(osp.join(sequence_folder, "info.json"))
-    sequence_info.convert_paths_to_absolute(dataset_root)
-    return sequence_info
+def _create_sequence(sequence: dict, dataset_root: str) -> Information:
+    info = Information.from_dict(sequence)
+    info.convert_paths_to_absolute(dataset_root)
+    return info
 
 
 class ZodSequences:
@@ -44,16 +44,27 @@ class ZodSequences:
             yield self.__getitem__(frame_id)
 
     def _load_sequences(self):
-        sequence_folder = osp.join(self._dataset_root, "sequences")
-        folders = [osp.join(sequence_folder, f) for f in sorted(os.listdir(sequence_folder))]
+        filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES[self._version]
 
-        sequences = process_map(
+        with open(osp.join(self._dataset_root, filename), "r") as f:
+            all_ids = json.load(f)
+
+        train_sequences = process_map(
             _create_sequence,
-            folders,
+            all_ids[constants.TRAIN],
             repeat(self._dataset_root),
             chunksize=1,
-            desc="Loading sequences",
+            desc="Loading train sequences",
+        )
+        val_sequences = process_map(
+            _create_sequence,
+            all_ids[constants.VAL],
+            repeat(self._dataset_root),
+            chunksize=1,
+            desc="Loading val sequences",
         )
 
-        # TODO: fix this
-        return {s.id: s for s in sequences[:900]}, {s.id: s for s in sequences[900:]}
+        train_sequences = {s.id: s for s in train_sequences}
+        val_sequences = {s.id: s for s in val_sequences}
+
+        return train_sequences, val_sequences

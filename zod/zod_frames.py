@@ -17,9 +17,7 @@ from zod.utils.utils import zfill_id
 
 
 def _create_frame(frame: dict, dataset_root: str) -> Information:
-    # TODO: this is a temporary workaround since we dont have the big json
-    path = osp.join(dataset_root, osp.dirname(frame["metadata_path"]), "info.json")
-    info = Information.from_json_path(path)
+    info = Information.from_dict(frame)
     info.convert_paths_to_absolute(dataset_root)
     return info
 
@@ -30,10 +28,10 @@ def _get_lidar_frames_path(
     if n_sweeps_before == 0 and n_sweeps_after == 0:
         return [core_frame_path]
 
-    surrounding_frames = sorted(os.listdir(os.path.dirname(core_frame_path)))
-    core_frame_idx = surrounding_frames.index(os.path.basename(core_frame_path))
+    surrounding_frames = sorted(os.listdir(osp.dirname(core_frame_path)))
+    core_frame_idx = surrounding_frames.index(osp.basename(core_frame_path))
     frame_paths = [
-        os.path.join(os.path.dirname(core_frame_path), f)
+        osp.join(osp.dirname(core_frame_path), f)
         for f in surrounding_frames[
             max(0, core_frame_idx - n_sweeps_before) : core_frame_idx + n_sweeps_after + 1
         ]
@@ -69,7 +67,7 @@ class ZodFrames(object):
         """Load frames for the given version."""
         filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SINGLE_FRAMES[self._version]
 
-        with open(os.path.join(self._dataset_root, filename), "r") as f:
+        with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 
         train_frames = process_map(
