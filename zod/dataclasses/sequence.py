@@ -8,8 +8,8 @@ from zod.frames.annotation_parser import ANNOTATION_PARSERS
 
 class ZodSequence:
     def __init__(self, info: Information):
-        self.info: Information = info
-        self._ego_motion: EgoMotion = None
+        self.info: Information = info  # holds all the paths to the files
+        self._ego_motion: EgoMotion = None  # this is the light-weight version of oxts
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
         self._metadata: SequenceMetadata = None
@@ -25,7 +25,7 @@ class ZodSequence:
     def oxts(self) -> EgoMotion:
         """Get the oxts."""
         if self._oxts is None:
-            self._oxts = EgoMotion.from_sequence_oxts(self.info.oxts_path)
+            self._oxts = EgoMotion.from_oxts(self.info.oxts_path)
         return self._oxts
 
     @property
