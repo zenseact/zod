@@ -53,7 +53,7 @@ def main(
         # TODO: maybe wipe this folder instead of continuing above
         # Extract ego motion
         oxts_file = sorted(oxts_file)[-1]
-        ego_motion = EgoMotion.from_oxts(osp.join(sequence_dir, OXTS_FOLDER, oxts_file))
+        ego_motion = EgoMotion.from_oxts_path(osp.join(sequence_dir, OXTS_FOLDER, oxts_file))
 
         # Extract calibration
         calibration_file = calibration_file[0]
