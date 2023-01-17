@@ -25,7 +25,7 @@ class ZodFrame:
     def oxts(self) -> EgoMotion:
         """Get the oxts."""
         if self._oxts is None:
-            self._oxts = EgoMotion.from_oxts(self.info.oxts_path)
+            self._oxts = EgoMotion.from_oxts_path(self.info.oxts_path)
         return self._oxts
 
     @property

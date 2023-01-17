@@ -70,22 +70,23 @@ class EgoMotion:
         )
 
     @classmethod
-    def from_oxts(cls, file: h5py.File, poses: np.ndarray, time_field: str) -> "EgoMotion":
+    def from_oxts_path(cls, file_path: str) -> "EgoMotion":
         """Load ego motion from a sequence or frame oxts file."""
-        return cls(
-            poses=poses,
-            accelerations=np.stack(
-                [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
-            ),
-            velocities=np.stack(
-                [file["velForward"][()], file["velLateral"][()], -file["velDown"][()]], axis=1
-            ),
-            angular_rates=np.stack(
-                [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
-            ),
-            timestamps=OXTS_TIMESTAMP_OFFSET + file[time_field][()] + file["leapSeconds"][()],
-            origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
-        )
+        with h5py.File(file_path, "r") as file:
+            return cls(
+                poses=file["poses"][()],
+                accelerations=np.stack(
+                    [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
+                ),
+                velocities=np.stack(
+                    [file["velForward"][()], file["velLateral"][()], -file["velDown"][()]], axis=1
+                ),
+                angular_rates=np.stack(
+                    [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
+                ),
+                timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
+                origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
+            )
 
     @classmethod
     def from_json_path(cls, json_path: str) -> "EgoMotion":
