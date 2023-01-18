@@ -42,7 +42,7 @@ If you publish work that uses Zenseact Open Dataset, please cite: [coming soon](
 ## Contact
 For questions about the dataset, please [Contact Us](mailto:opendataset@zenseact.com).
 
-## Contibuting
+## Contributing
 We welcome contributions to the development kit. If you would like to contribute, please open a pull request.
 
 ## License
