@@ -23,8 +23,25 @@ convert_app = typer.Typer(
 
 
 def tsr_dummy(
-    dataset_root: Path = typer.Option(..., help="Path to the root of the ZOD dataset."),
-    output_dir: Path = typer.Option(..., help="Path to the output directory."),
+    dataset_root: Path = typer.Option(
+        ...,
+        exists=True,
+        dir_okay=True,
+        writable=False,
+        readable=True,
+        resolve_path=True,
+        help="Path to the root of the ZOD dataset.",
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        readable=True,
+        resolve_path=True,
+        help="Path to the output directory.",
+    ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
     path_size: Tuple[int, int] = typer.Option((64, 64), help="Path resultion."),
 ):

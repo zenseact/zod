@@ -2,7 +2,7 @@ import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import chain
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 
 from zod.dataclasses import JSONSerializable
 
@@ -73,7 +73,9 @@ class Information(JSONSerializable):
 
     ### Keyframe accessors ###
 
-    def get_keyframe_annotation(self, project: AnnotationProject) -> AnnotationFrame:
+    def get_keyframe_annotation(self, project: AnnotationProject) -> Optional[AnnotationFrame]:
+        if project.value not in self.annotation_frames:
+            return None
         if len(self.annotation_frames[project.value]) == 1:
             return self.annotation_frames[project.value][0]
         else:
@@ -98,7 +100,11 @@ class Information(JSONSerializable):
 
     ### Timestamp accessors ###
 
-    def get_annotation(self, time: datetime, project: AnnotationProject) -> AnnotationFrame:
+    def get_annotation(
+        self, time: datetime, project: AnnotationProject
+    ) -> Optional[AnnotationFrame]:
+        if project.value not in self.annotation_frames:
+            return None
         return min(
             self.annotation_frames[project.value],
             key=lambda annotation_frame: abs(annotation_frame.time - time),
@@ -125,6 +131,8 @@ class Information(JSONSerializable):
     ### Full accessors ###
 
     def get_annotations(self, project: AnnotationProject) -> List[AnnotationFrame]:
+        if project.value not in self.annotation_frames:
+            return []
         return self.annotation_frames[project.value]
 
     def get_camera_frames(
