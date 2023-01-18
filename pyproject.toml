@@ -45,35 +45,13 @@ cli = ["typer", "dropbox"]
 all = ["typer", "dropbox", "opencv-python", "pyproj", "matplotlib", "plotly", "pandas"]
 
 [tool.poetry.group.dev.dependencies]
-black = {version="^22.10.0", python = "^3.7"}
-pre-commit = {version="^2.20.0", python = "^3.7"}
-ruff = {version="^0.0.166", python = "^3.7"}
+ruff = {version="^0.0.225", python = "^3.7"}
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 100
-target-version = ["py310"]
-
 [tool.ruff]
 line-length = 100
-
-[tool.isort]
-profile = "black"
-lines_after_imports = 2
-line_length = 100
-py_version = "38"
-known_zod = "zod"
-known_torch = ["torch", "torchvision"]
-sections = [
-    "FUTURE",
-    "STDLIB",
-    "THIRDPARTY",
-    # Separate out torch for convenience
-    "TORCH",
-    "ZOD",
-    "FIRSTPARTY",
-    "LOCALFOLDER",
-]
+# isort, Warning, pycodestyle (see here: https://github.com/charliermarsh/ruff#supported-rules)
+select = ["I", "W", "E"]
