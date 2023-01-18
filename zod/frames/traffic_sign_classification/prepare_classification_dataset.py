@@ -14,11 +14,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import cv2
 from tqdm.contrib.concurrent import process_map
 
-from zod import constants
-from zod.frames import annotation_parser as ap
-from zod.frames.info import FrameInfo
-from zod.frames.zod_frames import ZodFrames
-
+import zod.constants as constants
+import zod.frames.annotation_parser as ap
+from zod import ZodFrames
+from zod.dataclasses.frame import ZodFrame
 
 SUMMARY = """
 Finished creating dataset.
@@ -88,21 +87,19 @@ def _parse_args():
     return Args(**vars(args))
 
 
-def _process_frame(frame: FrameInfo, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
+def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
-    if frame.traffic_sign_annotation_path is None:
-        return []
 
-    traffic_signs = ap.parse_traffic_sign_annotation(frame.traffic_sign_annotation_path)
+    traffic_signs: List[ap.TrafficSignAnnotation] = frame.get_annotation(
+        constants.AnnotationProject.TRAFFIC_SIGNS
+    )
+
     if len(traffic_signs) == 0:
         return []
 
     new_cropped_frames = []
     # load the image
-    # TODO: change to blur image path before release
-    image_path = frame.camera_frame[constants.CAMERA_FRONT_BLUR].filepath.replace(
-        "blur", "original"
-    )
+    image_path = frame.info.get_keyframe_camera_frame().filepath
     image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     for traffic_sign in traffic_signs:
 
@@ -112,7 +109,7 @@ def _process_frame(frame: FrameInfo, args: Args, train_ids: Set[str]) -> List[Di
 
         if not os.path.exists(cls_folder):
             os.makedirs(cls_folder)
-            os.chmod(cls_folder, 0o777)
+            os.chmod(cls_folder, 0o775)
 
         new_frame_id = f"{frame.frame_id}_{traffic_sign.uuid}"
         output_file = os.path.join(
@@ -168,7 +165,7 @@ def main(args: Args):
 
     if not os.path.exists((args.output_folder)):
         os.makedirs(args.output_folder)
-        os.chmod(args.output_folder, 0o777)
+        os.chmod(args.output_folder, 0o775)
     zod_frames = ZodFrames(args.dataset_root, version="full")
     print(f"Will process {len(zod_frames)} full frames.")
 

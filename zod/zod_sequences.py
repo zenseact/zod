@@ -74,7 +74,7 @@ class ZodSequences:
         if split == constants.TRAIN:
             return list(self._train_sequences.keys())
         elif split == constants.VAL:
-            return list(self._train_sequences.keys())
+            return list(self._val_sequences.keys())
         else:
             raise ValueError(
                 f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"

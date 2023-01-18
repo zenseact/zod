@@ -1,6 +1,5 @@
 """This module will generate a COCO JSON file from the ZOD dataset."""
 
-import enum
 import json
 import os
 from functools import partial
@@ -10,11 +9,12 @@ from typing import List, Tuple
 import typer
 from tqdm.contrib.concurrent import process_map
 
-from zod.frames.zod_frames import ZodFrames
-from zod.constants import ALL_CLASSES, BLUR, CAMERA_FRONT, DNAT
+import zod.constants as constants
+from zod import ZodFrames
+from zod.constants import ALL_CLASSES, BLUR
+from zod.dataclasses.frame import ZodFrame
 from zod.utils.objects import AnnotatedObject
-from zod.frames.info import FrameInfo
-
+from zod.utils.utils import str_from_datetime
 
 # Map classes to categories, starting from 1
 CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(ALL_CLASSES)}
@@ -23,37 +23,34 @@ OPEN_DATASET_URL = (
 )
 
 
-class Anonymization(str, enum.Enum):
-    blur = BLUR
-    dnat = DNAT
-    original = "original"
-
-
 def _convert_frame(
-    frame_info: FrameInfo, classes: List[str], anonymization: Anonymization, use_png: bool
+    frame_info: ZodFrame, classes: List[str], anonymization: constants.Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
-    with open(frame_info.object_detection_annotation_path) as f:
-        objs = json.load(f)
-    objs = [AnnotatedObject.from_dict(anno) for anno in objs]
-    camera = f"{CAMERA_FRONT}_{anonymization or BLUR}"
-    file_name = frame_info.camera_frame[camera].filepath
-    if anonymization == Anonymization.original:
+
+    objs: List[AnnotatedObject] = frame_info.get_annotation(
+        constants.AnnotationProject.OBJECT_DETECTION
+    )
+    camera_frame = frame_info.info.get_keyframe_camera_frame(anonymization=anonymization)
+    file_name = camera_frame.filepath
+
+    if anonymization == constants.Anonymization.original:
         file_name = file_name.replace(BLUR, "original")
     if use_png:
         file_name = file_name.replace(".jpg", ".png")
+
     image_dict = {
         "id": int(frame_info.frame_id),
         "license": 1,
         "file_name": file_name,
-        "height": frame_info.camera_frame[camera].height,
-        "width": frame_info.camera_frame[camera].width,
-        "date_captured": str(frame_info.timestamp),
+        "height": camera_frame.height,
+        "width": camera_frame.width,
+        "date_captured": str_from_datetime(frame_info.info.keyframe_time),
     }
     anno_dicts = [
         {
-            "id": int(frame_info.frame_id) * 1000
+            "id": int(frame_info.info.id) * 1000
             + obj_idx,  # avoid collisions by assuming max 1k objects per frame
-            "image_id": int(frame_info.frame_id),
+            "image_id": int(frame_info.info.id),
             "category_id": CATEGORY_NAME_TO_ID[obj.name],
             "bbox": [round(val, 2) for val in obj.box2d.xywh.tolist()],
             "area": round(obj.box2d.area, 2),
@@ -66,7 +63,11 @@ def _convert_frame(
 
 
 def generate_coco_json(
-    dataset: ZodFrames, split: str, classes: List[str], anonymization: Anonymization, use_png: bool
+    dataset: ZodFrames,
+    split: str,
+    classes: List[str],
+    anonymization: constants.Anonymization,
+    use_png: bool,
 ) -> dict:
     """Generate COCO JSON file from the ZOD dataset."""
     assert split in ["train", "val"], f"Unknown split: {split}"
@@ -111,11 +112,27 @@ def generate_coco_json(
 
 # Use typer instead of argparse
 def convert_to_coco(
-    dataset_root: Path = typer.Option(..., help="Path to the root of the ZOD dataset."),
-    output_dir: Path = typer.Option(..., help="Path to the output directory."),
-    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
-    anonymization: Anonymization = typer.Option(
-        Anonymization.blur, help="Anonymization mode to use."
+    dataset_root: Path = typer.Option(
+        ...,
+        exists=True,
+        dir_okay=True,
+        writable=False,
+        readable=True,
+        resolve_path=True,
+        help="Path to the root of the ZOD dataset.",
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        exists=True,
+        dir_okay=True,
+        writable=True,
+        readable=True,
+        resolve_path=True,
+        help="Path to the output directory.",
+    ),
+    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, mini."),
+    anonymization: constants.Anonymization = typer.Option(
+        constants.Anonymization.blur, help="Anonymization mode to use."
     ),
     use_png: bool = typer.Option(False, help="Whether to use PNG images instead of JPG."),
     classes: List[str] = typer.Option(
