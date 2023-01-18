@@ -12,6 +12,11 @@ def datetime_from_str(timestamp: str) -> datetime:
     return datetime.strptime(timestamp, DB_DATE_STRING_FORMAT_W_MICROSECONDS)
 
 
+def str_from_datetime(timestamp: datetime) -> str:
+    """Convert a datetime object to a timestamp string."""
+    return timestamp.strftime(DB_DATE_STRING_FORMAT_W_MICROSECONDS)
+
+
 def parse_datetime_from_filename(filename: str) -> datetime:
     """Parse a timestamp from a filename."""
     timestamp_str = os.path.splitext(os.path.basename(filename))[0].split("_")[-1]
