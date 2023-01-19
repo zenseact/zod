@@ -50,7 +50,8 @@ class Box3D:
     def convert_to(self, frame: str, calib: Calibration):
         if frame == self.frame:
             return
-        # convert box to ego frame
+        
+        # Convert box to ego frame
         if self.frame in LIDARS:
             extrinsics = calib.lidars[self.frame].extrinsics
         elif self.frame in CAMERAS:
@@ -60,7 +61,8 @@ class Box3D:
         else:
             raise ValueError(f"Invalid source frame {self.frame}")
         self._transform(extrinsics, frame=EGO)
-        # convert box to target frame
+        
+        # Convert box to target frame
         if frame in LIDARS:
             extrinsics = calib.lidars[frame].extrinsics
         elif frame in CAMERAS:
@@ -85,7 +87,7 @@ class Box3D:
          - front right top
          - front left top
         """
-        # get the 3d corners of the box
+        # Get the 3d corners of the box
         corners = np.array(
             [
                 [-0.5, -0.5, -0.5],
@@ -126,9 +128,10 @@ class Box3D:
         if self.frame not in CAMERAS:
             raise ValueError(f"Cannot project box into frame {self.frame}")
 
-        # concatenate the corners and center of the box
+        # Concatenate the corners and center of the box
         points = np.concatenate([self.center.reshape((1, -1)), self.corners], axis=0)
-        # project center into camera
+        
+        # Project center into camera
         pos2d = project_3d_to_2d_kannala(
             points,
             calib.cameras[self.frame].intrinsics,
@@ -317,19 +320,21 @@ class Box2D:
             frustum: (8, 4) array of the frustum. Note that is min_depth == 0.0,
             the first 4 points will correspond to camera center (0, 0, 0)
         """
-        # get the 2d bounding box corners
+        # Get the 2d bounding box corners
         corners = self.corners
         camera_calib = calibration.cameras[CAMERA_FRONT]
         if min_depth > 0:
-            # copy the corners
+            # Copy the corners
             corners = np.concatenate([corners, corners], axis=0)
-            # create the depth vector where the first four correspond to min_depth
+            
+            # Create the depth vector where the first four correspond to min_depth
             # and the last four correspond to max_depth
             depth = np.array([min_depth] * 4 + [max_depth] * 4)
+        
         else:
             depth = np.array([max_depth] * 4)
 
-        # project the 2d corners to the max_depth using the calibration
+        # Project the 2d corners to the max_depth using the calibration
         frustum = unproject_2d_to_3d_kannala(
             corners, camera_calib.intrinsics, camera_calib.undistortion, depth
         )
@@ -337,7 +342,7 @@ class Box2D:
         if min_depth == 0.0:
             frustum = np.concatenate((np.zeros((4, 3)), frustum), axis=0)
 
-        # transform the frustum to the selected frame if needed
+        # Transform the frustum to the selected frame if needed
         if frame is not None:
             frustum = calibration.transform_points(
                 points=frustum,
@@ -352,14 +357,14 @@ class Box2D:
 class AnnotatedObject:
     """Class to store dynamic object information."""
 
-    # these are always available
+    # These are always available
     box2d: Box2D
     unclear: bool
     name: str
     uuid: str
 
-    # these are not set if the object is unclear
-    box3d: Optional[Box3D]  # this can be None even if the object is not unclear
+    # These are not set if the object is unclear
+    box3d: Optional[Box3D]  # This can be None even if the object is not unclear
     object_type: Optional[str]
     occlusion_level: Optional[str]
     artificial: Optional[str]
@@ -422,20 +427,20 @@ class AnnotatedObject:
         Returns:
             True if the object should be ignored.
         """
-        # remove objects that are not to be evaluated
+        # Remove objects that are not to be evaluated
         if (self.name not in EVALUATION_CLASSES) and require_eval:
             return True
-        # remove unclear objects
+        # Remove unclear objects
         if self.unclear:
             return True
-        # remove objects that dont have 3d box
+        # Remove objects that dont have 3d box
         if self.box3d is None and require_3d:
             return True
-        # if the object is artificial, reflection or an image, ignore it
+        # If the object is artificial, reflection or an image, ignore it
         if self.artificial not in (None, "None"):
             return True
 
-        # class specific removals
+        # Class specific removals
         if self.name == "Vehicle":
             if self.object_type not in (
                 "Car",

@@ -15,13 +15,17 @@ def motion_compensate_scanwise(
     """Motion compensate a (pointwise compensated) lidar point cloud."""
     source_pose = ego_motion.get_poses(lidar_data.core_timestamp)
     target_pose = ego_motion.get_poses(target_timestamp)
+    
     # Compute relative transformation between target pose and source pose
     odometry = np.linalg.inv(target_pose) @ source_pose
-    # project to ego vehicle frame using calib
+    
+    # Project to ego vehicle frame using calib
     lidar_data.transform(calibration.extrinsics)
-    # project to center frame using odometry
+    
+    # Project to center frame using odometry
     lidar_data.transform(odometry)
-    # project back to lidar frame using calib
+    
+    # Project back to lidar frame using calib
     lidar_data.transform(calibration.extrinsics.inverse)
     return lidar_data
 
@@ -35,17 +39,21 @@ def motion_compensate_pointwise(
     """Motion compensate a lidar point cloud in a pointwise manner."""
     lidar_data = lidar_data.copy()
     target_timestamp = target_timestamp or lidar_data.core_timestamp
-    # interpolate oxts data for each frame
+    
+    # Interpolate oxts data for each frame
     point_poses = ego_motion.get_poses(lidar_data.timestamps)
     target_pose = ego_motion.get_poses(target_timestamp)
+    
     # Compute relative transformation between target pose and point poses
     odometry = np.linalg.inv(target_pose) @ point_poses
 
-    # project to ego vehicle frame using calib
+    # Project to ego vehicle frame using calib
     lidar_data.transform(calibration.extrinsics)
-    # project to center frame using odometry
+    
+    # Project to center frame using odometry
     lidar_data.transform(odometry)
-    # project back to lidar frame using calib
+    
+    # Project back to lidar frame using calib
     lidar_data.transform(calibration.extrinsics.inverse)
 
     return lidar_data

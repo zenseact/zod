@@ -2,7 +2,7 @@ import json
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
@@ -19,6 +19,8 @@ def _create_sequence(sequence: dict, dataset_root: str) -> Information:
 
 
 class ZodSequences:
+    """ZOD Sequences."""
+
     def __init__(self, dataset_root: Union[Path, str], version: str):
         self._dataset_root = dataset_root
         self._version = version
@@ -31,19 +33,20 @@ class ZodSequences:
             **self._val_sequences,
         }
 
-    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
-        """Get sequence by id, which is zero-padded number."""
-        sequence_id = zfill_id(sequence_id)
-        return ZodSequence(self._sequences[sequence_id])
-
     def __len__(self) -> int:
         return len(self._sequences)
+
+    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
+        """Get sequence by id, which is a 6-digit zero-padded number. Ex: '000001'."""
+        sequence_id = zfill_id(sequence_id)
+        return ZodSequence(self._sequences[sequence_id])
 
     def __iter__(self):
         for frame_id in self._sequences:
             yield self.__getitem__(frame_id)
 
-    def _load_sequences(self):
+    def _load_sequences(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
+        """Load sequences for the given version."""
         filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES[self._version]
 
         with open(osp.join(self._dataset_root, filename), "r") as f:

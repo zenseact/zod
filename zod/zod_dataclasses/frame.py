@@ -8,15 +8,15 @@ from zod.frames.annotation_parser import ANNOTATION_PARSERS
 
 class ZodFrame:
     def __init__(self, info: Information):
-        self.info: Information = info  # holds all the paths to the files
-        self._ego_motion: EgoMotion = None  # this is the light-weight version of oxts
+        self.info: Information = info  # Holds all the paths to the files
+        self._ego_motion: EgoMotion = None  # This is the lightweight version of oxts
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
         self._metadata: FrameMetaData = None
 
     @property
     def ego_motion(self) -> EgoMotion:
-        """Get the oxts file."""
+        """Get the ego motion."""
         if self._ego_motion is None:
             self._ego_motion = EgoMotion.from_json_path(self.info.ego_motion_path)
         return self._ego_motion
