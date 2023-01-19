@@ -17,7 +17,7 @@ from zod.utils.geometry import (
     project_3d_to_2d_kannala,
     unproject_2d_to_3d_kannala,
 )
-from zod.dataclasses.zod_dataclasses import Calibration, Pose
+from zod.zod_dataclasses.zod_dataclasses import Calibration, Pose
 
 
 @dataclass

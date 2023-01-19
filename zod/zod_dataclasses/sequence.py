@@ -1,8 +1,8 @@
 from zod.constants import AnnotationProject
-from zod.dataclasses.info import Information
-from zod.dataclasses.metadata import SequenceMetadata
-from zod.dataclasses.oxts import EgoMotion
-from zod.dataclasses.zod_dataclasses import Calibration
+from zod.zod_dataclasses.info import Information
+from zod.zod_dataclasses.metadata import SequenceMetadata
+from zod.zod_dataclasses.oxts import EgoMotion
+from zod.zod_dataclasses.zod_dataclasses import Calibration
 from zod.frames.annotation_parser import ANNOTATION_PARSERS
 
 

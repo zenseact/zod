@@ -1,20 +1,18 @@
 from pathlib import Path
 from typing import Tuple
 
-
 try:
     import typer
 except ImportError:
     print('zod is installed without the CLI dependencies: pip install "zod[cli]"')
     exit(1)
 
-from zod.frames.generate_coco_json import convert_to_coco
-from zod.utils.download_zod import download_zod
-
+from zod.cli.download_zod import app as download_app
+from zod.cli.generate_coco_json import convert_to_coco
 
 app = typer.Typer(help="Zenseact Open Dataset CLI.", no_args_is_help=True)
 
-app.command("download", no_args_is_help=True)(download_zod)
+app.add_typer(download_app, name="download")
 
 
 convert_app = typer.Typer(

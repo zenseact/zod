@@ -5,7 +5,7 @@ import numpy as np
 
 from zod.constants import CAMERAS
 from zod.utils.objects import Box3D
-from zod.dataclasses.zod_dataclasses import Calibration
+from zod.zod_dataclasses.zod_dataclasses import Calibration
 
 
 def render_3d_box(

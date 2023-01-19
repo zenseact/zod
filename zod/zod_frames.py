@@ -9,9 +9,9 @@ from typing import Dict, List, Tuple, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.dataclasses.frame import ZodFrame
-from zod.dataclasses.info import Information
-from zod.dataclasses.zod_dataclasses import LidarData
+from zod.zod_dataclasses.frame import ZodFrame
+from zod.zod_dataclasses.info import Information
+from zod.zod_dataclasses.zod_dataclasses import LidarData
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
 from zod.utils.utils import zfill_id
 
