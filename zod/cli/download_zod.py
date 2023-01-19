@@ -48,9 +48,10 @@ class FilterSettings:
     """Filter settings."""
 
     mini: bool
-    test: bool
     annotations: bool
     images: bool
+    blur: bool
+    dnat: bool
     lidar: bool
     oxts: bool
     calibrations: bool
@@ -193,18 +194,19 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
     if settings.mini and "mini" not in entry.name:
         # If mini is set, we only want to download the mini dataset
         return False
-    if settings.test and "test" not in entry.name:
-        # If test is set, we only want to download the test dataset
-        return False
+    # If we are downloading the full dataset, we don't want the mini dataset
     if not settings.mini and "mini" in entry.name:
-        return False
-    if not settings.test and "test" in entry.name:
         return False
 
     if not settings.annotations and "annotations" in entry.name:
         return False
-    if not settings.images and "images" in entry.name:
-        return False
+    if "images" in entry.name:
+        if not settings.images:
+            return False
+        if not settings.blur and "blur" in entry.name:
+            return False
+        if not settings.dnat and "dnat" in entry.name:
+            return False
     if not settings.oxts and "oxts" in entry.name:
         return False
     if not settings.calibrations and "calibrations" in entry.name:
@@ -220,7 +222,7 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
     return True
 
 
-def _download_dataset(dl_settings, filter_settings, dirname):
+def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSettings, dirname: str):
     dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
     url, entries = _list_folder(dl_settings.url, dbx, dirname)
     files_to_download = [
@@ -252,7 +254,6 @@ def _download_dataset(dl_settings, filter_settings, dirname):
 
 
 def _list_folder(url, dbx, path):
-    url = url.replace("hdl", "h?dl")
     shared_link = dropbox.files.SharedLink(url=url)
     try:
         res = dbx.files_list_folder(path=f"/{path}", shared_link=shared_link)
@@ -294,9 +295,10 @@ def common(
 def frames(
     ctx: typer.Context,
     mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
-    test: bool = typer.Option(False, help="Whether to download the test files"),
     annotations: bool = typer.Option(True, help="Whether to download the annotations"),
     images: bool = typer.Option(True, help="Whether to download the images"),
+    blur: bool = typer.Option(True, help="Whether to download the blur images"),
+    dnat: bool = typer.Option(False, help="Whether to download the dnat images"),
     lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
     num_scans_before: int = typer.Option(
         0, help="Number of earlier lidar scans to download (-1 == all)"
@@ -308,12 +310,17 @@ def frames(
     calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
 ):
     """Download the zenseact open dataset."""
+
+    if images:
+        assert blur or dnat, "Must download at least one type of image"
+
     dl_settings: DownloadSettings = ctx.obj
     filter_settings = FilterSettings(
         mini=mini,
-        test=test,
         annotations=annotations,
         images=images,
+        blur=blur,
+        dnat=dnat,
         lidar=lidar,
         oxts=oxts,
         calibrations=calibrations,
@@ -327,7 +334,6 @@ def frames(
 def sequences(
     ctx: typer.Context,
     mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
-    test: bool = typer.Option(False, help="Whether to download the test files"),
     annotations: bool = typer.Option(True, help="Whether to download the annotations"),
     images: bool = typer.Option(True, help="Whether to download the images"),
     lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
@@ -338,9 +344,10 @@ def sequences(
     dl_settings: DownloadSettings = ctx.obj
     filter_settings = FilterSettings(
         mini=mini,
-        test=test,
         annotations=annotations,
         images=images,
+        blur=True,
+        dnat=False,
         lidar=lidar,
         oxts=oxts,
         calibrations=calibrations,
