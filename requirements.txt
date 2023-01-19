@@ -12,3 +12,4 @@ pandas
 pyproj
 plotly
 nbformat
+scipy

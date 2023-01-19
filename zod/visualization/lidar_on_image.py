@@ -3,11 +3,12 @@
 import cv2
 import numpy as np
 
+from zod.constants import CAMERA_FRONT, LIDAR_VELODYNE
+
 # from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
-from zod.zod_dataclasses.zod_dataclasses import Calibration, Pose, transform_points, LidarData
-from zod.constants import LIDAR_VELODYNE, CAMERA_FRONT
 from zod.visualization.oxts_on_image import kannala_project
+from zod.zod_dataclasses.zod_dataclasses import Calibration, LidarData, Pose, transform_points
 
 # from constants import FOV
 
@@ -34,7 +35,7 @@ def project_lidar_to_image(
     """Project lidar pointcloud to camera."""
     t_lidar_to_camera = get_3d_transform_camera_lidar(calib)
 
-    camera_data = transform_points(lidar_data.points, t_lidar_to_camera)
+    camera_data = transform_points(lidar_data.points, t_lidar_to_camera.transform)
     positive_depth = camera_data[:, 2] > 0
     camera_data = camera_data[positive_depth]
     if not camera_data.any():
