@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from ..frames.polygon_annotations.polygon_transformations import polygon_to_mask
+from zod.frames.polygon_annotations.polygon_transformations import polygon_to_mask
 
 
 def overlay_polygon_on_image(polygon, image, fill_color=(100, 0, 0), alpha=1.0):

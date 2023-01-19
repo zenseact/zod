@@ -84,7 +84,7 @@ def parse_ego_road_annotation(annotation_path: str, classes=["EgoRoad_Road"]):
     if annotation_path:
         annotations = _read_annotation_file(annotation_path)
     else:
-        annotations = None
+        annotations = []
 
     polygons = []
     for annotation in annotations:
