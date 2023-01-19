@@ -55,7 +55,7 @@ class ZodFrames(object):
         return len(self._frames)
 
     def __getitem__(self, frame_id: Union[int, str]) -> ZodFrame:
-        """Get frame by id, which is zero-padded frame number."""
+        """Get frame by id, which is a 6-digit zero-padded number. Ex: '000001'."""
         frame_id = zfill_id(frame_id)
         return ZodFrame(self._frames[frame_id])
 
@@ -130,7 +130,7 @@ class ZodFrames(object):
         )
 
         lidar_data = LidarData.empty()
-        for i, frame_path in enumerate(frame_paths):
+        for _, frame_path in enumerate(frame_paths):
             lidar_data.append(LidarData.from_npy(frame_path))
 
         if motion_compensation:

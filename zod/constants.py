@@ -1,9 +1,9 @@
-"""Relevant constants for the ZOD."""
+"""Relevant constants for ZOD."""
 
-# sensor data
 from enum import Enum
 
 
+# Sensor data
 LIDAR_VELODYNE = "lidar_velodyne"
 CAMERA_FRONT = "camera_front"
 BLUR = "blur"
@@ -16,7 +16,7 @@ LIDARS = (LIDAR_VELODYNE,)
 CAMERAS = (CAMERA_FRONT,)
 EGO = "ego"
 
-# evaluatuion
+# Evaluation
 EVALUATION_FRAME = LIDAR_VELODYNE
 ALL_CLASSES = [
     "Vehicle",
@@ -40,13 +40,13 @@ EVALUATION_CLASSES = [
     "TrafficSignal",
 ]
 
-# dataset paths
+# Dataset paths
 SINGLE_FRAMES = "single_frames"
 SEQUENCES = "sequences"
 DRIVES = "drives"
 DB_DATE_STRING_FORMAT_W_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-# train-val splits
+# Train-val splits
 TRAIN = "train"
 VAL = "val"
 FULL = "full"
@@ -63,7 +63,7 @@ SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES = {
 
 VERSIONS = (FULL, MINI)
 
-# keys in OxTS data
+# Keys in oxts data
 LONGITUDE = "posLon"
 LATITUDE = "posLat"
 MAPS_STYLE = "open-street-map"
@@ -72,7 +72,7 @@ OPACITY_LEVEL = 1
 DEFAULT_COLOR = "red"
 DEFAULT_SIZE = 1
 
-# Usefull constants
+# Useful constants
 MICROSEC_PER_SEC = 1e6
 
 

@@ -41,7 +41,7 @@ def parse_traffic_sign_annotation(annotation_path: str) -> List[TrafficSignAnnot
     annotated_objects = []
 
     for annotated_object in annotation:
-        # ignore all unclear traffic signs
+        # Ignore all unclear traffic signs
         if annotated_object["properties"]["unclear"]:
             continue
 

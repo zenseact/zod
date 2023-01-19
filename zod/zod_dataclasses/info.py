@@ -64,7 +64,7 @@ class Information(JSONSerializable):
         ), f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
 
         for camera_frame in self.camera_frames[camera]:
-            # get the closest lidar frame in time
+            # Get the closest lidar frame in time
             lidar_frame = min(
                 self.lidar_frames[lidar],
                 key=lambda lidar_frame: abs(lidar_frame.time - camera_frame.time),
