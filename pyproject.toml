@@ -46,6 +46,8 @@ all = ["typer", "dropbox", "opencv-python", "pyproj", "matplotlib", "plotly", "p
 
 [tool.poetry.group.dev.dependencies]
 ruff = {version="^0.0.225", python = "^3.7"}
+black = {version="^22.10.0", python = "^3.7"}
+pre-commit = {version="^2.20.0", python = "^3.7"}
 
 [build-system]
 requires = ["poetry-core"]
@@ -55,3 +57,7 @@ build-backend = "poetry.core.masonry.api"
 line-length = 100
 # isort, Warning, pycodestyle (see here: https://github.com/charliermarsh/ruff#supported-rules)
 select = ["I", "W", "E"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
