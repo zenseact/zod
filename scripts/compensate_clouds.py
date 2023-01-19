@@ -11,9 +11,9 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
-from zod.dataclasses.oxts import EgoMotion
+from zod.zod_dataclasses.oxts import EgoMotion
 from zod.utils.utils import parse_datetime_from_filename
-from zod.dataclasses.zod_dataclasses import Calibration, LidarData
+from zod.zod_dataclasses.zod_dataclasses import Calibration, LidarData
 
 
 OLD_LIDAR_FOLDER = "lidar_velodyne"

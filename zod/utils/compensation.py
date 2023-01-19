@@ -2,8 +2,8 @@ from typing import Union
 
 import numpy as np
 
-from zod.dataclasses.oxts import EgoMotion
-from zod.dataclasses.zod_dataclasses import LidarCalibration, LidarData
+from zod.zod_dataclasses.oxts import EgoMotion
+from zod.zod_dataclasses.zod_dataclasses import LidarCalibration, LidarData
 
 
 def motion_compensate_scanwise(

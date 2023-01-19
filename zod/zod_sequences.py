@@ -7,8 +7,8 @@ from typing import Dict, List, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
-from zod.dataclasses.info import Information
-from zod.dataclasses.sequence import ZodSequence
+from zod.zod_dataclasses.info import Information
+from zod.zod_dataclasses.sequence import ZodSequence
 from zod.utils.utils import zfill_id
 
 

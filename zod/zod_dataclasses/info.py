@@ -4,10 +4,10 @@ from datetime import datetime
 from itertools import chain
 from typing import Dict, Iterator, List, Optional, Tuple
 
-from zod.dataclasses import JSONSerializable
+from zod.zod_dataclasses import JSONSerializable
 
 from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
-from zod.dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
+from zod.zod_dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
 
 
 @dataclass

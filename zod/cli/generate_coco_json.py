@@ -12,7 +12,7 @@ from tqdm.contrib.concurrent import process_map
 import zod.constants as constants
 from zod import ZodFrames
 from zod.constants import ALL_CLASSES, BLUR
-from zod.dataclasses.frame import ZodFrame
+from zod.zod_dataclasses.frame import ZodFrame
 from zod.utils.objects import AnnotatedObject
 from zod.utils.utils import str_from_datetime
 

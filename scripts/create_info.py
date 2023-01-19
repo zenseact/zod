@@ -11,8 +11,8 @@ from dataclass_wizard import JSONWizard
 from tqdm.contrib.concurrent import process_map
 
 from zod.constants import DB_DATE_STRING_FORMAT_W_MICROSECONDS
-from zod.dataclasses.info import Information
-from zod.dataclasses.zod_dataclasses import AnnotationFrame, SensorFrame
+from zod.zod_dataclasses.info import Information
+from zod.zod_dataclasses.zod_dataclasses import AnnotationFrame, SensorFrame
 
 
 DATASET_ROOT = "/staging/dataset_donation/round_2/"

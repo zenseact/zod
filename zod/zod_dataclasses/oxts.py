@@ -8,7 +8,6 @@ import numpy as np
 import quaternion
 from scipy.interpolate import interp1d
 
-
 OXTS_TIMESTAMP_OFFSET = datetime(1980, 1, 6, tzinfo=timezone.utc).timestamp()
 
 

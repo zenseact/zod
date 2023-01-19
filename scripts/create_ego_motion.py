@@ -9,10 +9,10 @@ import numpy as np
 import typer
 from tqdm.contrib.concurrent import process_map
 
-from zod.dataclasses.frame import ZodFrame
-from zod.dataclasses.info import Information
-from zod.dataclasses.oxts import EgoMotion
-from zod.dataclasses.sequence import ZodSequence
+from zod.zod_dataclasses.frame import ZodFrame
+from zod.zod_dataclasses.info import Information
+from zod.zod_dataclasses.oxts import EgoMotion
+from zod.zod_dataclasses.sequence import ZodSequence
 from zod.zod_frames import ZodFrames
 from zod.zod_sequences import ZodSequences
 

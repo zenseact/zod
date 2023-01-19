@@ -31,7 +31,7 @@ from scipy.optimize import linear_sum_assignment
 from zod.frames.evaluation.object_detection.utils import polygon_iod2D
 from zod.constants import EVALUATION_FRAME
 from zod.utils.objects import AnnotatedObject, PredictedObject
-from zod.dataclasses.zod_dataclasses import Calibration
+from zod.zod_dataclasses.zod_dataclasses import Calibration
 
 GtPredMatch = Tuple[AnnotatedObject, PredictedObject]
 MIN_CAMERA_ONLY_DEPTH = 150  # in meters

@@ -10,9 +10,10 @@ from dataclasses import dataclass
 
 from tqdm import tqdm
 
-
 try:
+    import click.exceptions
     import dropbox
+    import dropbox.exceptions
     import dropbox.files
     import dropbox.sharing
     import typer
@@ -25,6 +26,8 @@ APP_KEY = "kcvokw7c7votepo"
 REFRESH_TOKEN = "z2h_5rjphJEAAAAAAAAAAUWtQlltCYlMbZ2WqMgtymELhiSuKIksxAYeArubKnZV"
 CHUNK_SIZE = 1024 * 1024  # 1 MB
 TIMEOUT = 60 * 60  # 1 hour
+
+app = typer.Typer(help="Zenseact Open Dataset Donwloader", no_args_is_help=True)
 
 
 @dataclass
@@ -53,6 +56,18 @@ class FilterSettings:
     calibrations: bool
     num_scans_before: int
     num_scans_after: int
+
+
+@dataclass
+class DownloadSettings:
+    """Download settings."""
+
+    url: str
+    output_dir: str
+    rm: bool
+    dry_run: bool
+    extract: bool
+    parallel: bool
 
 
 class ResumableDropbox(dropbox.Dropbox):
@@ -176,13 +191,16 @@ def _download_and_extract(dbx: ResumableDropbox, info: ExtractInfo):
 def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bool:
     """Filter the entry based on the flags."""
     if settings.mini and "mini" not in entry.name:
+        # If mini is set, we only want to download the mini dataset
+        return False
+    if settings.test and "test" not in entry.name:
+        # If test is set, we only want to download the test dataset
         return False
     if not settings.mini and "mini" in entry.name:
         return False
-    if settings.test and "test" not in entry.name:
-        return False
     if not settings.test and "test" in entry.name:
         return False
+
     if not settings.annotations and "annotations" in entry.name:
         return False
     if not settings.images and "images" in entry.name:
@@ -202,9 +220,79 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
     return True
 
 
-def download_zod(
+def _download_dataset(dl_settings, filter_settings, dirname):
+    dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
+    url, entries = _list_folder(dl_settings.url, dbx, dirname)
+    files_to_download = [
+        ExtractInfo(
+            file_path=f"/{dirname}/" + entry.name,
+            size=entry.size,
+            url=url,
+            output_dir=dl_settings.output_dir,
+            rm=dl_settings.rm,
+            dry_run=dl_settings.dry_run,
+            extract=dl_settings.extract,
+        )
+        for entry in entries
+        if _filter_entry(entry, filter_settings)
+    ]
+    if not files_to_download:
+        typer.echo("No files to download. Perhaps you specified too many filters?")
+        return
+
+    if not dl_settings.dry_run:
+        os.makedirs(dl_settings.output_dir, exist_ok=True)
+        os.makedirs(osp.join(dl_settings.output_dir, "downloads"), exist_ok=True)
+    if dl_settings.parallel:
+        with ThreadPoolExecutor() as pool:
+            pool.map(lambda info: _download_and_extract(dbx, info), files_to_download)
+    else:
+        for info in files_to_download:
+            _download_and_extract(dbx, info)
+
+
+def _list_folder(url, dbx, path):
+    url = url.replace("hdl", "h?dl")
+    shared_link = dropbox.files.SharedLink(url=url)
+    try:
+        res = dbx.files_list_folder(path=f"/{path}", shared_link=shared_link)
+    except dropbox.exceptions.ApiError as err:
+        raise click.exceptions.ClickException(
+            f"Dropbox raised the following error:\n\t{err}\nThis could be due to a bad url."
+        )
+
+    entries = res.entries
+    while res.has_more:
+        res = dbx.files_list_folder_continue(res.cursor)
+        entries.extend(res.entries)
+    return url, entries
+
+
+@app.callback(no_args_is_help=True)
+def common(
+    ctx: typer.Context,
     url: str = typer.Option(..., help="The dropbox shared folder url"),
     output_dir: str = typer.Option(..., help="The output directory"),
+    rm: bool = typer.Option(False, help="Whether to remove the downloaded archives"),
+    dry_run: bool = typer.Option(
+        False, help="Whether to only print the files that would be downloaded"
+    ),
+    extract: bool = typer.Option(True, help="Whether to unpack the archives"),
+    parallel: bool = typer.Option(True, help="Whether to download files in parallel"),
+):
+    ctx.obj = DownloadSettings(
+        url=url,
+        output_dir=output_dir,
+        rm=rm,
+        dry_run=dry_run,
+        extract=extract,
+        parallel=parallel,
+    )
+
+
+@app.command()
+def frames(
+    ctx: typer.Context,
     mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
     test: bool = typer.Option(False, help="Whether to download the test files"),
     annotations: bool = typer.Option(True, help="Whether to download the annotations"),
@@ -218,14 +306,9 @@ def download_zod(
     ),
     oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
     calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
-    rm: bool = typer.Option(False, help="Whether to remove the downloaded archives"),
-    dry_run: bool = typer.Option(
-        False, help="Whether to only print the files that would be downloaded"
-    ),
-    extract: bool = typer.Option(True, help="Whether to unpack the archives"),
-    parallel: bool = typer.Option(True, help="Whether to download files in parallel"),
 ):
     """Download the zenseact open dataset."""
+    dl_settings: DownloadSettings = ctx.obj
     filter_settings = FilterSettings(
         mini=mini,
         test=test,
@@ -237,38 +320,35 @@ def download_zod(
         num_scans_before=num_scans_before,
         num_scans_after=num_scans_after,
     )
-    dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
-    url = url.replace("hdl", "h?dl")
-    shared_link = dropbox.files.SharedLink(url=url)
-    res = dbx.files_list_folder(path="/single_frames", shared_link=shared_link)
-    if not dry_run:
-        os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(osp.join(output_dir, "downloads"), exist_ok=True)
+    _download_dataset(dl_settings, filter_settings, "single_frames")
 
-    files_to_download = [
-        ExtractInfo(
-            file_path="/single_frames/" + entry.name,
-            size=entry.size,
-            url=url,
-            output_dir=output_dir,
-            rm=rm,
-            dry_run=dry_run,
-            extract=extract,
-        )
-        for entry in res.entries
-        if _filter_entry(entry, filter_settings)
-    ]
-    if not files_to_download:
-        typer.echo("No files to download. Perhaps you specified too many filters?")
-        return
 
-    if parallel:
-        with ThreadPoolExecutor() as pool:
-            pool.map(lambda info: _download_and_extract(dbx, info), files_to_download)
-    else:
-        for info in files_to_download:
-            _download_and_extract(dbx, info)
+@app.command()
+def sequences(
+    ctx: typer.Context,
+    mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
+    test: bool = typer.Option(False, help="Whether to download the test files"),
+    annotations: bool = typer.Option(True, help="Whether to download the annotations"),
+    images: bool = typer.Option(True, help="Whether to download the images"),
+    lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
+    oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
+    calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
+):
+    """Download the zenseact open dataset."""
+    dl_settings: DownloadSettings = ctx.obj
+    filter_settings = FilterSettings(
+        mini=mini,
+        test=test,
+        annotations=annotations,
+        images=images,
+        lidar=lidar,
+        oxts=oxts,
+        calibrations=calibrations,
+        num_scans_before=-1,
+        num_scans_after=-1,
+    )
+    _download_dataset(dl_settings, filter_settings, "sequences")
 
 
 if __name__ == "__main__":
-    typer.run(download_zod)
+    app()
