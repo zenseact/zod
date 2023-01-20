@@ -1,44 +1,7 @@
 """Relevant constants for ZOD."""
 
 from enum import Enum
-
-
-# Sensor data
-LIDAR_VELODYNE = "lidar_velodyne"
-CAMERA_FRONT = "camera_front"
-BLUR = "blur"
-DNAT = "dnat"
-CAMERA_FRONT_BLUR = f"{CAMERA_FRONT}_{BLUR}"
-CAMERA_FRONT_DNAT = f"{CAMERA_FRONT}_{DNAT}"
-CALIBRATION = "calibration"
-OXTS = "oxts"
-LIDARS = (LIDAR_VELODYNE,)
-CAMERAS = (CAMERA_FRONT,)
-EGO = "ego"
-
-# Evaluation
-EVALUATION_FRAME = LIDAR_VELODYNE
-ALL_CLASSES = [
-    "Vehicle",
-    "VulnerableVehicle",
-    "Pedestrian",
-    "Animal",
-    "PoleObject",
-    "Inconclusive",
-    "TrafficBeacon",
-    "TrafficSign",
-    "TrafficSignal",
-    "TrafficGuide",
-    "DynamicBarrier",
-]
-
-EVALUATION_CLASSES = [
-    "Vehicle",
-    "VulnerableVehicle",
-    "Pedestrian",
-    "TrafficSign",
-    "TrafficSignal",
-]
+from typing import Literal, Union
 
 # Dataset paths
 SINGLE_FRAMES = "single_frames"
@@ -63,36 +26,61 @@ SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES = {
 
 VERSIONS = (FULL, MINI)
 
-# Keys in oxts data
-LONGITUDE = "posLon"
-LATITUDE = "posLat"
-MAPS_STYLE = "open-street-map"
-SIZE_MAX = 7
-OPACITY_LEVEL = 1
-DEFAULT_COLOR = "red"
-DEFAULT_SIZE = 1
-
-# Useful constants
-MICROSEC_PER_SEC = 1e6
-
-
-class Camera(Enum):
-    front = "front"
-
-
-class Lidar(Enum):
-    velodyne = "velodyne"
-
 
 class Anonymization(Enum):
-    blur = BLUR
-    dnat = DNAT
-    original = "original"
+    BLUR = "blur"
+    DNAT = "dnat"
+    ORIGINAL = "original"
 
 
 class AnnotationProject(Enum):
+    # TODO: delete this!
+    DYNAMIC_OBJECTS = "dynamic_objects"
+    STATIC_OBJECTS = "static_objects"
     OBJECT_DETECTION = "object_detection"
     LANE_MARKINGS = "lane_markings"
     TRAFFIC_SIGNS = "traffic_signs"
     EGO_ROAD = "ego_road"
     ROAD_CONDITION = "road_condition"
+
+
+### Coordinate Frames ###
+
+EGO = "ego"
+
+
+class Camera(Enum):
+    FRONT = "front"
+
+
+class Lidar(Enum):
+    VELODYNE = "velodyne"
+
+
+CoordinateFrame = Union[Camera, Lidar, Literal[EGO]]
+
+
+### Evaluation ###
+
+EVALUATION_FRAME = Lidar.VELODYNE
+ALL_CLASSES = [
+    "Vehicle",
+    "VulnerableVehicle",
+    "Pedestrian",
+    "Animal",
+    "PoleObject",
+    "Inconclusive",
+    "TrafficBeacon",
+    "TrafficSign",
+    "TrafficSignal",
+    "TrafficGuide",
+    "DynamicBarrier",
+]
+
+EVALUATION_CLASSES = [
+    "Vehicle",
+    "VulnerableVehicle",
+    "Pedestrian",
+    "TrafficSign",
+    "TrafficSignal",
+]

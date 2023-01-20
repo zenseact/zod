@@ -23,7 +23,7 @@ class EgoMotion:
     def __len__(self) -> int:
         return len(self.timestamps)
 
-    def get_poses(self, target_ts: Union[np.ndarray, float, np.float64]) -> np.ndarray:
+    def get_poses(self, target_ts: Union[np.ndarray, float]) -> np.ndarray:
         """Interpolate neighbouring poses to find pose for each target timestamp.
         Args:
             target_ts: [N] timestamps for which to find a pose by interpolation.

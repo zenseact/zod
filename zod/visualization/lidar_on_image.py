@@ -3,22 +3,27 @@
 import cv2
 import numpy as np
 
-from zod.constants import CAMERA_FRONT, LIDAR_VELODYNE
+from zod.constants import Camera, Lidar
+from zod.utils.geometry import transform_points
 
 # from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
 from zod.visualization.oxts_on_image import kannala_project
-from zod.zod_dataclasses.zod_dataclasses import Calibration, LidarData, Pose, transform_points
+from zod.zod_dataclasses.calibration import Calibration
+from zod.zod_dataclasses.geometry import Pose
+from zod.zod_dataclasses.sensor import LidarData
 
 # from constants import FOV
 
 
 def get_3d_transform_camera_lidar(
-    calib: Calibration, lidar_name: str = LIDAR_VELODYNE, camera_name: str = CAMERA_FRONT
+    calib: Calibration,
+    lidar: Lidar = Lidar.VELODYNE,
+    camera: Camera = Camera.FRONT,
 ) -> Pose:
     """Get 3D transformation between lidar and camera."""
-    t_refframe_to_frame = calib.lidars[lidar_name].extrinsics
-    t_refframe_from_frame = calib.cameras[camera_name].extrinsics
+    t_refframe_to_frame = calib.lidars[lidar].extrinsics
+    t_refframe_from_frame = calib.cameras[camera].extrinsics
 
     t_from_frame_refframe = t_refframe_from_frame.inverse
     t_from_frame_to_frame = Pose(t_from_frame_refframe.transform @ t_refframe_to_frame.transform)
@@ -29,10 +34,11 @@ def get_3d_transform_camera_lidar(
 def project_lidar_to_image(
     lidar_data: LidarData,
     calib: Calibration,
-    lidar_name: str = LIDAR_VELODYNE,
-    camera_name: str = CAMERA_FRONT,
+    lidar: Lidar = Lidar.VELODYNE,
+    camera: Camera = Camera.FRONT,
 ) -> np.ndarray:
     """Project lidar pointcloud to camera."""
+    # TODO: use lidar param here
     t_lidar_to_camera = get_3d_transform_camera_lidar(calib)
 
     camera_data = transform_points(lidar_data.points, t_lidar_to_camera.transform)
@@ -40,12 +46,12 @@ def project_lidar_to_image(
     camera_data = camera_data[positive_depth]
     if not camera_data.any():
         return camera_data
-    camera_data = get_points_in_camera_fov(calib.cameras[camera_name].field_of_view, camera_data)
+    camera_data = get_points_in_camera_fov(calib.cameras[camera].field_of_view, camera_data)
 
     xy_array = kannala_project(
         camera_data,
-        calib.cameras[camera_name].intrinsics[..., :3],
-        calib.cameras[camera_name].distortion,
+        calib.cameras[camera].intrinsics[..., :3],
+        calib.cameras[camera].distortion,
     )
     xyd_array = np.concatenate([xy_array, camera_data[:, 2:3]], axis=1)
     return xyd_array
@@ -71,8 +77,8 @@ def get_points_in_camera_fov(fov: np.ndarray, camera_data: np.ndarray) -> np.nda
 
 
 def draw_projections_as_points(
-    image: np.array, points: np.array, clip_to: float = None
-) -> np.array:
+    image: np.ndarray, points: np.ndarray, clip_to: float = None
+) -> np.ndarray:
     """Draw projected points from pointcloud to image plane as colored points.
 
     Args:
@@ -98,8 +104,8 @@ def draw_projections_as_points(
 
 
 def draw_projection_as_jet_circles(
-    image: np.array, points: np.array, radius: int, clip_to: float = None
-) -> np.array:
+    image: np.ndarray, points: np.ndarray, radius: int, clip_to: float = None
+) -> np.ndarray:
     """Draw projected points from pointcloud to image plane as jet colored circles.
 
     Args:

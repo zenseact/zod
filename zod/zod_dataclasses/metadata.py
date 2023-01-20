@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from zod.zod_dataclasses import JSONSerializable
+from ._serializable import JSONSerializable
 
 
 @dataclass

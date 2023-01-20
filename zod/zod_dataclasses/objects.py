@@ -6,18 +6,17 @@ import numpy as np
 from pyquaternion import Quaternion
 
 from zod.constants import (
-    CAMERA_FRONT,
-    CAMERAS,
     EGO,
     EVALUATION_CLASSES,
-    LIDAR_VELODYNE,
-    LIDARS,
+    Camera,
+    CoordinateFrame,
+    Lidar,
 )
 from zod.utils.geometry import (
     project_3d_to_2d_kannala,
     unproject_2d_to_3d_kannala,
 )
-from zod.zod_dataclasses.zod_dataclasses import Calibration, Pose
+from zod.zod_dataclasses import Calibration, Pose
 
 
 @dataclass
@@ -31,47 +30,27 @@ class Box3D:
     center: np.ndarray  # x, y, z
     size: np.ndarray  # L, W, H
     orientation: Quaternion
-    frame: str
+    frame: CoordinateFrame
 
-    def _transform(self, transform: Optional[Pose], frame: str):
+    def _transform(self, transform: Optional[Pose], new_frame: CoordinateFrame):
         if transform is not None:
             self.center = transform.rotation_matrix @ self.center
             self.center += transform.translation
             self.orientation = transform.rotation * self.orientation
-            self.frame = frame
+            self.frame = new_frame
 
-    def _transform_inv(self, transform: Optional[Pose], frame: str):
+    def _transform_inv(self, transform: Optional[Pose], new_frame: CoordinateFrame):
         if transform is not None:
             self.center -= transform.translation
             self.center = transform.rotation_matrix.T @ self.center
             self.orientation = transform.rotation.inverse * self.orientation
-            self.frame = frame
+            self.frame = new_frame
 
-    def convert_to(self, frame: str, calib: Calibration):
+    def convert_to(self, frame: CoordinateFrame, calib: Calibration):
         if frame == self.frame:
             return
-        
-        # Convert box to ego frame
-        if self.frame in LIDARS:
-            extrinsics = calib.lidars[self.frame].extrinsics
-        elif self.frame in CAMERAS:
-            extrinsics = calib.cameras[self.frame].extrinsics
-        elif self.frame == EGO:
-            extrinsics = None
-        else:
-            raise ValueError(f"Invalid source frame {self.frame}")
-        self._transform(extrinsics, frame=EGO)
-        
-        # Convert box to target frame
-        if frame in LIDARS:
-            extrinsics = calib.lidars[frame].extrinsics
-        elif frame in CAMERAS:
-            extrinsics = calib.cameras[frame].extrinsics
-        elif frame == EGO:
-            return
-        else:
-            raise ValueError(f"Invalid target frame {frame}")
-        self._transform_inv(extrinsics, frame=frame)
+        self._transform(calib.get_extrinsics(self.frame), new_frame=EGO)
+        self._transform_inv(calib.get_extrinsics(frame), new_frame=frame)
 
     @property
     def corners(self) -> np.ndarray:
@@ -125,12 +104,12 @@ class Box3D:
             - front right top
             - front left top
         """
-        if self.frame not in CAMERAS:
+        if not isinstance(self.frame, Camera):
             raise ValueError(f"Cannot project box into frame {self.frame}")
 
         # Concatenate the corners and center of the box
         points = np.concatenate([self.center.reshape((1, -1)), self.corners], axis=0)
-        
+
         # Project center into camera
         pos2d = project_3d_to_2d_kannala(
             points,
@@ -139,7 +118,7 @@ class Box3D:
         )
         return pos2d
 
-    def __eq__(self, __o: object) -> bool:
+    def __eq__(self, __o: "Box3D") -> bool:
         b1 = np.allclose(self.center, __o.center)
         b2 = np.allclose(self.size, __o.size)
         b3 = self.orientation == __o.orientation
@@ -152,10 +131,10 @@ class Box2D:
     """2D Bounding Box container."""
 
     xyxy: np.ndarray  # xmin, ymin, xmax, ymax
-    frame: str
+    frame: Camera
 
     @classmethod
-    def from_points(cls, points: List[List[float]], frame=CAMERA_FRONT) -> "Box2D":
+    def from_points(cls, points: List[List[float]], frame=Camera.FRONT) -> "Box2D":
         """Compute outer points from a polygon.
 
         Args:
@@ -303,7 +282,7 @@ class Box2D:
     def get_3d_frustum(
         self,
         calibration: Calibration,
-        frame: Optional[str] = LIDAR_VELODYNE,
+        frame: Optional[CoordinateFrame] = None,
         min_depth: float = 0.0,
         max_depth: float = 500.0,
     ) -> np.ndarray:
@@ -322,15 +301,15 @@ class Box2D:
         """
         # Get the 2d bounding box corners
         corners = self.corners
-        camera_calib = calibration.cameras[CAMERA_FRONT]
+        camera_calib = calibration.cameras[self.frame]
         if min_depth > 0:
             # Copy the corners
             corners = np.concatenate([corners, corners], axis=0)
-            
+
             # Create the depth vector where the first four correspond to min_depth
             # and the last four correspond to max_depth
             depth = np.array([min_depth] * 4 + [max_depth] * 4)
-        
+
         else:
             depth = np.array([max_depth] * 4)
 
@@ -346,7 +325,7 @@ class Box2D:
         if frame is not None:
             frustum = calibration.transform_points(
                 points=frustum,
-                from_frame=CAMERA_FRONT,
+                from_frame=self.frame,
                 to_frame=frame,
             )
 
@@ -379,7 +358,7 @@ class AnnotatedObject:
 
         box2d = Box2D.from_points(
             points=data["geometry"]["coordinates"],
-            frame=CAMERA_FRONT,
+            frame=Camera.FRONT,
         )
         if properties["class"] == "Inconclusive":
             unclear = True
@@ -404,7 +383,7 @@ class AnnotatedObject:
                     properties["orientation_3d_qy"],
                     properties["orientation_3d_qz"],
                 ),
-                frame=LIDAR_VELODYNE,
+                frame=Lidar.VELODYNE,
             )
 
         return cls(
@@ -475,4 +454,4 @@ class PredictedObject:
     box3d: Box3D
 
     def __eq__(self, __o: Union[AnnotatedObject, "PredictedObject"]) -> bool:
-        self.box3d == __o.box3d
+        return self.box3d == __o.box3d

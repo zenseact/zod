@@ -10,11 +10,12 @@ import typer
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
+from zod.constants import Lidar
 from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
-from zod.zod_dataclasses.oxts import EgoMotion
 from zod.utils.utils import parse_datetime_from_filename
-from zod.zod_dataclasses.zod_dataclasses import Calibration, LidarData
-
+from zod.zod_dataclasses.calibration import Calibration
+from zod.zod_dataclasses.oxts import EgoMotion
+from zod.zod_dataclasses.sensor import LidarData
 
 OLD_LIDAR_FOLDER = "lidar_velodyne"
 COMPENSATED_LIDAR_FOLDER = "lidar_velodyne_compensated"
@@ -59,7 +60,7 @@ def main(
         calibration_file = calibration_file[0]
         with open(osp.join(sequence_dir, CALIBRATION_FOLDER, calibration_file), "r") as f:
             calibration = Calibration.from_dict(json.load(f))
-        calibration = calibration.lidars["lidar_velodyne"]
+        calibration = calibration.lidars[Lidar.VELODYNE]
 
         if compensate_to_keyframe and not _get_num_files(
             osp.join(sequence_dir, KEYFRAME_LIDAR_FOLDER)
@@ -103,7 +104,7 @@ def save_global_cloud(sequence, sequence_dir, ego_motion, calibration, clouds_in
         lidar_files, desc=f"Storing global cloud for {sequence}...", leave=False
     ):
         _, lidar = _read_lidar(lidar_dir, lidar_file)
-        global_lidar.append(motion_compensate_scanwise(lidar, ego_motion, calibration, global_ts))
+        global_lidar.extend(motion_compensate_scanwise(lidar, ego_motion, calibration, global_ts))
     # Write each time which is not ideal but it's a one-time script
     global_lidar_path = osp.join(sequence_dir, GLOBAL_LIDAR_FOLDER, f"{global_ts}.npy")
     os.makedirs(osp.dirname(global_lidar_path), exist_ok=True)

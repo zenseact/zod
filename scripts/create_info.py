@@ -10,10 +10,9 @@ import typer
 from dataclass_wizard import JSONWizard
 from tqdm.contrib.concurrent import process_map
 
-from zod.constants import DB_DATE_STRING_FORMAT_W_MICROSECONDS
+from zod.constants import DB_DATE_STRING_FORMAT_W_MICROSECONDS, AnnotationProject, Lidar
 from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.zod_dataclasses import AnnotationFrame, SensorFrame
-
+from zod.zod_dataclasses.sensor import AnnotationFrame, CameraFrame, LidarFrame, SensorFrame
 
 DATASET_ROOT = "/staging/dataset_donation/round_2/"
 FILE_NAME = "info.json"
@@ -66,7 +65,7 @@ def create_sequence_info(id_: str, dataset_root: str, top_dir: str) -> Informati
         end_time=max(camera_times + lidar_times),
         keyframe_time=camera_times[len(camera_times) // 2],
         camera_frames=all_camera_frames,
-        lidar_frames={"velodyne": lidar_frames},
+        lidar_frames={Lidar.VELODYNE: lidar_frames},
         calibration_path=calibration_path,
         ego_motion_path=os.path.join(top_dir, id_, "ego_motion.json"),
         metadata_path=os.path.join(top_dir, id_, "metadata.json"),
@@ -82,10 +81,10 @@ def create_sequence_info(id_: str, dataset_root: str, top_dir: str) -> Informati
     return sequence_info
 
 
-def _get_lidar_frames(id_, top_dir, dir_path) -> List[SensorFrame]:
+def _get_lidar_frames(id_, top_dir, dir_path) -> List[LidarFrame]:
     lidar_files = sorted(os.listdir(os.path.join(dir_path, "lidar_velodyne")))
     lidar_frames = [
-        SensorFrame(
+        LidarFrame(
             filepath=os.path.join(top_dir, id_, "lidar_velodyne", filename),
             time=_split_filename(filename)[-1],
         )
@@ -94,32 +93,35 @@ def _get_lidar_frames(id_, top_dir, dir_path) -> List[SensorFrame]:
     return lidar_frames
 
 
-def _get_annotation_frames(id_, top_dir, dir_path) -> Dict[str, List[AnnotationFrame]]:
+def _get_annotation_frames(
+    id_, top_dir, dir_path
+) -> Dict[AnnotationProject, List[AnnotationFrame]]:
     if not os.path.exists(os.path.join(dir_path, "annotations")):
         return {}
     all_annotation_frames = {}
     for project in sorted(os.listdir(os.path.join(dir_path, "annotations"))):
         annotation_files = sorted(os.listdir(os.path.join(dir_path, "annotations", project)))
+        project_enum = AnnotationProject(project)
         annotation_frames = [
             AnnotationFrame(
                 filepath=os.path.join(top_dir, id_, "annotations", project, filename),
                 time=_split_filename(filename)[-1],
-                project=project,
+                project=project_enum,
             )
             for filename in annotation_files
             if filename.endswith(".json")
         ]
-        all_annotation_frames[project] = annotation_frames
+        all_annotation_frames[project_enum] = annotation_frames
     return all_annotation_frames
 
 
-def _get_camera_frames(id_, top_dir, dir_path) -> Dict[str, List[SensorFrame]]:
+def _get_camera_frames(id_, top_dir, dir_path) -> Dict[str, List[CameraFrame]]:
     all_camera_frames = {}
     for camera in sorted(glob.glob(os.path.join(dir_path, "camera_*"))):
         camera_files = sorted(os.listdir(camera))
 
         camera_frames = [
-            SensorFrame(
+            CameraFrame(
                 filepath=os.path.join(top_dir, id_, osp.basename(camera), filename),
                 time=_split_filename(filename)[-1],
             )

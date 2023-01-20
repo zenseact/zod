@@ -3,9 +3,9 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from zod.constants import CAMERA_FRONT, AnnotationProject
+from zod.constants import AnnotationProject, Camera
 from zod.frames.traffic_sign_classification.class_map import get_class_idx
-from zod.utils.objects import AnnotatedObject, Box2D
+from zod.zod_dataclasses.objects import AnnotatedObject, Box2D
 
 
 def _read_annotation_file(annotation_file: str) -> Dict[str, Any]:
@@ -45,7 +45,7 @@ def parse_traffic_sign_annotation(annotation_path: str) -> List[TrafficSignAnnot
         if annotated_object["properties"]["unclear"]:
             continue
 
-        bounding_box = Box2D.from_points(annotated_object["geometry"]["coordinates"], CAMERA_FRONT)
+        bounding_box = Box2D.from_points(annotated_object["geometry"]["coordinates"], Camera.FRONT)
 
         annotated_objects.append(
             TrafficSignAnnotation(

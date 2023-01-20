@@ -15,7 +15,7 @@ import cv2
 from tqdm.contrib.concurrent import process_map
 
 import zod.constants as constants
-import zod.frames.annotation_parser as ap
+import zod.utils.annotation_parser as ap
 from zod import ZodFrames
 from zod.zod_dataclasses.frame import ZodFrame
 
@@ -99,7 +99,7 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
 
     new_cropped_frames = []
     # load the image
-    image_path = frame.info.get_keyframe_camera_frame().filepath
+    image_path = frame.info.get_key_camera_frame().filepath
     image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     for traffic_sign in traffic_signs:
 

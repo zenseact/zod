@@ -1,9 +1,15 @@
-from zod.constants import AnnotationProject
-from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.metadata import FrameMetaData
-from zod.zod_dataclasses.oxts import EgoMotion
-from zod.zod_dataclasses.zod_dataclasses import Calibration
-from zod.frames.annotation_parser import ANNOTATION_PARSERS
+from typing import Any, List
+
+import numpy as np
+
+from zod.constants import AnnotationProject, Lidar
+from zod.utils.compensation import motion_compensate_scanwise
+
+from .calibration import Calibration
+from .info import Information
+from .metadata import FrameMetaData
+from .oxts import EgoMotion
+from .sensor import LidarData, LidarFrame
 
 
 class ZodFrame:
@@ -42,15 +48,56 @@ class ZodFrame:
             self._metadata = FrameMetaData.from_json_path(self.info.metadata_path)
         return self._metadata
 
-    def get_annotation(self, project: AnnotationProject):
+    def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        path = self.info.get_keyframe_annotation(project).filepath
-        return ANNOTATION_PARSERS[project](path)
+        assert project in self.info.annotation_frames, f"Project {project} not available."
+        return self.info.get_key_annotation_frame(project).read()
 
-    def get_aggregated_point_cloud(self):
-        # TODO: adjust core timestamp so that it always points "forward"
-        # like this: 0.75*timestamps.max()+0.25*timestamps.min()
-        # This is extra important since zodframe scans are not pointwise compensated
-        # Or maybe even better to look at the angles of all points and find/interpolate
-        # the time that corresponds to -pi/2
-        raise NotImplementedError
+    def get_image(self) -> np.ndarray:
+        """Get the image."""
+        return self.info.get_key_camera_frame().read()
+
+    def get_lidar_frames(
+        self,
+        num_before: int = 0,
+        num_after: int = 0,
+    ) -> list[LidarFrame]:
+        """Get the lidar frames (around the keyframe)."""
+        all_frames = self.info.get_lidar_frames(Lidar.VELODYNE)
+        key_frame_dx = len(all_frames) // 2  # the key frame is in the middle
+        start = max(0, key_frame_dx - num_before)
+        end = min(len(all_frames), key_frame_dx + num_after + 1)
+        return all_frames[start:end]
+
+    def get_lidar_data(self, num_before: int = 0, num_after: int = 0) -> List[LidarData]:
+        """Get the lidar data, same as `get_lidar_frames` but actually reads the data."""
+        return [lidar_frame.read() for lidar_frame in self.get_lidar_frames(num_before, num_after)]
+
+    def get_aggregated_point_cloud(self, num_before: int, num_after: int = 0) -> LidarData:
+        """Get an aggregated point cloud around the keyframe."""
+        key_lidar_frame = self.info.get_key_lidar_frame()
+        key_lidar_data = key_lidar_frame.read()
+        _adjust_lidar_core_time(key_lidar_data)
+        target_time = key_lidar_data.core_timestamp
+        lidar_calib = self.calibration.lidars[Lidar.VELODYNE]
+        aggregated_data = key_lidar_data
+        for lidar_frame in self.get_lidar_frames(num_before, num_after):
+            if lidar_frame == key_lidar_frame:
+                continue
+            lidar_data = lidar_frame.read()
+            _adjust_lidar_core_time(lidar_data)
+            lidar_data = motion_compensate_scanwise(
+                lidar_data, self.ego_motion, lidar_calib, target_time
+            )
+            aggregated_data.extend(aggregated_data)
+        return aggregated_data
+
+
+def _adjust_lidar_core_time(lidar: LidarData):
+    """Adjust the core timestamp of a lidar scan so that it always points "forward".
+
+    This assumes that the scans are not pointwise compensated, and that the cut-off is to the right.
+    """
+    # TODO: maybe this should be done by looking at the angles instead?
+    # This could fail if there are no points on either side of the cut-off.
+    lidar.core_timestamp = 0.75 * lidar.timestamps.max() + 0.25 * lidar.timestamps.min()
