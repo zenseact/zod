@@ -8,4 +8,7 @@ class JSONSerializable(_JSONSerializable):
     def from_json_path(cls, json_path):
         with open(json_path) as fp:
             data = json.load(fp)
-        return cls.from_dict(data)
+        if isinstance(data, dict):
+            return cls.from_dict(data)
+        elif isinstance(data, str):
+            return cls.from_json(data)
