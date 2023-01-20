@@ -2,12 +2,17 @@ import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import chain
-from typing import Dict, Iterator, List, Optional, Tuple
-
-from zod.zod_dataclasses import JSONSerializable
+from typing import Dict, Iterator, List, Tuple
 
 from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
-from zod.zod_dataclasses.zod_dataclasses import AnnotationFrame, CameraFrame, SensorFrame
+
+from ._serializable import JSONSerializable
+from .sensor import (
+    AnnotationFrame,
+    CameraFrame,
+    LidarFrame,
+    SensorFrame,
+)
 
 
 @dataclass
@@ -24,9 +29,9 @@ class Information(JSONSerializable):
     metadata_path: str
     oxts_path: str
 
-    annotation_frames: Dict[str, List[AnnotationFrame]]
-    camera_frames: Dict[str, List[CameraFrame]]
-    lidar_frames: Dict[str, List[SensorFrame]]
+    annotation_frames: Dict[AnnotationProject, List[AnnotationFrame]]
+    camera_frames: Dict[str, List[CameraFrame]]  # key is a combination of Camera and Anonymization
+    lidar_frames: Dict[Lidar, List[LidarFrame]]
 
     @property
     def all_frames(self) -> Iterator[SensorFrame]:
@@ -73,18 +78,18 @@ class Information(JSONSerializable):
 
     ### Keyframe accessors ###
 
-    def get_keyframe_annotation(self, project: AnnotationProject) -> Optional[AnnotationFrame]:
-        if project.value not in self.annotation_frames:
-            return None
-        if len(self.annotation_frames[project.value]) == 1:
-            return self.annotation_frames[project.value][0]
+    def get_key_annotation_frame(self, project: AnnotationProject) -> AnnotationFrame:
+        if project not in self.annotation_frames:
+            raise ValueError(f"No annotations found for project {project.value}.")
+        if len(self.annotation_frames[project]) == 1:
+            return self.annotation_frames[project][0]
         else:
-            return self.get_annotation(self.keyframe_time, project)
+            return self.get_annotation_frame(self.keyframe_time, project)
 
-    def get_keyframe_camera_frame(
+    def get_key_camera_frame(
         self,
-        camera: Camera = Camera.front,
-        anonymization: Anonymization = Anonymization.blur,
+        camera: Camera = Camera.FRONT,
+        anonymization: Anonymization = Anonymization.BLUR,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
         if len(self.camera_frames[camera_name]) == 1:
@@ -95,26 +100,29 @@ class Information(JSONSerializable):
                 key=lambda camera_frame: abs(camera_frame.time - self.keyframe_time),
             )
 
-    def get_keyframe_lidar_frame(self, lidar: Lidar = Lidar.velodyne) -> SensorFrame:
+    def get_key_lidar_frame(self, lidar: Lidar = Lidar.VELODYNE) -> LidarFrame:
         return self.get_lidar_frame(self.keyframe_time, lidar)
 
     ### Timestamp accessors ###
 
-    def get_annotation(
-        self, time: datetime, project: AnnotationProject
-    ) -> Optional[AnnotationFrame]:
-        if project.value not in self.annotation_frames:
-            return None
+    def get_annotation_frame(
+        self,
+        time: datetime,
+        project: AnnotationProject,
+        # TODO: implement exact flag?
+    ) -> AnnotationFrame:
+        if project not in self.annotation_frames:
+            raise ValueError(f"No annotations found for project {project.value}.")
         return min(
-            self.annotation_frames[project.value],
+            self.annotation_frames[project],
             key=lambda annotation_frame: abs(annotation_frame.time - time),
         )
 
     def get_camera_frame(
         self,
         time: datetime,
-        camera: Camera = Camera.front,
-        anonymization: Anonymization = Anonymization.blur,
+        camera: Camera = Camera.FRONT,
+        anonymization: Anonymization = Anonymization.BLUR,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
         return min(
@@ -122,26 +130,26 @@ class Information(JSONSerializable):
             key=lambda camera_frame: abs(camera_frame.time - time),
         )
 
-    def get_lidar_frame(self, time: datetime, lidar: Lidar = Lidar.velodyne) -> SensorFrame:
+    def get_lidar_frame(self, time: datetime, lidar: Lidar = Lidar.VELODYNE) -> LidarFrame:
         return min(
-            self.lidar_frames[lidar.value],
+            self.lidar_frames[lidar],
             key=lambda lidar_frame: abs(lidar_frame.time - time),
         )
 
     ### Full accessors ###
 
-    def get_annotations(self, project: AnnotationProject) -> List[AnnotationFrame]:
-        if project.value not in self.annotation_frames:
+    def get_annotation_frames(self, project: AnnotationProject) -> List[AnnotationFrame]:
+        if project not in self.annotation_frames:
             return []
-        return self.annotation_frames[project.value]
+        return self.annotation_frames[project]
 
     def get_camera_frames(
         self,
-        camera: Camera = Camera.front,
-        anonymization: Anonymization = Anonymization.blur,
+        camera: Camera = Camera.FRONT,
+        anonymization: Anonymization = Anonymization.BLUR,
     ) -> List[CameraFrame]:
         camera_name = f"{camera.value}_{anonymization.value}"
         return self.camera_frames[camera_name]
 
-    def get_lidar_frames(self, lidar: Lidar = Lidar.velodyne) -> List[SensorFrame]:
-        return self.lidar_frames[lidar.value]
+    def get_lidar_frames(self, lidar: Lidar = Lidar.VELODYNE) -> List[LidarFrame]:
+        return self.lidar_frames[lidar]

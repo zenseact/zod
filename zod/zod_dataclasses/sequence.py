@@ -1,9 +1,13 @@
-from zod.constants import AnnotationProject
-from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.metadata import SequenceMetadata
-from zod.zod_dataclasses.oxts import EgoMotion
-from zod.zod_dataclasses.zod_dataclasses import Calibration
-from zod.frames.annotation_parser import ANNOTATION_PARSERS
+from typing import Any, List, Optional
+
+from zod.constants import AnnotationProject, Lidar
+from zod.utils.compensation import motion_compensate_scanwise
+
+from .calibration import Calibration
+from .info import Information
+from .metadata import SequenceMetadata
+from .oxts import EgoMotion
+from .sensor import LidarData
 
 
 class ZodSequence:
@@ -42,7 +46,32 @@ class ZodSequence:
             self._metadata = SequenceMetadata.from_json_path(self.info.metadata_path)
         return self._metadata
 
-    def get_annotation(self, project: AnnotationProject):
+    def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        path = self.info.get_keyframe_annotation(project).filepath
-        return ANNOTATION_PARSERS[project](path)
+        anno_frame = self.info.get_key_annotation_frame(project)
+        return anno_frame and anno_frame.read()  # read if not None
+
+    def get_point_clouds(self, start: int = 0, end: int = -1) -> List[LidarData]:
+        """Get the point clouds."""
+        return [
+            lidar_frame.read()
+            for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]
+        ]
+
+    def get_aggregated_point_cloud(
+        self, start: int = 0, end: int = -1, timestamp: Optional[float] = None
+    ) -> LidarData:
+        """Get the aggregated point cloud."""
+        lidar_scans = self.get_point_clouds(start, end)
+        if timestamp is None:
+            timestamp = lidar_scans[len(lidar_scans) // 2].core_timestamp
+        for i, scan in enumerate(lidar_scans):
+            if scan.core_timestamp == timestamp:
+                continue
+            compensated_scan = motion_compensate_scanwise(
+                scan, self.ego_motion, self.calibration.lidars[Lidar.VELODYNE], timestamp
+            )
+            lidar_scans[i] = compensated_scan
+        aggregated = lidar_scans[0]
+        aggregated.extend(*lidar_scans[1:])
+        return aggregated

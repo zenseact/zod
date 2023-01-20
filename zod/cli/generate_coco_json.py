@@ -11,10 +11,10 @@ from tqdm.contrib.concurrent import process_map
 
 import zod.constants as constants
 from zod import ZodFrames
-from zod.constants import ALL_CLASSES, BLUR
-from zod.zod_dataclasses.frame import ZodFrame
-from zod.utils.objects import AnnotatedObject
+from zod.constants import ALL_CLASSES, Anonymization
 from zod.utils.utils import str_from_datetime
+from zod.zod_dataclasses.frame import ZodFrame
+from zod.zod_dataclasses.objects import AnnotatedObject
 
 # Map classes to categories, starting from 1
 CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(ALL_CLASSES)}
@@ -24,33 +24,33 @@ OPEN_DATASET_URL = (
 
 
 def _convert_frame(
-    frame_info: ZodFrame, classes: List[str], anonymization: constants.Anonymization, use_png: bool
+    frame: ZodFrame, classes: List[str], anonymization: constants.Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
 
-    objs: List[AnnotatedObject] = frame_info.get_annotation(
-        constants.AnnotationProject.OBJECT_DETECTION
-    )
-    camera_frame = frame_info.info.get_keyframe_camera_frame(anonymization=anonymization)
+    objs: List[AnnotatedObject] = frame.get_annotation(constants.AnnotationProject.OBJECT_DETECTION)
+    camera_frame = frame.info.get_key_camera_frame(anonymization=anonymization)
     file_name = camera_frame.filepath
 
-    if anonymization == constants.Anonymization.original:
-        file_name = file_name.replace(BLUR, "original")
+    if anonymization == constants.Anonymization.ORIGINAL:
+        file_name = file_name.replace(
+            Anonymization.BLUR.value, constants.Anonymization.ORIGINAL.value
+        )
     if use_png:
         file_name = file_name.replace(".jpg", ".png")
 
     image_dict = {
-        "id": int(frame_info.frame_id),
+        "id": int(frame.info.id),
         "license": 1,
         "file_name": file_name,
         "height": camera_frame.height,
         "width": camera_frame.width,
-        "date_captured": str_from_datetime(frame_info.info.keyframe_time),
+        "date_captured": str_from_datetime(frame.info.keyframe_time),
     }
     anno_dicts = [
         {
-            "id": int(frame_info.info.id) * 1000
+            "id": int(frame.info.id) * 1000
             + obj_idx,  # avoid collisions by assuming max 1k objects per frame
-            "image_id": int(frame_info.info.id),
+            "image_id": int(frame.info.id),
             "category_id": CATEGORY_NAME_TO_ID[obj.name],
             "bbox": [round(val, 2) for val in obj.box2d.xywh.tolist()],
             "area": round(obj.box2d.area, 2),
@@ -132,7 +132,7 @@ def convert_to_coco(
     ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, mini."),
     anonymization: constants.Anonymization = typer.Option(
-        constants.Anonymization.blur, help="Anonymization mode to use."
+        constants.Anonymization.BLUR, help="Anonymization mode to use."
     ),
     use_png: bool = typer.Option(False, help="Whether to use PNG images instead of JPG."),
     classes: List[str] = typer.Option(

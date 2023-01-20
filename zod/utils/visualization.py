@@ -3,9 +3,9 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from zod.constants import CAMERAS
-from zod.utils.objects import Box3D
-from zod.zod_dataclasses.zod_dataclasses import Calibration
+from zod.constants import Camera
+from zod.zod_dataclasses.calibration import Calibration
+from zod.zod_dataclasses.objects import Box3D
 
 
 def render_3d_box(
@@ -17,7 +17,7 @@ def render_3d_box(
 ) -> None:
     """Render a 3d box on the image."""
 
-    assert box3d.frame in CAMERAS, "Only support rendering 3d boxes in camera frames."
+    assert isinstance(box3d.frame, Camera), "Only support rendering 3d boxes in camera frames."
 
     points = box3d.project_into_camera(calib).astype(np.int32)
     center_im = points[0]

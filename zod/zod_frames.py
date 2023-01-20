@@ -9,34 +9,15 @@ from typing import Dict, List, Tuple, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
+from zod.utils.utils import zfill_id
 from zod.zod_dataclasses.frame import ZodFrame
 from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.zod_dataclasses import LidarData
-from zod.utils.compensation import motion_compensate_pointwise, motion_compensate_scanwise
-from zod.utils.utils import zfill_id
 
 
 def _create_frame(frame: dict, dataset_root: str) -> Information:
     info = Information.from_dict(frame)
     info.convert_paths_to_absolute(dataset_root)
     return info
-
-
-def _get_lidar_frames_path(
-    core_frame_path: str, n_sweeps_before: int, n_sweeps_after: int
-) -> List[str]:
-    if n_sweeps_before == 0 and n_sweeps_after == 0:
-        return [core_frame_path]
-
-    surrounding_frames = sorted(os.listdir(osp.dirname(core_frame_path)))
-    core_frame_idx = surrounding_frames.index(osp.basename(core_frame_path))
-    frame_paths = [
-        osp.join(osp.dirname(core_frame_path), f)
-        for f in surrounding_frames[
-            max(0, core_frame_idx - n_sweeps_before) : core_frame_idx + n_sweeps_after + 1
-        ]
-    ]
-    return frame_paths
 
 
 class ZodFrames(object):
@@ -104,37 +85,3 @@ class ZodFrames(object):
     def get_all_frame_infos(self) -> Dict[str, Information]:
         """Get all frames."""
         return self._frames
-
-    def motion_compensate_pointcloud(
-        self, lidar_data: LidarData, frame_id: str, lidar_name: str
-    ) -> LidarData:
-        return motion_compensate_pointwise(
-            lidar_data,
-            self.read_ego_motion(frame_id),
-            self.read_calibration(frame_id).lidars[lidar_name],
-        )
-
-    def read_pointcloud(
-        self,
-        frame_id: str,
-        lidar_name: str,
-        n_sweeps_before: int = 0,
-        n_sweeps_after: int = 0,
-        motion_compensation: bool = False,
-    ) -> LidarData:
-        """Read pointcloud from npy format."""
-        frame_paths = _get_lidar_frames_path(
-            self._frames[frame_id].lidar_frame[lidar_name].filepath,
-            n_sweeps_before,
-            n_sweeps_after,
-        )
-
-        lidar_data = LidarData.empty()
-        for _, frame_path in enumerate(frame_paths):
-            lidar_data.append(LidarData.from_npy(frame_path))
-
-        if motion_compensation:
-            # TODO fix this
-            lidar_data = motion_compensate_scanwise(lidar_data, frame_id, lidar_name)
-
-        return lidar_data

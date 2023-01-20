@@ -1,18 +1,18 @@
 """Plot gps information."""
 
-from typing import List, Optional, Sequence
 import json
+from typing import List, Optional, Sequence
+
 import numpy as np
 import plotly.express as px
+
 from zod.zod_dataclasses.oxts import EgoMotion
 
-from ..constants import (
-    DEFAULT_COLOR,
-    DEFAULT_SIZE,
-    MAPS_STYLE,
-    OPACITY_LEVEL,
-    SIZE_MAX,
-)
+MAPS_STYLE = "open-street-map"
+SIZE_MAX = 7
+OPACITY_LEVEL = 1
+DEFAULT_COLOR = "red"
+DEFAULT_SIZE = 1
 
 
 class PlotlyAutoZoomer:

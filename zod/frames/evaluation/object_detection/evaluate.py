@@ -8,6 +8,7 @@ from typing import Callable, Dict, Iterator, List, Tuple
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+from zod.constants import EVALUATION_CLASSES
 from zod.frames.evaluation.object_detection.matching import MatchedFrame, match_one_frame
 from zod.frames.evaluation.object_detection.nuscenes_eval.common.data_classes import EvalBoxes
 from zod.frames.evaluation.object_detection.nuscenes_eval.common.utils import center_distance
@@ -22,10 +23,8 @@ from zod.frames.evaluation.object_detection.nuscenes_eval.detection.data_classes
     DetectionMetrics,
 )
 from zod.frames.evaluation.object_detection.utils import NUSCENES_DEFAULT_SETTINGS
-from zod.constants import EVALUATION_CLASSES
-from zod.utils.objects import AnnotatedObject, PredictedObject
-from zod.zod_dataclasses.zod_dataclasses import Calibration
-
+from zod.zod_dataclasses.objects import AnnotatedObject, PredictedObject
+from zod.zod_dataclasses.sensor import Calibration
 
 VALID_TP_METRICS = ["trans_err", "scale_err", "orient_err"]
 PRECISION_RECALL_SAMPLING_POINTS = 101

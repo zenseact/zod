@@ -3,9 +3,9 @@ from typing import List, Sequence, Tuple
 import cv2
 import numpy as np
 
-from ..utils.objects import AnnotatedObject, Box2D, Box3D
-from ..utils.visualization import render_3d_box
-
+from zod.constants import Camera
+from zod.utils.visualization import render_3d_box
+from zod.zod_dataclasses.objects import AnnotatedObject, Box2D, Box3D
 
 FONT_TYPE = cv2.FONT_HERSHEY_COMPLEX
 
@@ -74,7 +74,7 @@ def overlay_object_3d_box_on_image(
     color=(0, 0, 100),
     scale_factor=None,
     line_thickness=2,
-    camera: str = "camera_front",
+    camera: Camera = Camera.FRONT,
 ):
     """Visualize 2D box of annotated object on the image."""
     box3d.convert_to(camera, calib)
