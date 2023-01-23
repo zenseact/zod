@@ -136,6 +136,8 @@ class SensorFrame(JSONSerializable):
 class LidarFrame(SensorFrame):
     """Class to store information about a lidar frame."""
 
+    is_compensated: bool  # Whether the cloud is pointwise compensated
+
     def read(self) -> LidarData:
         """Read the point cloud."""
         return LidarData.from_npy(self.filepath)

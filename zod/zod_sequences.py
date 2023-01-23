@@ -6,7 +6,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
-from zod import constants
+from zod.constants import SEQUENCES, TRAIN, TRAINVAL_FILES, VAL, VERSIONS
 from zod.utils.utils import zfill_id
 from zod.zod_dataclasses.info import Information
 from zod.zod_dataclasses.sequence import ZodSequence
@@ -24,9 +24,7 @@ class ZodSequences:
     def __init__(self, dataset_root: Union[Path, str], version: str):
         self._dataset_root = dataset_root
         self._version = version
-        assert (
-            version in constants.VERSIONS
-        ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
+        assert version in VERSIONS, f"Unknown version: {version}, must be one of: {VERSIONS}"
         self._train_sequences, self._val_sequences = self._load_sequences()
         self._sequences: Dict[str, Information] = {
             **self._train_sequences,
@@ -47,21 +45,21 @@ class ZodSequences:
 
     def _load_sequences(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load sequences for the given version."""
-        filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SEQUENCES[self._version]
+        filename = TRAINVAL_FILES[SEQUENCES][self._version]
 
         with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 
         train_sequences = process_map(
             _create_sequence,
-            all_ids[constants.TRAIN],
+            all_ids[TRAIN],
             repeat(self._dataset_root),
             chunksize=1,
             desc="Loading train sequences",
         )
         val_sequences = process_map(
             _create_sequence,
-            all_ids[constants.VAL],
+            all_ids[VAL],
             repeat(self._dataset_root),
             chunksize=1,
             desc="Loading val sequences",
@@ -74,14 +72,12 @@ class ZodSequences:
 
     def get_split(self, split: str) -> List[str]:
         """Get split by name (e.g. train / val)."""
-        if split == constants.TRAIN:
+        if split == TRAIN:
             return list(self._train_sequences.keys())
-        elif split == constants.VAL:
+        elif split == VAL:
             return list(self._val_sequences.keys())
         else:
-            raise ValueError(
-                f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
-            )
+            raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 
     def get_all_ids(self) -> Set[str]:
         """Get all sequence ids."""
