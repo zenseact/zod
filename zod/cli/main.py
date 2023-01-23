@@ -9,10 +9,15 @@ except ImportError:
 
 from zod.cli.download_zod import app as download_app
 from zod.cli.generate_coco_json import convert_to_coco
+from zod.cli.visualize_lidar import app as visualize_lidar_app
 
 app = typer.Typer(help="Zenseact Open Dataset CLI.", no_args_is_help=True)
 
 app.add_typer(download_app, name="download")
+
+visualize_app = typer.Typer(help="Visualization tools", no_args_is_help=True)
+app.add_typer(visualize_app, name="visualize")
+visualize_app.add_typer(visualize_lidar_app, name="lidar")
 
 
 convert_app = typer.Typer(

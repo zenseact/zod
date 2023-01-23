@@ -2,14 +2,14 @@ import json
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
 from zod import constants
+from zod.utils.utils import zfill_id
 from zod.zod_dataclasses.info import Information
 from zod.zod_dataclasses.sequence import ZodSequence
-from zod.utils.utils import zfill_id
 
 
 def _create_sequence(sequence: dict, dataset_root: str) -> Information:
@@ -82,3 +82,7 @@ class ZodSequences:
             raise ValueError(
                 f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
             )
+
+    def get_all_ids(self) -> Set[str]:
+        """Get all sequence ids."""
+        return set(self._sequences.keys())
