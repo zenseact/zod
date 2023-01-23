@@ -1,19 +1,6 @@
-FROM nvcr.io/nvidia/pytorch:22.12-py3
+FROM python:3.10-slim
 
-# Install using poetry
-RUN pip install tqdm \
-    numpy \
-    scipy \
-    h5py \
-    pyquaternion \
-    numpy-quaternion \
-    importlib-metadata \
-    typer \
-    dropbox \
-    opencv \
-    pyproj \
-    matplotlib \
-    plotly \
-    ipykernel \
-    pandas \
-    dataclass_wizard
+ADD . /tmp/repo
+RUN cd /tmp/repo && pip install --no-cache-dir ".[all]"
+
+ENTRYPOINT [ "zod" ]

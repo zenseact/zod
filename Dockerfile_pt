@@ -1,0 +1,5 @@
+FROM nvcr.io/nvidia/pytorch:22.12-py3
+
+# RUN pip install zod[all]
+ADD . /tmp/repo
+RUN cd /tmp/repo && pip install ".[all]"
