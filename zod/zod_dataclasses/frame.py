@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -78,12 +78,15 @@ class ZodFrame:
         """Get the lidar data, same as `get_lidar_frames` but actually reads the data."""
         return [lidar_frame.read() for lidar_frame in self.get_lidar_frames(num_before, num_after)]
 
-    def get_aggregated_point_cloud(self, num_before: int, num_after: int = 0) -> LidarData:
+    def get_aggregated_point_cloud(
+        self, num_before: int, num_after: int = 0, timestamp: Optional[float] = None
+    ) -> LidarData:
         """Get an aggregated point cloud around the keyframe."""
         key_lidar_frame = self.info.get_key_lidar_frame()
         key_lidar_data = key_lidar_frame.read()
         _adjust_lidar_core_time(key_lidar_data)
-        target_time = key_lidar_data.core_timestamp
+        if timestamp is None:
+            timestamp = key_lidar_data.core_timestamp
         lidar_calib = self.calibration.lidars[Lidar.VELODYNE]
         # Adjust each individual scan
         to_aggregate = []
@@ -93,7 +96,7 @@ class ZodFrame:
             lidar_data = lidar_frame.read()
             _adjust_lidar_core_time(lidar_data)
             lidar_data = motion_compensate_scanwise(
-                lidar_data, self.ego_motion, lidar_calib, target_time
+                lidar_data, self.ego_motion, lidar_calib, timestamp
             )
             to_aggregate.append(lidar_data)
         # Aggregate the scans
