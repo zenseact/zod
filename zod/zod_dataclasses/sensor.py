@@ -109,6 +109,16 @@ class LidarData:
             + sum(o.core_timestamp * len(o.timestamps) for o in other)
         ) / (len(self.timestamps) + sum(len(o.timestamps) for o in other))
 
+    def __eq__(self, other: "LidarData") -> bool:
+        """Check if two LidarData objects are equal."""
+        return (
+            np.allclose(self.points, other.points)
+            and np.allclose(self.timestamps, other.timestamps)
+            and np.allclose(self.intensity, other.intensity)
+            and np.allclose(self.diode_idx, other.diode_idx)
+            and np.isclose(self.core_timestamp, other.core_timestamp)
+        )
+
 
 @dataclass
 class SensorFrame(JSONSerializable):
