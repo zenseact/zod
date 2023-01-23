@@ -115,7 +115,7 @@ def compensate_to_keyframe_cloud(sequence, sequence_dir, lidar_files, ego_motion
     """Extract and compensate the nearest point cloud to the keyframe (middle) image."""
     print("Compensating to keyframe for: ", sequence)
     images = os.listdir(osp.join(sequence_dir, IMAGE_FOLDER))
-    images = [i for i in images if i.endswith(".jpg")]
+    images = sorted([i for i in images if i.endswith(".jpg")])
     keyframe_image_name = images[len(images) // 2]
     keyframe_datetime = parse_datetime_from_filename(keyframe_image_name)
     nearest_lidar = min(
