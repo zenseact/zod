@@ -4,7 +4,7 @@ import os
 import os.path as osp
 from itertools import repeat
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
@@ -86,6 +86,6 @@ class ZodFrames(object):
         """Get all frames."""
         return self._frames
 
-    def get_all_ids(self) -> List[str]:
+    def get_all_ids(self) -> Set[str]:
         """Get all frame ids."""
-        return list(self._frames.keys())
+        return set(self._frames.keys())
