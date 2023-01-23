@@ -23,15 +23,16 @@ The general outline of the matching process is as follows:
 """
 
 from dataclasses import dataclass
-from shapely import geometry
 from typing import Callable, List, Tuple
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from zod.frames.evaluation.object_detection.utils import polygon_iod2D
+from shapely import geometry
+
 from zod.constants import EVALUATION_FRAME
+from zod.frames.evaluation.object_detection.utils import polygon_iod2D
+from zod.zod_dataclasses import Calibration
 from zod.zod_dataclasses.objects import AnnotatedObject, PredictedObject
-from zod.zod_dataclasses.sensor import Calibration
 
 GtPredMatch = Tuple[AnnotatedObject, PredictedObject]
 MIN_CAMERA_ONLY_DEPTH = 150  # in meters
