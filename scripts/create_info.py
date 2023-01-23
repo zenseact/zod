@@ -3,25 +3,34 @@ import json
 import os
 import os.path as osp
 from datetime import datetime
-from itertools import repeat
+from itertools import chain, repeat
 from typing import Dict, List, Tuple
 
 import typer
 from dataclass_wizard import JSONWizard
 from tqdm.contrib.concurrent import process_map
 
-from zod.constants import DB_DATE_STRING_FORMAT_W_MICROSECONDS, AnnotationProject, Lidar
+from zod.constants import (
+    DB_DATE_STRING_FORMAT_W_MICROSECONDS,
+    FRAMES,
+    SEQUENCES,
+    SPLIT_FILES,
+    TRAIN,
+    TRAINVAL_FILES,
+    VAL,
+    AnnotationProject,
+    Anonymization,
+    Lidar,
+)
 from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.sensor import AnnotationFrame, CameraFrame, LidarFrame, SensorFrame
+from zod.zod_dataclasses.sensor import AnnotationFrame, CameraFrame, LidarFrame
 
 DATASET_ROOT = "/staging/dataset_donation/round_2/"
 FILE_NAME = "info.json"
-SEQUENCES = "sequences"
-FRAMES = "single_frames"
 
 
 def _split_filename(filename: str) -> Tuple[str, str, datetime]:
-    seq_id, veh, timestamp = os.path.splitext(filename)[0].split("_")
+    seq_id, veh, timestamp = osp.splitext(filename)[0].split("_")
 
     # parse timestamp 2022-02-14T13:23:33.029609Z
     timestamp = datetime.strptime(timestamp, DB_DATE_STRING_FORMAT_W_MICROSECONDS)
@@ -34,15 +43,15 @@ class GlobalJSONMeta(JSONWizard.Meta):
 
 
 def create_sequence_info(id_: str, dataset_root: str, top_dir: str) -> Information:
-    dir_path = os.path.join(dataset_root, top_dir, id_)
+    dir_path = osp.join(dataset_root, top_dir, id_)
 
-    calibration_filename = os.listdir(os.path.join(dir_path, "calibration"))[0]
-    calibration_path = os.path.join(top_dir, id_, "calibration", calibration_filename)
+    calibration_filename = os.listdir(osp.join(dir_path, "calibration"))[0]
+    calibration_path = osp.join(top_dir, id_, "calibration", calibration_filename)
 
-    oxts_filename = os.listdir(os.path.join(dir_path, "oxts"))[0]
-    oxts_path = os.path.join(top_dir, id_, "oxts", oxts_filename)
+    oxts_filename = os.listdir(osp.join(dir_path, "oxts"))[0]
+    oxts_path = osp.join(top_dir, id_, "oxts", oxts_filename)
 
-    lidar_frames = _get_lidar_frames(id_, top_dir, dir_path)
+    all_lidar_frames = _get_lidar_frames(id_, top_dir, dir_path)
 
     all_camera_frames = _get_camera_frames(id_, top_dir, dir_path)
 
@@ -55,81 +64,129 @@ def create_sequence_info(id_: str, dataset_root: str, top_dir: str) -> Informati
     assert all(
         len(frames) == len(next(iter(all_camera_frames.values())))
         for frames in all_camera_frames.values()
-    ), "Number of frames for all cameras should be equal"
-    camera_times = [frame.time for frame in next(iter(all_camera_frames.values()))]
-    lidar_times = [frame.time for frame in lidar_frames]
+    ), f"Number of frames for all cameras should be equal, but are not for sequence {id_}"
+    first_camera_times = [frame.time for frame in next(iter(all_camera_frames.values()))]
+    all_times = {
+        frame.time for frame in chain(*all_camera_frames.values(), *all_lidar_frames.values())
+    }
 
     sequence_info = Information(
         id=id_,
-        start_time=min(camera_times + lidar_times),
-        end_time=max(camera_times + lidar_times),
-        keyframe_time=camera_times[len(camera_times) // 2],
+        start_time=min(all_times),
+        end_time=max(all_times),
+        keyframe_time=first_camera_times[len(first_camera_times) // 2],
         camera_frames=all_camera_frames,
-        lidar_frames={Lidar.VELODYNE: lidar_frames},
+        lidar_frames=all_lidar_frames,
         calibration_path=calibration_path,
-        ego_motion_path=os.path.join(top_dir, id_, "ego_motion.json"),
-        metadata_path=os.path.join(top_dir, id_, "metadata.json"),
+        ego_motion_path=osp.join(top_dir, id_, "ego_motion.json"),
+        metadata_path=osp.join(top_dir, id_, "metadata.json"),
         oxts_path=oxts_path,
         annotation_frames=all_annotation_frames,
     )
 
-    with open(os.path.join(dir_path, FILE_NAME), "w") as f:
+    with open(osp.join(dir_path, FILE_NAME), "w") as f:
         json.dump(sequence_info.to_dict(), f)
 
-    os.chmod(os.path.join(dir_path, FILE_NAME), 0o664)
+    try:
+        os.chmod(osp.join(dir_path, FILE_NAME), 0o664)
+    except PermissionError:
+        pass
 
     return sequence_info
 
 
-def _get_lidar_frames(id_, top_dir, dir_path) -> List[LidarFrame]:
-    lidar_files = sorted(os.listdir(os.path.join(dir_path, "lidar_velodyne")))
-    lidar_frames = [
-        LidarFrame(
-            filepath=os.path.join(top_dir, id_, "lidar_velodyne", filename),
-            time=_split_filename(filename)[-1],
-        )
-        for filename in lidar_files
-    ]
-    return lidar_frames
+def _get_lidar_frames(id_, top_dir, dir_path) -> Dict[Lidar, List[LidarFrame]]:
+    all_lidar_frames = {}
+    for lidar in Lidar:
+        lidar_name = f"lidar_{lidar.value}"
+        lidar_dir = osp.join(dir_path, lidar_name)
+        if not osp.exists(lidar_dir):
+            continue
+        lidar_files = sorted(os.listdir(lidar_dir))
+        lidar_frames = [
+            LidarFrame(
+                filepath=osp.join(top_dir, id_, lidar_name, filename),
+                time=_split_filename(filename)[-1],
+                is_compensated=top_dir == SEQUENCES,
+            )
+            for filename in lidar_files
+        ]
+        all_lidar_frames[lidar] = lidar_frames
+    return all_lidar_frames
 
 
 def _get_annotation_frames(
     id_, top_dir, dir_path
 ) -> Dict[AnnotationProject, List[AnnotationFrame]]:
-    if not os.path.exists(os.path.join(dir_path, "annotations")):
+    if not osp.exists(osp.join(dir_path, "annotations")):
         return {}
     all_annotation_frames = {}
-    for project in sorted(os.listdir(os.path.join(dir_path, "annotations"))):
-        annotation_files = sorted(os.listdir(os.path.join(dir_path, "annotations", project)))
-        project_enum = AnnotationProject(project)
+    for project_name in sorted(os.listdir(osp.join(dir_path, "annotations"))):
+        if project_name not in {p.value for p in AnnotationProject}:
+            continue
+        annotation_files = sorted(os.listdir(osp.join(dir_path, "annotations", project_name)))
+        project = AnnotationProject(project_name)
         annotation_frames = [
             AnnotationFrame(
-                filepath=os.path.join(top_dir, id_, "annotations", project, filename),
+                filepath=osp.join(top_dir, id_, "annotations", project_name, filename),
                 time=_split_filename(filename)[-1],
-                project=project_enum,
+                project=project,
             )
             for filename in annotation_files
             if filename.endswith(".json")
         ]
-        all_annotation_frames[project_enum] = annotation_frames
+        all_annotation_frames[project] = annotation_frames
     return all_annotation_frames
 
 
 def _get_camera_frames(id_, top_dir, dir_path) -> Dict[str, List[CameraFrame]]:
     all_camera_frames = {}
-    for camera in sorted(glob.glob(os.path.join(dir_path, "camera_*"))):
+    for camera in sorted(glob.glob(osp.join(dir_path, "camera_*"))):
         camera_files = sorted(os.listdir(camera))
 
         camera_frames = [
             CameraFrame(
-                filepath=os.path.join(top_dir, id_, osp.basename(camera), filename),
+                filepath=osp.join(top_dir, id_, osp.basename(camera), filename),
                 time=_split_filename(filename)[-1],
             )
             for filename in camera_files
             if filename.endswith(".jpg")
         ]
-        all_camera_frames[osp.basename(camera).lstrip("camera_")] = camera_frames
+        if camera_frames:
+            all_camera_frames[osp.basename(camera).lstrip("camera_")] = camera_frames
+    # TODO: this is temporary, remove
+    blur = Anonymization.BLUR.value
+    for camera, frames in list(all_camera_frames.items()):
+        if blur in camera:
+            continue
+        blur_camera = "_".join(camera.split("_")[:-1] + [blur])
+        if blur_camera in all_camera_frames:
+            continue
+        all_camera_frames[blur_camera] = [
+            CameraFrame(
+                filepath=frame.filepath.replace(camera, blur_camera),
+                time=frame.time,
+            )
+            for frame in frames
+        ]
     return all_camera_frames
+
+
+def create_train_val_files(all_infos: List[Information], dataset_root: str, top_dir: str):
+    infos = {info.id: info.to_dict() for info in all_infos}
+    for version, train_val_file in TRAINVAL_FILES[top_dir].items():
+        with open(osp.join(dataset_root, SPLIT_FILES[top_dir][version][TRAIN])) as f:
+            train_ids = set(f.read().splitlines())
+        with open(osp.join(dataset_root, SPLIT_FILES[top_dir][version][VAL])) as f:
+            val_ids = set(f.read().splitlines())
+        with open(osp.join(dataset_root, train_val_file), "w") as f:
+            json.dump(
+                {
+                    TRAIN: [infos[id_] for id_ in train_ids],
+                    VAL: [infos[id_] for id_ in val_ids],
+                },
+                f,
+            )
 
 
 def main(
@@ -141,20 +198,24 @@ def main(
         raise typer.BadParameter("Please specify either --sequences or --frames")
     if sequences:
         folders = sorted(os.listdir(osp.join(dataset_root, SEQUENCES)))
-        process_map(
+        all_infos = process_map(
             create_sequence_info,
             folders,
             repeat(dataset_root),
             repeat(SEQUENCES),
+            chunksize=10,
         )
+        create_train_val_files(all_infos, dataset_root, SEQUENCES)
     if frames:
         folders = sorted(os.listdir(osp.join(dataset_root, FRAMES)))
-        process_map(
+        all_infos = process_map(
             create_sequence_info,
             folders,
             repeat(dataset_root),
             repeat(FRAMES),
+            chunksize=100,
         )
+        create_train_val_files(all_infos, dataset_root, FRAMES)
 
 
 if __name__ == "__main__":

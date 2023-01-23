@@ -8,7 +8,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
-from zod import constants
+from zod.constants import FRAMES, FULL, TRAIN, TRAINVAL_FILES, VAL, VERSIONS
 from zod.utils.utils import zfill_id
 from zod.zod_dataclasses.frame import ZodFrame
 from zod.zod_dataclasses.info import Information
@@ -26,9 +26,7 @@ class ZodFrames(object):
     def __init__(self, dataset_root: Union[Path, str], version: str):
         self._dataset_root = dataset_root
         self._version = version
-        assert (
-            version in constants.VERSIONS
-        ), f"Unknown version: {version}, must be one of: {constants.VERSIONS}"
+        assert version in VERSIONS, f"Unknown version: {version}, must be one of: {VERSIONS}"
         self._train_frames, self._val_frames = self._load_frames()
         self._frames: Dict[str, Information] = {**self._train_frames, **self._val_frames}
 
@@ -46,24 +44,24 @@ class ZodFrames(object):
 
     def _load_frames(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load frames for the given version."""
-        filename = constants.SPLIT_TO_TRAIN_VAL_FILE_SINGLE_FRAMES[self._version]
+        filename = TRAINVAL_FILES[FRAMES][self._version]
 
         with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 
         train_frames = process_map(
             _create_frame,
-            all_ids[constants.TRAIN],
+            all_ids[TRAIN],
             repeat(self._dataset_root),
             desc="Loading train frames",
-            chunksize=50 if self._version == constants.FULL else 1,
+            chunksize=50 if self._version == FULL else 1,
         )
         val_frames = process_map(
             _create_frame,
-            all_ids[constants.VAL],
+            all_ids[VAL],
             repeat(self._dataset_root),
             desc="Loading val frames",
-            chunksize=50 if self._version == constants.FULL else 1,
+            chunksize=50 if self._version == FULL else 1,
         )
 
         train_frames = {frame.id: frame for frame in train_frames}
@@ -73,14 +71,12 @@ class ZodFrames(object):
 
     def get_split(self, split: str) -> List[str]:
         """Get split by name (e.g. train / val)."""
-        if split == constants.TRAIN:
+        if split == TRAIN:
             return list(self._train_frames.keys())
-        elif split == constants.VAL:
+        elif split == VAL:
             return list(self._val_frames.keys())
         else:
-            raise ValueError(
-                f"Unknown split: {split}, should be {constants.TRAIN} or {constants.VAL}"
-            )
+            raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 
     def get_all_frame_infos(self) -> Dict[str, Information]:
         """Get all frames."""
