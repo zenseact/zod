@@ -51,7 +51,7 @@ class Information(JSONSerializable):
             frame.filepath = osp.join(root_path, frame.filepath)
 
     def get_camera_lidar_map(
-        self, camera: str, lidar: str
+        self, anonymization: Anonymization, camera: Camera, lidar: Lidar
     ) -> Iterator[Tuple[CameraFrame, SensorFrame]]:
         """Iterate over all camera frames and their corresponding lidar frames.
 
@@ -61,14 +61,15 @@ class Information(JSONSerializable):
         Yields:
             A tuple of the camera frame and the closest lidar frame.
         """
+        camera_name = f"{camera.value}_{anonymization.value}"
         assert (
-            camera in self.camera_frames
-        ), f"Camera {camera} not found. Available cameras: {self.camera_frames.keys()}"
+            camera_name in self.camera_frames
+        ), f"Camera {camera_name} not found. Available cameras: {self.camera_frames.keys()}"
         assert (
             lidar in self.lidar_frames
         ), f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
 
-        for camera_frame in self.camera_frames[camera]:
+        for camera_frame in self.camera_frames[camera_name]:
             # Get the closest lidar frame in time
             lidar_frame = min(
                 self.lidar_frames[lidar],
@@ -88,8 +89,8 @@ class Information(JSONSerializable):
 
     def get_key_camera_frame(
         self,
+        anonymization: Anonymization,
         camera: Camera = Camera.FRONT,
-        anonymization: Anonymization = Anonymization.BLUR,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
         if len(self.camera_frames[camera_name]) == 1:
@@ -121,8 +122,8 @@ class Information(JSONSerializable):
     def get_camera_frame(
         self,
         time: datetime,
+        anonymization: Anonymization,
         camera: Camera = Camera.FRONT,
-        anonymization: Anonymization = Anonymization.BLUR,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
         return min(
@@ -145,8 +146,8 @@ class Information(JSONSerializable):
 
     def get_camera_frames(
         self,
+        anonymization: Anonymization,
         camera: Camera = Camera.FRONT,
-        anonymization: Anonymization = Anonymization.BLUR,
     ) -> List[CameraFrame]:
         camera_name = f"{camera.value}_{anonymization.value}"
         return self.camera_frames[camera_name]

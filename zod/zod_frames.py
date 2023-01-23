@@ -85,3 +85,7 @@ class ZodFrames(object):
     def get_all_frame_infos(self) -> Dict[str, Information]:
         """Get all frames."""
         return self._frames
+
+    def get_all_ids(self) -> List[str]:
+        """Get all frame ids."""
+        return list(self._frames.keys())

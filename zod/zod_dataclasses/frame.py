@@ -2,7 +2,7 @@ from typing import Any, List
 
 import numpy as np
 
-from zod.constants import AnnotationProject, Lidar
+from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 from zod.utils.compensation import motion_compensate_scanwise
 
 from .calibration import Calibration
@@ -53,9 +53,14 @@ class ZodFrame:
         assert project in self.info.annotation_frames, f"Project {project} not available."
         return self.info.get_key_annotation_frame(project).read()
 
-    def get_image(self) -> np.ndarray:
+    def get_image(
+        self,
+        anonymization: Anonymization = Anonymization.BLUR,
+    ) -> np.ndarray:
         """Get the image."""
-        return self.info.get_key_camera_frame().read()
+        return self.info.get_key_camera_frame(
+            camera=Camera.FRONT, anonymization=anonymization
+        ).read()
 
     def get_lidar_frames(
         self,
@@ -80,7 +85,8 @@ class ZodFrame:
         _adjust_lidar_core_time(key_lidar_data)
         target_time = key_lidar_data.core_timestamp
         lidar_calib = self.calibration.lidars[Lidar.VELODYNE]
-        aggregated_data = key_lidar_data
+        # Adjust each individual scan
+        to_aggregate = []
         for lidar_frame in self.get_lidar_frames(num_before, num_after):
             if lidar_frame == key_lidar_frame:
                 continue
@@ -89,8 +95,10 @@ class ZodFrame:
             lidar_data = motion_compensate_scanwise(
                 lidar_data, self.ego_motion, lidar_calib, target_time
             )
-            aggregated_data.extend(aggregated_data)
-        return aggregated_data
+            to_aggregate.append(lidar_data)
+        # Aggregate the scans
+        key_lidar_data.extend(*to_aggregate)
+        return key_lidar_data
 
 
 def _adjust_lidar_core_time(lidar: LidarData):
