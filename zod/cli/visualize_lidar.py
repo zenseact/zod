@@ -56,7 +56,7 @@ def sequences(
     sequence_id: int = typer.Option(..., help="Frame id to visualize"),
     start: int = typer.Option(0, help="Index of the first frame to visualize"),
     end: int = typer.Option(-1, help="Index of the last frame to visualize (-1 means last)"),
-    downsampling: int = typer.Option(1, help="Downsampling factor (random point dropping)"),
+    downsampling: int = typer.Option(10, help="Downsampling factor (random point dropping)"),
 ):
     """Visualize the lidar data for a given frame id."""
     zod_sequences = ZodSequences(dataset_root=dataset_root, version=version)
@@ -65,6 +65,7 @@ def sequences(
     frame = zod_sequences[sequence_id]
     data = frame.get_aggregated_point_cloud(start=start, end=end)
     if downsampling > 1:
+        typer.echo(f"Will subsample the point-cloud with a factor {downsampling}")
         indexes = np.random.choice(
             data.points.shape[0], size=data.points.shape[0] // downsampling, replace=False
         )
