@@ -22,9 +22,9 @@ nice little trick to download only mini version from cluster
 
 ```bash
 mkdir ~/data/zod
-rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/mini_train_val_single_frames.json ~/data/zod/
+rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/trainval_frames_mini.json ~/data/zod/
 
-cat ~/data/zod/mini_train_val_single_frames.json | jq -r '.[] | .[] | .id' | xargs -I{} rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/single_frames/{} ~/data/zod/single_frames
+cat ~/data/zod/trainval_frames_mini.json | jq -r '.[] | .[] | .id' | xargs -I{} rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/single_frames/{} ~/data/zod/single_frames
 ```
 
 ## Anonymization
