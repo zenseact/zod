@@ -66,7 +66,7 @@ class ZodFrame:
         self,
         num_before: int = 0,
         num_after: int = 0,
-    ) -> list[LidarFrame]:
+    ) -> List[LidarFrame]:
         """Get the lidar frames (around the keyframe)."""
         all_frames = self.info.get_lidar_frames(Lidar.VELODYNE)
         key_frame_dx = len(all_frames) // 2  # the key frame is in the middle
