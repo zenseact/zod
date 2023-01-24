@@ -22,9 +22,15 @@ nice little trick to download only mini version from cluster
 
 ```bash
 mkdir ~/data/zod
-rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/trainval_frames_mini.json ~/data/zod/
+# create an entry in your .ssh/config if you dont have it already
+#Host hal-data
+#    User <your-s-id>
+#    HostName hal-data.int.autoheim.net
+# if you dont do that: replace hal-data with hal-data.int.autoheim.net below
 
-cat ~/data/zod/trainval_frames_mini.json | jq -r '.[] | .[] | .id' | xargs -I{} rsync -ar --info=progress2 hal:/staging/dataset_donation/round_2/single_frames/{} ~/data/zod/single_frames
+rsync -ar --info=progress2  hal-data:/staging/dataset_donation/round_2/trainval_frames_mini.json ~/data/zod/
+
+cat ~/data/zod/trainval_frames_mini.json | jq -r '.[] | .[] | .id' | xargs -I{} rsync -ar --info=progress2  hal-data:/staging/dataset_donation/round_2/single_frames/{} ~/data/zod/single_frames
 ```
 
 ## Anonymization
