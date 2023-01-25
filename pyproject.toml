@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zod"
-version = "0.0.13"
+version = "0.0.14"
 description = "Zenseact Open Dataset"
 authors = ["Zenseact <opendataset@zenseact.com>"]
 license = "MIT"
@@ -16,15 +16,15 @@ python = "^3.6.1"
 tqdm = ">=4.60"
 numpy = [
     { version = "^1.21", platform = "darwin", python = "^3.8" },
-    { version = "^1.19" }
+    { version = "^1.19" },
 ]
 scipy = [
     { version = "^1.9", platform = "darwin", python = "^3.8" },
-    { version = "^1.5" }
+    { version = "^1.5" },
 ]
 h5py = [
     { version = "^3.3", platform = "darwin", python = "^3.8" },
-    { version = "^3.1" }
+    { version = "^3.1" },
 ]
 pyquaternion = ">=0.9"
 numpy-quaternion = "^2022.4.2"
@@ -42,12 +42,20 @@ pandas = { version = "*", optional = true }
 
 [tool.poetry.extras]
 cli = ["typer", "dropbox"]
-all = ["typer", "dropbox", "opencv-python", "pyproj", "matplotlib", "plotly", "pandas"]
+all = [
+    "typer",
+    "dropbox",
+    "opencv-python",
+    "pyproj",
+    "matplotlib",
+    "plotly",
+    "pandas",
+]
 
 [tool.poetry.group.dev.dependencies]
-ruff = {version="^0.0.225", python = "^3.7"}
-black = {version="^22.10.0", python = "^3.7"}
-pre-commit = {version="^2.20.0", python = "^3.7"}
+ruff = { version = "^0.0.225", python = "^3.7" }
+black = { version = "^22.10.0", python = "^3.7" }
+pre-commit = { version = "^2.20.0", python = "^3.7" }
 
 [build-system]
 requires = ["poetry-core"]
