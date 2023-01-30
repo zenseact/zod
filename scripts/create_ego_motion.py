@@ -16,24 +16,16 @@ from zod.zod_dataclasses.sequence import ZodSequence
 from zod.zod_frames import ZodFrames
 from zod.zod_sequences import ZodSequences
 
-
 DATASET_ROOT = "/staging/dataset_donation/round_2/"
 FILE_NAME = "ego_motion.json"
 SEQUENCES = "sequences"
 FRAMES = "single_frames"
-# TODO: this is required because oxts is not extracted far enough backwards
-TRUNCATE = True
 
 
 def interpolate_and_write_oxts(info: Information, oxts: EgoMotion, save_dir: str):
     datetimes = [frame.time for frame in info.all_frames]
     datetimes = sorted(list(set(datetimes)))
     timestamps = np.array([t.timestamp() for t in datetimes])
-
-    if TRUNCATE:
-        timestamps[timestamps < np.min(oxts.timestamps)] = np.min(oxts.timestamps)
-        timestamps[timestamps > np.max(oxts.timestamps)] = np.max(oxts.timestamps)
-        timestamps = np.unique(timestamps)
 
     ego_motion_interp = oxts.interpolate(timestamps)
     with open(osp.join(save_dir, info.id, "ego_motion.json"), "w") as f:
