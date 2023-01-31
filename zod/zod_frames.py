@@ -33,8 +33,10 @@ class ZodFrames(object):
     def __len__(self) -> int:
         return len(self._frames)
 
-    def __getitem__(self, frame_id: Union[int, str]) -> ZodFrame:
+    def __getitem__(self, frame_id: Union[int, str, slice]) -> ZodFrame:
         """Get frame by id, which is a 6-digit zero-padded number. Ex: '000001'."""
+        if isinstance(frame_id, slice):
+            return [self.__getitem__(i) for i in range(*frame_id.indices(len(self)))]
         frame_id = zfill_id(frame_id)
         return ZodFrame(self._frames[frame_id])
 

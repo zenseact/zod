@@ -34,8 +34,11 @@ class ZodSequences:
     def __len__(self) -> int:
         return len(self._sequences)
 
-    def __getitem__(self, sequence_id: Union[int, str]) -> ZodSequence:
+    def __getitem__(self, sequence_id: Union[int, str, slice]) -> ZodSequence:
         """Get sequence by id, which is a 6-digit zero-padded number. Ex: '000001'."""
+        if isinstance(sequence_id, slice):
+            return [self.__getitem__(i) for i in range(*sequence_id.indices(len(self)))]
+
         sequence_id = zfill_id(sequence_id)
         return ZodSequence(self._sequences[sequence_id])
 
