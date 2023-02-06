@@ -7,7 +7,7 @@ import pandas as pd
 import pyproj
 
 from zod.constants import Camera
-from zod.utils.geometry import get_points_in_camera_fov, kannala_project, transform_points
+from zod.utils.geometry import get_points_in_camera_fov, project_3d_to_2d_kannala, transform_points
 from zod.zod_dataclasses.calibration import Calibration
 from zod.zod_dataclasses.oxts import EgoMotion
 
@@ -40,7 +40,7 @@ def visualize_oxts_on_image(
     print(f"Number of points in fov: {len(points_in_fov)}")
 
     # project points to image plane
-    xy_array = kannala_project(
+    xy_array = project_3d_to_2d_kannala(
         points_in_fov,
         calibs.cameras[camera].intrinsics[..., :3],
         calibs.cameras[camera].distortion,

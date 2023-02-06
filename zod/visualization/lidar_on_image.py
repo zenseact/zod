@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from zod.constants import Camera, Lidar
-from zod.utils.geometry import get_points_in_camera_fov, kannala_project, transform_points
+from zod.utils.geometry import get_points_in_camera_fov, project_3d_to_2d_kannala, transform_points
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
 from zod.zod_dataclasses.calibration import Calibration
 from zod.zod_dataclasses.geometry import Pose
@@ -43,7 +43,7 @@ def project_lidar_to_image(
         return camera_data
     camera_data = get_points_in_camera_fov(calib.cameras[camera].field_of_view, camera_data)
 
-    xy_array = kannala_project(
+    xy_array = project_3d_to_2d_kannala(
         camera_data,
         calib.cameras[camera].intrinsics[..., :3],
         calib.cameras[camera].distortion,

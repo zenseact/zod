@@ -99,68 +99,6 @@ def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     return transformed_points
 
 
-def to_homogenous(a):
-    """Append ones to the last dimension of `a`."""
-    return np.concatenate([a, np.ones_like(a[..., 0:1])], axis=-1)
-
-
-def inner(a, b):
-    """Compute broadcastable inner product in the last dimension."""
-    return np.sum(a * b, axis=-1)
-
-
-def matvec(A, b, *, nrow=None):
-    """Multiply vector by matrix.
-
-    Notes
-    -----
-    If you have very large batches of small-dimensional
-    matrices / vectors, you should consider passing the
-    number of rows in the matrix with the `nrow` argument,
-    as this will switch to a codepath that depending on
-    the situation can be up to 1000x faster to compute.
-
-    """
-    if nrow is not None:
-        return np.stack([inner(A[..., i, :], b) for i in range(nrow)], axis=-1)
-    return (A @ b[..., None])[..., 0]
-
-
-def kannala_project(P, K, dist):
-    """Project 3D -> pixel coordinates under the Kannala camera model.
-
-    Parameters
-    ----------
-    P: tensor of shape `(..., 3)`
-        3D coordinates
-    K: tensor of shape `(..., 3, 3)`
-        Camera matrix
-    dist: tensor of shape `(..., 4)`
-        Distortion coefficients
-
-    Returns
-    -------
-    p: tensor of shape `(..., 2)`
-        Projected pixel coordinates
-
-    """
-    xy = P[..., :2]
-    radius = np.linalg.norm(xy, axis=-1, keepdims=True)
-    theta = np.arctan2(radius, P[..., 2:3])
-    dist_angle = theta * (
-        1
-        + dist[..., 0:1] * theta**2
-        + dist[..., 1:2] * theta**4
-        + dist[..., 2:3] * theta**6
-        + dist[..., 3:4] * theta**8
-    )
-
-    uv_distorted = dist_angle * np.where(radius != 0, xy / radius, np.zeros_like(xy))
-    uv_hom = to_homogenous(uv_distorted)
-
-    return matvec(K[..., :2, :], uv_hom, nrow=2)
-
-
 def get_points_in_camera_fov(fov: np.ndarray, camera_data: np.ndarray) -> np.ndarray:
     """Get points that are present in camera field of view.
 
