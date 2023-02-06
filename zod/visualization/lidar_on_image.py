@@ -4,16 +4,11 @@ import cv2
 import numpy as np
 
 from zod.constants import Camera, Lidar
-from zod.utils.geometry import transform_points
-
-# from calibration import CameraInfo, get_3d_transform_camera_lidar, rigid_transform_3d
+from zod.utils.geometry import get_points_in_camera_fov, kannala_project, transform_points
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
-from zod.visualization.oxts_on_image import kannala_project
 from zod.zod_dataclasses.calibration import Calibration
 from zod.zod_dataclasses.geometry import Pose
 from zod.zod_dataclasses.sensor import LidarData
-
-# from constants import FOV
 
 
 def get_3d_transform_camera_lidar(
@@ -55,25 +50,6 @@ def project_lidar_to_image(
     )
     xyd_array = np.concatenate([xy_array, camera_data[:, 2:3]], axis=1)
     return xyd_array
-
-
-def get_points_in_camera_fov(fov: np.ndarray, camera_data: np.ndarray) -> np.ndarray:
-    """Get points that are present in camera field of view.
-
-    Args:
-        fov: camera field of view
-        camera_data: data to filter inside the camera field of view
-
-    Returns:
-        points only visible in the camera
-
-    """
-    horizontal_fov, vertical_fov = fov
-    if horizontal_fov == 0:
-        return camera_data
-    angles = np.rad2deg(np.arctan2(camera_data[:, 0], camera_data[:, 2]))
-    mask = np.logical_and(angles > -horizontal_fov / 2, angles < horizontal_fov / 2)
-    return camera_data[mask.flatten()]
 
 
 def draw_projections_as_points(
