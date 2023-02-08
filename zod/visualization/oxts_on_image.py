@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 
 import cv2
 import numpy as np
-import pandas as pd
-import pyproj
 
 from zod.constants import Camera
 from zod.utils.geometry import get_points_in_camera_fov, project_3d_to_2d_kannala, transform_points

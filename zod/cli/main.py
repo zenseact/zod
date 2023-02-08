@@ -4,7 +4,7 @@ from typing import Tuple
 try:
     import typer
 except ImportError:
-    print('zod is installed without the CLI dependencies: pip install "zod[cli]"')
+    print('Warning! zod is installed without the CLI dependencies:\npip install "zod[cli]"')
     exit(1)
 
 from zod.cli.download_zod import app as download_app

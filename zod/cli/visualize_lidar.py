@@ -1,23 +1,27 @@
 import numpy as np
 import typer
 from matplotlib import cm
+from rich import print
+from rich.panel import Panel
 
 from zod import ZodFrames, ZodSequences
 from zod.utils.utils import zfill_id
 from zod.zod_dataclasses import LidarData
 
-try:
-    import open3d as o3d
-except ImportError:
-    print(
-        "zod does not ship with open3d, which is required for interactive point cloud visualization. "
-        "Please install it manually: pip install open3d"
-    )
-    exit(1)
 app = typer.Typer(no_args_is_help=True)
+
+IMPORT_ERROR = (
+    "zod does not ship with open3d, which is required for interactive point cloud "
+    "visualization.\nPlease install it manually: pip install open3d"
+)
 
 
 def _visualize(data: LidarData):
+    try:
+        import open3d as o3d
+    except ImportError:
+        print(Panel(IMPORT_ERROR, title="Warning! Missing Dependency", border_style="red"))
+        exit(1)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data.points)
     # color the pointcloud according to the timestamp

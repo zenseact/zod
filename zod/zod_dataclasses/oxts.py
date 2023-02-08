@@ -161,5 +161,5 @@ def interpolate_vectors(
     target_min_ts, target_max_ts = np.min(target_timestamps), np.max(target_timestamps)
     assert source_min_ts <= target_min_ts, "Target timestamps must be after source timestamps"
     assert source_max_ts >= target_max_ts, "Target timestamps must be before source timestamps"
-
+    # Interpolate values to find values for each target timestamp without scipy
     return interp1d(source_timestamps, values, axis=0)(target_timestamps)
