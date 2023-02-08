@@ -5,8 +5,8 @@ from rich import print
 from rich.panel import Panel
 
 from zod import ZodFrames, ZodSequences
+from zod.data_classes import LidarData
 from zod.utils.utils import zfill_id
-from zod.zod_dataclasses import LidarData
 
 app = typer.Typer(no_args_is_help=True)
 

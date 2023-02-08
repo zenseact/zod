@@ -7,12 +7,7 @@ from typing import Dict, Iterator, List, Tuple
 from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 
 from ._serializable import JSONSerializable
-from .sensor import (
-    AnnotationFrame,
-    CameraFrame,
-    LidarFrame,
-    SensorFrame,
-)
+from .sensor import AnnotationFrame, CameraFrame, LidarFrame, SensorFrame
 
 
 @dataclass

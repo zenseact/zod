@@ -6,8 +6,8 @@ from typing import Any, Dict
 import numpy as np
 
 from zod.constants import EGO, Camera, CoordinateFrame, Lidar
+from zod.data_classes.geometry import Pose
 from zod.utils.geometry import transform_points
-from zod.zod_dataclasses.geometry import Pose
 
 
 @dataclass

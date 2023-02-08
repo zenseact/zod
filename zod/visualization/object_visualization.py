@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from zod.constants import Camera
+from zod.data_classes.objects import AnnotatedObject, Box2D, Box3D
 from zod.utils.visualization import render_3d_box
-from zod.zod_dataclasses.objects import AnnotatedObject, Box2D, Box3D
 
 FONT_TYPE = cv2.FONT_HERSHEY_COMPLEX
 

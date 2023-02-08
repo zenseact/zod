@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from zod.constants import AnnotationProject, Camera
+from zod.data_classes.objects import AnnotatedObject, Box2D
 from zod.frames.traffic_sign_classification.class_map import get_class_idx
-from zod.zod_dataclasses.objects import AnnotatedObject, Box2D
 
 
 def _read_annotation_file(annotation_file: str) -> Dict[str, Any]:

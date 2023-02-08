@@ -6,7 +6,7 @@ from typing import List, Optional, Sequence
 import numpy as np
 import plotly.express as px
 
-from zod.zod_dataclasses.oxts import EgoMotion
+from zod.data_classes.oxts import EgoMotion
 
 MAPS_STYLE = "open-street-map"
 SIZE_MAX = 7

@@ -17,7 +17,7 @@ from tqdm.contrib.concurrent import process_map
 import zod.constants as constants
 import zod.utils.annotation_parser as ap
 from zod import ZodFrames
-from zod.zod_dataclasses.frame import ZodFrame
+from zod.data_classes.frame import ZodFrame
 
 SUMMARY = """
 Finished creating dataset.

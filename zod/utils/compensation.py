@@ -2,9 +2,9 @@ from typing import Optional
 
 import numpy as np
 
-from zod.zod_dataclasses.calibration import LidarCalibration
-from zod.zod_dataclasses.oxts import EgoMotion
-from zod.zod_dataclasses.sensor import LidarData
+from zod.data_classes.calibration import LidarCalibration
+from zod.data_classes.oxts import EgoMotion
+from zod.data_classes.sensor import LidarData
 
 
 def motion_compensate_scanwise(

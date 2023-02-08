@@ -4,11 +4,11 @@ import cv2
 import numpy as np
 
 from zod.constants import Camera, Lidar
+from zod.data_classes.calibration import Calibration
+from zod.data_classes.geometry import Pose
+from zod.data_classes.sensor import LidarData
 from zod.utils.geometry import get_points_in_camera_fov, project_3d_to_2d_kannala, transform_points
 from zod.visualization.colorlabeler import ColorLabeler, create_matplotlib_colormap
-from zod.zod_dataclasses.calibration import Calibration
-from zod.zod_dataclasses.geometry import Pose
-from zod.zod_dataclasses.sensor import LidarData
 
 
 def get_3d_transform_camera_lidar(

@@ -7,9 +7,9 @@ from typing import Dict, List, Set, Tuple, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod.constants import SEQUENCES, TRAIN, TRAINVAL_FILES, VAL, VERSIONS
+from zod.data_classes.info import Information
+from zod.data_classes.sequence import ZodSequence
 from zod.utils.utils import zfill_id
-from zod.zod_dataclasses.info import Information
-from zod.zod_dataclasses.sequence import ZodSequence
 
 
 def _create_sequence(sequence: dict, dataset_root: str) -> Information:

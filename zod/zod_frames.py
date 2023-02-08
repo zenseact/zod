@@ -9,9 +9,9 @@ from typing import Dict, List, Set, Tuple, Union
 from tqdm.contrib.concurrent import process_map
 
 from zod.constants import FRAMES, FULL, TRAIN, TRAINVAL_FILES, VAL, VERSIONS
+from zod.data_classes.frame import ZodFrame
+from zod.data_classes.info import Information
 from zod.utils.utils import zfill_id
-from zod.zod_dataclasses.frame import ZodFrame
-from zod.zod_dataclasses.info import Information
 
 
 def _create_frame(frame: dict, dataset_root: str) -> Information:

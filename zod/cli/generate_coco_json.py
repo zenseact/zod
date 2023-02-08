@@ -12,9 +12,9 @@ from tqdm.contrib.concurrent import process_map
 import zod.constants as constants
 from zod import ZodFrames
 from zod.constants import ALL_CLASSES, Anonymization
+from zod.data_classes.frame import ZodFrame
+from zod.data_classes.objects import AnnotatedObject
 from zod.utils.utils import str_from_datetime
-from zod.zod_dataclasses.frame import ZodFrame
-from zod.zod_dataclasses.objects import AnnotatedObject
 
 # Map classes to categories, starting from 1
 CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(ALL_CLASSES)}
