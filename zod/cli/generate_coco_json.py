@@ -11,9 +11,9 @@ from tqdm.contrib.concurrent import process_map
 
 import zod.constants as constants
 from zod import ZodFrames
+from zod.anno.object import AnnotatedObject
 from zod.constants import ALL_CLASSES, Anonymization
 from zod.data_classes.frame import ZodFrame
-from zod.data_classes.objects import AnnotatedObject
 from zod.utils.utils import str_from_datetime
 
 # Map classes to categories, starting from 1

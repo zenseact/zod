@@ -6,13 +6,9 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from ...nuscenes_eval.common.data_classes import EvalBox, MetricData
-from ...nuscenes_eval.common.utils import center_distance
-from ...nuscenes_eval.detection.constants import (
-    ATTRIBUTE_NAMES,
-    DETECTION_NAMES,
-    TP_METRICS,
-)
+from ..common.data_classes import EvalBox, MetricData
+from ..common.utils import center_distance
+from ..detection.constants import ATTRIBUTE_NAMES, DETECTION_NAMES, TP_METRICS
 
 
 class DetectionConfig:
@@ -29,7 +25,6 @@ class DetectionConfig:
         max_boxes_per_sample: int,
         mean_ap_weight: int,
     ):
-
         assert set(class_range.keys()) == set(DETECTION_NAMES), "Class count mismatch."
         assert dist_th_tp in dist_ths, "dist_th_tp must be in set of dist_ths."
 
@@ -102,7 +97,6 @@ class DetectionMetricData(MetricData):
         orient_err: np.array,
         attr_err: np.array,
     ):
-
         # Assert lengths.
         assert len(recall) == self.nelem
         assert len(precision) == self.nelem
@@ -214,7 +208,6 @@ class DetectionMetrics:
     """Stores average precision and true positive metric results. Provides properties to summarize."""
 
     def __init__(self, cfg: DetectionConfig):
-
         self.cfg = cfg
         self._label_aps = defaultdict(lambda: defaultdict(float))
         self._label_tp_errors = defaultdict(lambda: defaultdict(float))
@@ -263,7 +256,6 @@ class DetectionMetrics:
         scores = {}
         tp_errors = self.tp_errors
         for metric_name in TP_METRICS:
-
             # We convert the true positive errors to "scores" by 1-error.
             score = 1.0 - tp_errors[metric_name]
 
@@ -356,7 +348,6 @@ class DetectionBox(EvalBox):
         detection_score: float = -1.0,  # GT samples do not have a score.
         attribute_name: str = "",
     ):  # Box attribute. Each box can have at most 1 attribute.
-
         super().__init__(
             sample_token,
             translation,

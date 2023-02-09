@@ -6,8 +6,7 @@ from typing import Any
 import numpy as np
 from pyquaternion import Quaternion
 
-from ...nuscenes_eval.common.data_classes import EvalBox
-
+from ..common.data_classes import EvalBox
 
 # from nuscenes.utils.data_classes import Box
 

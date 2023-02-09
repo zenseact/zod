@@ -3,8 +3,9 @@
 import numpy as np
 from shapely import geometry
 
-from zod.data_classes.objects import AnnotatedObject, Box2D, Box3D
-from zod.frames.evaluation.object_detection.nuscenes_eval.detection.data_classes import DetectionBox
+from zod.anno.object import AnnotatedObject
+from zod.data_classes.box import Box2D, Box3D
+from zod.eval.detection.nuscenes_eval.detection.data_classes import DetectionBox
 
 NUSCENES_DEFAULT_SETTINGS = {
     "class_range": {

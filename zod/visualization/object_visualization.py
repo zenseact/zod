@@ -3,8 +3,9 @@ from typing import List, Sequence, Tuple
 import cv2
 import numpy as np
 
+from zod.anno.object import AnnotatedObject
 from zod.constants import Camera
-from zod.data_classes.objects import AnnotatedObject, Box2D, Box3D
+from zod.data_classes.box import Box2D, Box3D
 from zod.utils.visualization import render_3d_box
 
 FONT_TYPE = cv2.FONT_HERSHEY_COMPLEX

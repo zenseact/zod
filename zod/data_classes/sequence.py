@@ -51,18 +51,18 @@ class ZodSequence:
         anno_frame = self.info.get_key_annotation_frame(project)
         return anno_frame and anno_frame.read()  # read if not None
 
-    def get_point_clouds(self, start: int = 0, end: int = -1) -> List[LidarData]:
+    def get_lidar(self, start: int = 0, end: int = -1) -> List[LidarData]:
         """Get the point clouds."""
         return [
             lidar_frame.read()
             for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]
         ]
 
-    def get_aggregated_point_cloud(
+    def get_aggregated_lidar(
         self, start: int = 0, end: int = -1, timestamp: Optional[float] = None
     ) -> LidarData:
         """Get the aggregated point cloud."""
-        lidar_scans = self.get_point_clouds(start, end)
+        lidar_scans = self.get_lidar(start, end)
         if timestamp is None:
             timestamp = lidar_scans[len(lidar_scans) // 2].core_timestamp
         for i, scan in enumerate(lidar_scans):

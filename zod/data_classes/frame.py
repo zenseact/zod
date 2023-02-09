@@ -74,11 +74,16 @@ class ZodFrame:
         end = min(len(all_frames), key_frame_dx + num_after + 1)
         return all_frames[start:end]
 
-    def get_lidar_data(self, num_before: int = 0, num_after: int = 0) -> List[LidarData]:
+    def get_lidar(self, num_before: int = 0, num_after: int = 0) -> List[LidarData]:
         """Get the lidar data, same as `get_lidar_frames` but actually reads the data."""
         return [lidar_frame.read() for lidar_frame in self.get_lidar_frames(num_before, num_after)]
 
-    def get_aggregated_point_cloud(
+    def compensate_lidar(self, data: LidarData, timestamp: float) -> LidarData:
+        """Compensate a point cloud to a given timestamp."""
+        lidar_calib = self.calibration.lidars[Lidar.VELODYNE]
+        return motion_compensate_scanwise(data, self.ego_motion, lidar_calib, timestamp)
+
+    def get_aggregated_lidar(
         self, num_before: int, num_after: int = 0, timestamp: Optional[float] = None
     ) -> LidarData:
         """Get an aggregated point cloud around the keyframe."""

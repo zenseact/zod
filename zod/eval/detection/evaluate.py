@@ -8,23 +8,19 @@ from typing import Callable, Dict, Iterator, List, Tuple
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+from zod.anno.object import AnnotatedObject, PredictedObject
 from zod.constants import EVALUATION_CLASSES
-from zod.data_classes.objects import AnnotatedObject, PredictedObject
-from zod.data_classes.sensor import Calibration
-from zod.frames.evaluation.object_detection.matching import MatchedFrame, match_one_frame
-from zod.frames.evaluation.object_detection.nuscenes_eval.common.data_classes import EvalBoxes
-from zod.frames.evaluation.object_detection.nuscenes_eval.common.utils import center_distance
-from zod.frames.evaluation.object_detection.nuscenes_eval.detection.algo import (
-    accumulate,
-    calc_ap,
-    calc_tp,
-)
-from zod.frames.evaluation.object_detection.nuscenes_eval.detection.data_classes import (
+from zod.data_classes.calibration import Calibration
+from zod.eval.detection.matching import MatchedFrame, match_one_frame
+from zod.eval.detection.nuscenes_eval.common.data_classes import EvalBoxes
+from zod.eval.detection.nuscenes_eval.common.utils import center_distance
+from zod.eval.detection.nuscenes_eval.detection.algo import accumulate, calc_ap, calc_tp
+from zod.eval.detection.nuscenes_eval.detection.data_classes import (
     DetectionBox,
     DetectionConfig,
     DetectionMetrics,
 )
-from zod.frames.evaluation.object_detection.utils import NUSCENES_DEFAULT_SETTINGS
+from zod.eval.detection.utils import NUSCENES_DEFAULT_SETTINGS
 
 VALID_TP_METRICS = ["trans_err", "scale_err", "orient_err"]
 PRECISION_RECALL_SAMPLING_POINTS = 101

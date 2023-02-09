@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import cv2
 from tqdm.contrib.concurrent import process_map
 
+import zod.annotations.parser as parser
 import zod.constants as constants
-import zod.utils.annotation_parser as ap
 from zod import ZodFrames
 from zod.data_classes.frame import ZodFrame
 
@@ -90,7 +90,7 @@ def _parse_args():
 def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
 
-    traffic_signs: List[ap.TrafficSignAnnotation] = frame.get_annotation(
+    traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(
         constants.AnnotationProject.TRAFFIC_SIGNS
     )
 

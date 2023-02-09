@@ -1,6 +1,4 @@
 """Module to perform OxTS extraction and visualize GPS track projection on image plane."""
-from datetime import datetime, timezone
-
 import cv2
 import numpy as np
 

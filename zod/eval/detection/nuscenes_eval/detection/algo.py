@@ -5,16 +5,9 @@ from typing import Callable
 
 import numpy as np
 
-from ...nuscenes_eval.common.data_classes import EvalBoxes
-from ...nuscenes_eval.common.utils import (
-    attr_acc,
-    center_distance,
-    cummean,
-    scale_iou,
-    velocity_l2,
-    yaw_diff,
-)
-from ...nuscenes_eval.detection.data_classes import DetectionMetricData
+from ..common.data_classes import EvalBoxes
+from ..common.utils import attr_acc, center_distance, cummean, scale_iou, velocity_l2, yaw_diff
+from ..detection.data_classes import DetectionMetricData
 
 
 def accumulate(
@@ -96,7 +89,6 @@ def accumulate(
         match_gt_idx = None
 
         for gt_idx, gt_box in enumerate(gt_boxes[pred_box.sample_token]):
-
             # Find closest match among ground truth boxes
             if gt_box.detection_name == class_name and (pred_box.sample_token, gt_idx) not in taken:
                 this_distance = dist_fcn(gt_box, pred_box)

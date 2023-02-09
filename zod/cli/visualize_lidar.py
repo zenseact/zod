@@ -49,7 +49,7 @@ def frames(
     if zfill_id(frame_id) not in zod_frames.get_all_ids():
         raise ValueError(f"Frame id must be one of {zod_frames.get_all_ids()}.")
     frame = zod_frames[frame_id]
-    data = frame.get_aggregated_point_cloud(num_before=num_before, num_after=num_after)
+    data = frame.get_aggregated_lidar(num_before=num_before, num_after=num_after)
     _visualize(data)
 
 
@@ -67,7 +67,7 @@ def sequences(
     if zfill_id(sequence_id) not in zod_sequences.get_all_ids():
         raise ValueError(f"Frame id must be one of {zod_sequences.get_all_ids()}.")
     frame = zod_sequences[sequence_id]
-    data = frame.get_aggregated_point_cloud(start=start, end=end)
+    data = frame.get_aggregated_lidar(start=start, end=end)
     if downsampling > 1:
         typer.echo(f"Will subsample the point-cloud with a factor {downsampling}")
         indexes = np.random.choice(

@@ -6,8 +6,8 @@ from typing import Any, List, Union
 import numpy as np
 from PIL import Image
 
+from zod.anno.parser import ANNOTATION_PARSERS
 from zod.constants import AnnotationProject
-from zod.utils.annotation_parser import ANNOTATION_PARSERS
 from zod.utils.utils import parse_datetime_from_filename
 
 from ._serializable import JSONSerializable

@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from zod.constants import Camera
+from zod.data_classes.box import Box3D
 from zod.data_classes.calibration import Calibration
-from zod.data_classes.objects import Box3D
 
 
 def render_3d_box(
