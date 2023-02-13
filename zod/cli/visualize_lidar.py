@@ -1,6 +1,5 @@
 import numpy as np
 import typer
-from matplotlib import cm
 from rich import print
 from rich.panel import Panel
 
@@ -22,6 +21,8 @@ def _visualize(data: LidarData):
     except ImportError:
         print(Panel(IMPORT_ERROR, title="Warning! Missing Dependency", border_style="red"))
         exit(1)
+    from matplotlib import cm
+
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data.points)
     # color the pointcloud according to the timestamp
