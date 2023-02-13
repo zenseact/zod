@@ -1,6 +1,5 @@
 """ZOD Frames module."""
 import json
-import os
 import os.path as osp
 from itertools import repeat
 from pathlib import Path

@@ -8,8 +8,6 @@ from pyquaternion import Quaternion
 
 from ..common.data_classes import EvalBox
 
-# from nuscenes.utils.data_classes import Box
-
 DetectionBox = Any  # Workaround as direct imports lead to cyclic dependencies.
 
 

@@ -9,7 +9,7 @@ from .calibration import Calibration
 from .info import Information
 from .metadata import FrameMetaData
 from .oxts import EgoMotion
-from .sensor import LidarData, LidarFrame
+from .sensor import CameraFrame, LidarData, LidarFrame
 
 
 class ZodFrame:
@@ -52,6 +52,10 @@ class ZodFrame:
         """Get the annotation for a given project."""
         assert project in self.info.annotation_frames, f"Project {project} not available."
         return self.info.get_key_annotation_frame(project).read()
+
+    def get_camera_frame(self, anonymization: Anonymization = Anonymization.BLUR) -> CameraFrame:
+        """Get the camera frame."""
+        return self.info.get_key_camera_frame(camera=Camera.FRONT, anonymization=anonymization)
 
     def get_image(
         self,
