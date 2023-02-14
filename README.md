@@ -6,40 +6,41 @@ Find examples of how to use the dataset in the [examples](examples/) folder. Her
 
 ## Installation
 
-To intstall the library only, run:
+The install the library with minimal dependencies, for instance to be used in a training environment without need for interactivity och visualization, run:
 ```bash
 pip install zod
 ```
 
-To install the library, along with the CLI, run:
+To install the library along with the CLI, which can be used to download the dataset, convert between formats, and perform visualization, run:
 ```bash
-pip install zod[cli]
+pip install "zod[cli]"
 ```
 
-To install the full devkit, with all dependencies, run:
+To install the full devkit, with the CLI and all dependencies, run:
 ```bash
-pip install zod[all]
+pip install "zod[all]"
 ```
 
 ## Download using the CLI
 
 This is an example of how to download the ZOD Frames mini-dataset using the CLI. Prerequisites are that you have applied for access and received a download link. To download the mini-dataset, run:
 ```bash
-zod download --url <download-link> --output-dir <path/to/outputdir> frames --mini
+zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --mini
 ```
 similarly, to download the full dataset (including all lidar scans before and after the keyframe), run:
 ```bash
-zod download --url <download-link> --output-dir <path/to/outputdir> frames --lidar --num-scans-before -1 --num-scans-after -1 --oxts --images --blur --dnat --calibrations --annotations
+zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --lidar --num-scans-before -1 --num-scans-after -1 --oxts --images --blur --dnat --calibrations --annotations
 ```
 this will download all the previous and future lidar scans (as `num-scans-before=-1` and `num-scans-after=-1`), the OxTS data, the images (with both the blur and DNAT anonymization), the calibration files, the annotations, and all other necessary files. If you dont want any previous or future lidar scans, run:
 ```bash
-zod download --url <download-link> --output-dir <path/to/outputdir> frames --lidar --num-scans-before 0 --num-scans-after 0 --oxts --images --blur --dnat --calibrations --annotations
+zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --lidar --num-scans-before 0 --num-scans-after 0 --oxts --images --blur --dnat --calibrations --annotations
 ```
 
 For a full list of options for ZOD download, run:
 ```bash
-zod download frames --help
-zod download sequences --help
+zod download --help
+zod download --url="<url>" --output-dir=<dir> frames --help
+zod download --url="<url>" --output-dir=<dir> sequences --help
 ```
 depending on which dataset you want to download.
 
