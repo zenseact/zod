@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zod"
-version = "0.0.19"
+version = "0.1.0"
 description = "Zenseact Open Dataset"
 authors = ["Zenseact <opendataset@zenseact.com>"]
 license = "MIT"
@@ -12,7 +12,7 @@ repository = "https://github.com/zenseact/zod"
 zod = "zod.cli.main:app"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7.1"
 tqdm = ">=4.60"
 numpy = "^1.19"
 scipy = "^1.5"
@@ -21,6 +21,8 @@ h5py = ">=3.1"
 pyquaternion = ">=0.9"
 numpy-quaternion = ">=2022.4.2"
 dataclass-wizard = ">=0.22.2"
+importlib-metadata = { version = "*", python = "<3.8" }
+typing-extensions = { version = "*", python = "<3.8" }
 # Optional dependencies
 typer = { extras = ["all"], version = ">=0.7.0", optional = true }
 dropbox = { version = ">=11.36.0", optional = true }

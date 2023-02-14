@@ -1,7 +1,13 @@
 """Relevant constants for ZOD."""
 
 from enum import Enum
-from typing import Literal, Union
+from typing import Union
+
+# Python 3.7 compatibility
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 # Dataset paths
 FRAMES = "single_frames"
