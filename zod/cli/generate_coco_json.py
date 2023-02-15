@@ -26,7 +26,6 @@ OPEN_DATASET_URL = (
 def _convert_frame(
     frame: ZodFrame, classes: List[str], anonymization: constants.Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
-
     objs: List[AnnotatedObject] = frame.get_annotation(constants.AnnotationProject.OBJECT_DETECTION)
     camera_frame = frame.info.get_key_camera_frame(anonymization=anonymization)
     file_name = camera_frame.filepath
@@ -48,8 +47,8 @@ def _convert_frame(
     }
     anno_dicts = [
         {
-            "id": int(frame.info.id) * 1000
-            + obj_idx,  # avoid collisions by assuming max 1k objects per frame
+            # avoid collisions by assuming max 1k objects per frame
+            "id": int(frame.info.id) * 1000 + obj_idx,
             "image_id": int(frame.info.id),
             "category_id": CATEGORY_NAME_TO_ID[obj.name],
             "bbox": [round(val, 2) for val in obj.box2d.xywh.tolist()],
