@@ -1,11 +1,31 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from pyquaternion import Quaternion
 
-from zod.constants import EVALUATION_CLASSES, Camera, Lidar
+from zod.constants import Camera, Lidar
 from zod.data_classes.box import Box2D, Box3D
+
+OBJECT_CLASSES_DYNAMIC = [
+    "Vehicle",
+    "VulnerableVehicle",
+    "Pedestrian",
+    "Animal",
+]
+OBJECT_CLASSES_STATIC = [
+    "PoleObject",
+    "TrafficBeacon",
+    "TrafficSign",
+    "TrafficSignal",
+    "TrafficGuide",
+    "DynamicBarrier",
+]
+OBJECT_CLASSES = [
+    *OBJECT_CLASSES_DYNAMIC,
+    *OBJECT_CLASSES_STATIC,
+    "Inconclusive",
+]
 
 
 @dataclass
@@ -76,15 +96,12 @@ class AnnotatedObject:
             traffic_content_visible=properties.get("traffic_content_visible", None) == "True",
         )
 
-    def should_ignore_object(self, require_3d: bool = True, require_eval: bool = True) -> bool:
+    def should_ignore_object(self, require_3d: bool = True) -> bool:
         """Check if the object should be ignored.
 
         Returns:
             True if the object should be ignored.
         """
-        # Remove objects that are not to be evaluated
-        if (self.name not in EVALUATION_CLASSES) and require_eval:
-            return True
         # Remove unclear objects
         if self.unclear:
             return True

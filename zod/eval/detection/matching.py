@@ -30,13 +30,14 @@ from scipy.optimize import linear_sum_assignment
 from shapely import geometry
 
 from zod.anno.object import AnnotatedObject, PredictedObject
-from zod.constants import EVALUATION_FRAME
+from zod.constants import Lidar
 from zod.data_classes import Calibration
 from zod.eval.detection.utils import polygon_iod2D
 
 GtPredMatch = Tuple[AnnotatedObject, PredictedObject]
 MIN_CAMERA_ONLY_DEPTH = 150  # in meters
 MAX_CAMERA_ONLY_DEPTH = 500  # in meters
+EVALUATION_FRAME = Lidar.VELODYNE  # TODO: this should be an input somehow
 
 
 @dataclass
@@ -49,7 +50,7 @@ class MatchedFrame:
 
 
 def split_gt_objects(
-    ground_truth: List[AnnotatedObject],
+    ground_truth: List[AnnotatedObject], eval_classes: List[str]
 ) -> Tuple[List[AnnotatedObject], List[AnnotatedObject]]:
     """Split the ground truth objects into valid and dont-care objects."""
 
@@ -58,7 +59,7 @@ def split_gt_objects(
     # dont-care ground truth objects
     dont_care_gt: List[AnnotatedObject] = []
     for gt in ground_truth:
-        if gt.should_ignore_object():
+        if gt.name not in eval_classes or gt.should_ignore_object():
             dont_care_gt.append(gt)
         else:
             valid_gt.append(gt)
@@ -136,6 +137,7 @@ def greedy_match(
     calibration: Calibration,
     dist_fcn: Callable,
     dist_threshold: float,
+    eval_classes: List[str],
 ) -> MatchedFrame:
     """This function will greedily match the detections to the ground truth.
 
@@ -157,7 +159,7 @@ def greedy_match(
     # Sort the predictions by their confidence score.
     predictions = sorted(predictions, key=lambda x: x.confidence, reverse=True)
 
-    valid_gt, dont_care_gt = split_gt_objects(ground_truth)
+    valid_gt, dont_care_gt = split_gt_objects(ground_truth, eval_classes=eval_classes)
 
     # Create a list of tuples. Each tuple contains the ground truth object and the prediction.
     matches: List[GtPredMatch] = []
@@ -203,6 +205,7 @@ def optimal_match(
     calibration: Calibration,
     dist_fcn: Callable,
     dist_threshold: float,
+    eval_classes: List[str],
 ) -> MatchedFrame:
     """This function will make an optimal matching between the detections and the ground truth.
 
@@ -226,7 +229,7 @@ def optimal_match(
         # assert that the frames are the same
         assert ground_truth[0].box3d.frame == predictions[0].box3d.frame
 
-    valid_gt, dont_care_gt = split_gt_objects(ground_truth)
+    valid_gt, dont_care_gt = split_gt_objects(ground_truth, eval_classes=eval_classes)
 
     # initialize the cost matrix
     cost_matrix = np.zeros((len(valid_gt), len(predictions)))
@@ -271,6 +274,7 @@ def match_one_frame(
     calibration: Calibration,
     dist_fcn: Callable,
     dist_threshold: float,
+    eval_classes: List[str],
     method: str = "greedy",
 ) -> MatchedFrame:
     """Match the detections to the ground truth.
@@ -281,6 +285,7 @@ def match_one_frame(
         calibration: The calibration of the scene.
         dist_fcn: The distance function to use. should take 2 Box3D objects as arguments
         dist_threshold: The distance threshold.
+        eval_classes: A list of classes to evaluate, rest will be ignored.
         method: The method to use. Can be "greedy" or "optimal".
     Returns:
         A list of tuples. Each tuple contains the ground truth object and the prediction.
@@ -300,6 +305,7 @@ def match_one_frame(
             calibration=calibration,
             dist_fcn=dist_fcn,
             dist_threshold=dist_threshold,
+            eval_classes=eval_classes,
         )
     elif method == "optimal":
         return optimal_match(
@@ -308,6 +314,7 @@ def match_one_frame(
             calibration=calibration,
             dist_fcn=dist_fcn,
             dist_threshold=dist_threshold,
+            eval_classes=eval_classes,
         )
     else:
         raise ValueError(f"Unknown method: {method}")

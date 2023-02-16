@@ -8,7 +8,7 @@ from detectron2.data.datasets import register_coco_instances
 from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, launch
 from detectron2.evaluation import COCOEvaluator
 
-from zod.constants import ALL_CLASSES
+from zod.anno.object import OBJECT_CLASSES
 
 
 class Trainer(DefaultTrainer):
@@ -25,7 +25,7 @@ def build_config(args: Namespace) -> CfgNode:
     cfg.DATASETS.TRAIN = ("zod/train",)
     cfg.DATASETS.TEST = ("zod/val",)
     cfg.DATALOADER.NUM_WORKERS = 32
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(ALL_CLASSES)
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(OBJECT_CLASSES)
     cfg.OUTPUT_DIR = args.output_dir
     cfg.RESULT_SUBDIR = args.result_subdir
     if not args.use_imagenet:

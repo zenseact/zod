@@ -11,13 +11,13 @@ from tqdm.contrib.concurrent import process_map
 
 import zod.constants as constants
 from zod import ZodFrames
-from zod.anno.object import AnnotatedObject
-from zod.constants import ALL_CLASSES, Anonymization
+from zod.anno.object import OBJECT_CLASSES, AnnotatedObject
+from zod.constants import Anonymization
 from zod.data_classes.frame import ZodFrame
 from zod.utils.utils import str_from_datetime
 
 # Map classes to categories, starting from 1
-CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(ALL_CLASSES)}
+CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(OBJECT_CLASSES)}
 OPEN_DATASET_URL = (
     "https://www.ai.se/en/data-factory/datasets/data-factory-datasets/zenseact-open-dataset"
 )
@@ -53,7 +53,7 @@ def _convert_frame(
             "category_id": CATEGORY_NAME_TO_ID[obj.name],
             "bbox": [round(val, 2) for val in obj.box2d.xywh.tolist()],
             "area": round(obj.box2d.area, 2),
-            "iscrowd": obj.should_ignore_object(require_3d=False, require_eval=False),
+            "iscrowd": obj.should_ignore_object(require_3d=False),
         }
         for obj_idx, obj in enumerate(objs)
         if obj.name in classes
@@ -140,7 +140,7 @@ def convert_to_coco(
 ):
     # check that classes are valid
     for cls in classes:
-        if cls not in ALL_CLASSES:
+        if cls not in OBJECT_CLASSES:
             typer.echo(f"ERROR: Invalid class: {cls}.")
             raise typer.Exit(1)
     typer.echo(

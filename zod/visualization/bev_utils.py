@@ -4,11 +4,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-# from constants import DO_CLASSES, DYNAMIC_OBJECTS, SO_CLASSES, STATIC_OBJECTS
-# from plot_objects_annot_on_image import ObjectAnnotationHandler, get_annotations_files, read_anno_content
-
-
-# AVAILABLE_PROJECTS = [DYNAMIC_OBJECTS, STATIC_OBJECTS]
 # Dynamic Object classes for BEV visualization
 DO_CLASSES = ("Vehicle", "VulnerableVehicle", "Pedestrian", "Animal")
 # Static objects classes for BEV visualization
@@ -174,44 +169,3 @@ def filter_point_cloud(cloud: np.ndarray, angle: np.ndarray, cam_pos: np.ndarray
     point_angles = np.arctan2(cloud_xy[:, 1], cloud_xy[:, 0])
     mask = np.logical_or(point_angles < angle[0], point_angles > angle[1])
     return cloud[mask]
-
-
-def get_objects_for_bev(
-    seq_folder: str,
-    annotation_projects: List[str],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Get annotation objects for bird eye view visualization.
-
-    Args:
-        seq_folder: path to the sequence folder.
-        annotation_projects: list of projects you want to visualize.
-                             Possible projects: DYNAMIC_OBJECTS, STATIC_OBJECTS.
-
-    Returns:
-        extracted_anno_objects: positions, dimensions, rotations and classes of bounding boxes
-                                to be visualized.
-
-    """
-    anno_project_files = get_annotations_files(seq_folder)
-    anno_objects = []
-    for proj in annotation_projects:
-        if proj in AVAILABLE_PROJECTS:
-            anno_file = anno_project_files[proj]
-            anno_content = read_anno_content(anno_file)
-            anno_objects.extend(list(ObjectAnnotationHandler.from_annotations(anno_content)))
-        else:
-            raise Exception(
-                f"Project {proj} is not available to plot. "
-                f"Available projects: {*AVAILABLE_PROJECTS,}."
-            )
-    positions = [obj[2].marking3d.get("Location")[:2] for obj in anno_objects if obj[2].marking3d]
-    dimensions = [obj[2].marking3d.get("Size")[:2] for obj in anno_objects if obj[2].marking3d]
-    rotations = [obj[2].marking3d.get("Rotation") for obj in anno_objects if obj[2].marking3d]
-    classes = [[obj[0]] for obj in anno_objects if obj[2].marking3d]
-    extracted_anno_objects = (
-        np.array(classes),
-        np.array(positions),
-        np.array(dimensions),
-        np.array(rotations),
-    )
-    return extracted_anno_objects

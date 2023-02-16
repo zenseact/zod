@@ -85,29 +85,3 @@ class Lidar(Enum):
 
 
 CoordinateFrame = Union[Camera, Lidar, Literal[EGO]]
-
-
-### Evaluation ###
-
-EVALUATION_FRAME = Lidar.VELODYNE
-ALL_CLASSES = [
-    "Vehicle",
-    "VulnerableVehicle",
-    "Pedestrian",
-    "Animal",
-    "PoleObject",
-    "Inconclusive",
-    "TrafficBeacon",
-    "TrafficSign",
-    "TrafficSignal",
-    "TrafficGuide",
-    "DynamicBarrier",
-]
-
-EVALUATION_CLASSES = [
-    "Vehicle",
-    "VulnerableVehicle",
-    "Pedestrian",
-    "TrafficSign",
-    "TrafficSignal",
-]

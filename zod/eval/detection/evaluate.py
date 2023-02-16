@@ -9,7 +9,6 @@ import numpy as np
 from tqdm.contrib.concurrent import process_map
 
 from zod.anno.object import AnnotatedObject, PredictedObject
-from zod.constants import EVALUATION_CLASSES
 from zod.data_classes.calibration import Calibration
 from zod.eval.detection.matching import MatchedFrame, match_one_frame
 from zod.eval.detection.nuscenes_eval.common.data_classes import EvalBoxes
@@ -42,6 +41,14 @@ PER_CLASS_SUMMARY = """
     mATE: {mATE:.4f}
     mASE: {mASE:.4f}
     mAOE: {mAOE:.4f}"""
+
+EVALUATION_CLASSES = [
+    "Vehicle",
+    "VulnerableVehicle",
+    "Pedestrian",
+    "TrafficSign",
+    "TrafficSignal",
+]
 
 EvalFrame = Tuple[List[AnnotatedObject], List[PredictedObject], Calibration]
 
@@ -208,7 +215,6 @@ def _evaluate_frame(
     dist_fcn: Callable,
     dist_th: float,
 ) -> Dict[str, MatchedFrame]:
-
     gts, preds, calibration = frame
     # filter out all predictions that are not of the correct class
     preds = [pred for pred in preds if pred.name == cls]
@@ -221,6 +227,7 @@ def _evaluate_frame(
         calibration=calibration,
         dist_fcn=dist_fcn,
         dist_threshold=dist_th,
+        eval_classes=EVALUATION_CLASSES,
     )
 
     return {frame_id: matched_frame}
