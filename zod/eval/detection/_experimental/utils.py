@@ -1,28 +1,13 @@
 """Utility functions for object detection evaluation."""
 
 import numpy as np
+
+# NOTE: we need to add shapely to the requirements once this is enabled
 from shapely import geometry
 
 from zod.anno.object import AnnotatedObject
 from zod.data_classes.box import Box2D, Box3D
 from zod.eval.detection.nuscenes_eval.detection.data_classes import DetectionBox
-
-NUSCENES_DEFAULT_SETTINGS = {
-    "class_range": {
-        "Vehicle": 50,
-        "VulnerableVehicle": 40,
-        "Pedestrian": 30,
-        "TrafficSign": 30,
-        "TrafficSignal": 30,
-    },
-    "dist_fcn": "center_distance",
-    "dist_ths": [0.5, 1.0, 2.0, 4.0],
-    "dist_th_tp": 2.0,
-    "min_recall": 0.1,
-    "min_precision": 0.1,
-    "max_boxes_per_sample": 500,
-    "mean_ap_weight": 5,
-}
 
 
 def convert_to_detection_box(frame_id: str, obj: AnnotatedObject) -> DetectionBox:

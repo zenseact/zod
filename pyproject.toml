@@ -60,7 +60,7 @@ line-length = 100
 # isort, Warning, pycodestyle (see here: https://github.com/charliermarsh/ruff#supported-rules)
 select = ["I", "W", "E"]
 exclude = [
-    "zod/eval/detection/nuscenes_eval/*"
+    "zod/eval/detection/_nuscenes_eval/*"
 ]
 
 [tool.black]
