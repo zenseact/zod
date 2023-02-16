@@ -1,7 +1,6 @@
-FROM python:3.10-slim as compile-image
+FROM python:3.10-slim
 
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends build-essential gcc
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc
 
 # Copy over the bare minimum to install the package
 COPY pyproject.toml README.md /zod/
