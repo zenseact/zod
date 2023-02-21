@@ -134,7 +134,7 @@ class Box2D:
         """
         xmin = ymin = 999999
         xmax = ymax = -1
-        for (point_x, point_y) in points:
+        for point_x, point_y in points:
             xmin = min(xmin, point_x)
             xmax = max(xmax, point_x)
             ymin = min(ymin, point_y)

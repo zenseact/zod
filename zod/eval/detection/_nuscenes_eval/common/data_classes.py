@@ -25,7 +25,6 @@ class EvalBox(abc.ABC):
         ),  # Translation to ego vehicle in meters.
         num_pts: int = -1,
     ):  # Nbr. LIDAR or RADAR inside the box. Only for gt boxes.
-
         # Assert data for shape and NaNs.
         assert type(sample_token) == str, "Error: sample_token must be a string!"
 
