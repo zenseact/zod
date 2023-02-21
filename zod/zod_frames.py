@@ -1,6 +1,7 @@
 """ZOD Frames module."""
 import json
 import os.path as osp
+from functools import partial
 from itertools import repeat
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
@@ -22,9 +23,10 @@ def _create_frame(frame: dict, dataset_root: str) -> Information:
 class ZodFrames(object):
     """ZOD Frames."""
 
-    def __init__(self, dataset_root: Union[Path, str], version: str):
+    def __init__(self, dataset_root: Union[Path, str], version: str, mp: bool = True):
         self._dataset_root = dataset_root
         self._version = version
+        self._mp = mp
         assert version in VERSIONS, f"Unknown version: {version}, must be one of: {VERSIONS}"
         self._train_frames, self._val_frames = self._load_frames()
         self._frames: Dict[str, Information] = {**self._train_frames, **self._val_frames}
@@ -46,27 +48,28 @@ class ZodFrames(object):
     def _load_frames(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load frames for the given version."""
         filename = TRAINVAL_FILES[FRAMES][self._version]
-
         with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 
-        train_frames = process_map(
-            _create_frame,
-            all_ids[TRAIN],
-            repeat(self._dataset_root),
-            desc="Loading train frames",
-            chunksize=50 if self._version == FULL else 1,
-        )
-        val_frames = process_map(
-            _create_frame,
-            all_ids[VAL],
-            repeat(self._dataset_root),
-            desc="Loading val frames",
-            chunksize=50 if self._version == FULL else 1,
-        )
-
-        train_frames = {frame.id: frame for frame in train_frames}
-        val_frames = {frame.id: frame for frame in val_frames}
+        func = partial(_create_frame, dataset_root=self._dataset_root)
+        if self._mp and self._version == FULL:
+            train_frames = process_map(
+                func,
+                all_ids[TRAIN],
+                desc="Loading train frames",
+                chunksize=50 if self._version == FULL else 1,
+            )
+            val_frames = process_map(
+                func,
+                all_ids[VAL],
+                desc="Loading val frames",
+                chunksize=50 if self._version == FULL else 1,
+            )
+            train_frames = {frame.id: frame for frame in train_frames}
+            val_frames = {frame.id: frame for frame in val_frames}
+        else:
+            train_frames = {frame.id: frame for frame in map(func, all_ids[TRAIN])}
+            val_frames = {frame.id: frame for frame in map(func, all_ids[VAL])}
 
         return train_frames, val_frames
 
