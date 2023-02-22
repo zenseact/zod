@@ -14,7 +14,7 @@ from zod.eval.detection._nuscenes_eval.detection.data_classes import (
 )
 from zod.eval.detection.constants import EVALUATION_CLASSES
 
-VALID_TP_METRICS = ["trans_err", "scale_err", "orient_err"]
+VALID_TP_METRICS = {"trans_err": "mATE", "scale_err": "mASE", "orient_err": "mAOE"}
 PRECISION_RECALL_SAMPLING_POINTS = 101
 
 NUSCENES_SUMMARY = """
@@ -51,6 +51,55 @@ NUSCENES_DEFAULT_SETTINGS = {
     "max_boxes_per_sample": 500,
     "mean_ap_weight": 5,
 }
+
+
+def evaluate_nuscenes_style(
+    gt_boxes: EvalBoxes,
+    det_boxes: EvalBoxes,
+    verbose: bool = False,
+    output_path: str = None,
+) -> Dict[str, float]:
+    """Perform nuscenes evaluation based on a number of groundtruths and detections."""
+    detection_cfg = DetectionConfig(**NUSCENES_DEFAULT_SETTINGS)
+    detection_metrics = DetectionMetrics(detection_cfg)
+
+    class_ranges = {k: (0, v) for k, v in NUSCENES_DEFAULT_SETTINGS["class_range"].items()}
+
+    # filter according to the default nuscenes settings
+    gt_boxes = _filter_eval_boxes_on_ranges(gt_boxes, class_ranges)
+    det_boxes = _filter_eval_boxes_on_ranges(det_boxes, class_ranges)
+
+    metrics = {
+        dist_th: _nuscenes_evaluate(gt_boxes, det_boxes, dist_th=dist_th)
+        for dist_th in detection_cfg.dist_ths
+    }
+
+    evaluated_clses = set(metrics[detection_cfg.dist_ths[0]].keys())
+    for zod_cls in evaluated_clses:
+        # They evaluate the ap across all thresholds
+        for dist_th in detection_cfg.dist_ths:
+            detection_metrics.add_label_ap(
+                detection_name=zod_cls,
+                dist_th=dist_th,
+                ap=metrics[dist_th][zod_cls]["ap"],
+            )
+
+        # They evaluate the tp across only one threshold
+        for metric in VALID_TP_METRICS:
+            detection_metrics.add_label_tp(
+                zod_cls, metric, metrics[detection_cfg.dist_th_tp][zod_cls][metric]
+            )
+
+    if verbose:
+        _print_nuscenes_metrics(detection_metrics)
+
+    serialized = _serialize(detection_metrics)
+
+    if output_path:
+        with open(os.path.join(output_path, "nuscenes_evaluation_metrics.json"), "w") as f:
+            json.dump(serialized, f)
+
+    return serialized
 
 
 def _nuscenes_evaluate(
@@ -112,7 +161,7 @@ def _filter_eval_boxes_on_ranges(
     return filtered_boxes
 
 
-def print_nuscenes_metrics(metrics: DetectionMetrics):
+def _print_nuscenes_metrics(metrics: DetectionMetrics):
     print(
         NUSCENES_SUMMARY.format(
             dist_func=metrics.cfg.dist_fcn,
@@ -136,48 +185,22 @@ def print_nuscenes_metrics(metrics: DetectionMetrics):
         )
 
 
-def evaluate_nuscenes_style(
-    gt_boxes: EvalBoxes,
-    det_boxes: EvalBoxes,
-    verbose: bool = False,
-    output_path: str = None,
-) -> DetectionMetrics:
-    """Perform nuscenes evaluation based on a number of groundtruths and detections."""
-    detection_cfg = DetectionConfig(**NUSCENES_DEFAULT_SETTINGS)
-    detection_metrics = DetectionMetrics(detection_cfg)
-
-    class_ranges = {k: (0, v) for k, v in NUSCENES_DEFAULT_SETTINGS["class_range"].items()}
-
-    # filter according to the default nuscenes settings
-    gt_boxes = _filter_eval_boxes_on_ranges(gt_boxes, class_ranges)
-    det_boxes = _filter_eval_boxes_on_ranges(det_boxes, class_ranges)
-
-    metrics = {
-        dist_th: _nuscenes_evaluate(gt_boxes, det_boxes, dist_th=dist_th)
-        for dist_th in detection_cfg.dist_ths
+def _serialize(detection_metrics: DetectionMetrics) -> Dict[str, float]:
+    # Only serialize the classes that were evaluated (had GT)
+    classes = list(detection_metrics.mean_dist_aps.keys())
+    tp_metrics = {
+        name: detection_metrics.tp_errors[metric] for metric, name in VALID_TP_METRICS.items()
     }
-
-    evaluated_clses = set(metrics[detection_cfg.dist_ths[0]].keys())
-    for zod_cls in evaluated_clses:
-        # They evaluate the ap across all thresholds
-        for dist_th in detection_cfg.dist_ths:
-            detection_metrics.add_label_ap(
-                detection_name=zod_cls,
-                dist_th=dist_th,
-                ap=metrics[dist_th][zod_cls]["ap"],
-            )
-
-        # They evaluate the tp across only one threshold
-        for metric in VALID_TP_METRICS:
-            detection_metrics.add_label_tp(
-                zod_cls, metric, metrics[detection_cfg.dist_th_tp][zod_cls][metric]
-            )
-
-    if output_path:
-        with open(os.path.join(output_path, "nuscenes_evaluation_metrics.json"), "w") as f:
-            json.dump(detection_metrics.serialize(), f)
-
-    if verbose:
-        print_nuscenes_metrics(detection_metrics)
-
-    return detection_metrics
+    class_aps = {f"{cls}/mAP": detection_metrics.mean_dist_aps[cls] for cls in classes}
+    class_tps = {
+        f"{cls}/{name}": detection_metrics._label_tp_errors[cls][metric]
+        for cls in classes
+        for metric, name in VALID_TP_METRICS.items()
+    }
+    return {
+        "NDS": detection_metrics.nd_score,
+        "mAP": detection_metrics.mean_ap,
+        **tp_metrics,
+        **class_aps,
+        **class_tps,
+    }
