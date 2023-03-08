@@ -14,4 +14,7 @@ except ImportError:
     # use the shim package importlib-metadata pre-3.8
     import importlib_metadata as importlib_metadata
 
-__version__ = importlib_metadata.version(__package__ or __name__)
+try:
+    __version__ = importlib_metadata.version(__package__ or __name__)
+except importlib_metadata.PackageNotFoundError:
+    __version__ = "0.0.0"
