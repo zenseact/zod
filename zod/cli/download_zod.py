@@ -31,12 +31,13 @@ app = typer.Typer(help="Zenseact Open Dataset Donwloader", no_args_is_help=True)
 
 
 @dataclass
-class ExtractInfo:
+class DownloadExtractInfo:
     """Information about a file to extract."""
 
     url: str
     file_path: str
-    output_dir: str
+    extract_dir: str
+    dl_dir: str
     rm: bool
     dry_run: bool
     size: int
@@ -110,7 +111,7 @@ def _print_final_msg(pbar: tqdm, basename: str):
     tqdm.write(msg)
 
 
-def _download(download_path: str, dbx: ResumableDropbox, info: ExtractInfo):
+def _download(download_path: str, dbx: ResumableDropbox, info: DownloadExtractInfo):
     current_size = 0
     if osp.exists(download_path):
         current_size = osp.getsize(download_path)
@@ -123,6 +124,11 @@ def _download(download_path: str, dbx: ResumableDropbox, info: ExtractInfo):
         leave=False,
         initial=current_size,
     )
+    if pbar.n > info.size:
+        tqdm.write(
+            f"Error! File {download_path} already exists and is larger than expected. "
+            "Please delete and try again."
+        )
     # Retry download if partial file exists (e.g. due to network error)
     while pbar.n < info.size:
         if pbar.n > 0:
@@ -152,7 +158,7 @@ def _extract(tar_path: str, output_dir: str):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         ) as tar:
-            for line in tar.stdout:
+            for _ in tar.stdout:
                 pbar.update(1)
         # check if tar exited with error
         if tar.returncode != 0:
@@ -167,23 +173,22 @@ def _extract(tar_path: str, output_dir: str):
     tqdm.write(f"Extracted {pbar.n} files from {osp.basename(tar_path)}.")
 
 
-def _download_and_extract(dbx: ResumableDropbox, info: ExtractInfo):
+def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
-    download_path = osp.join(info.output_dir, "downloads", osp.basename(info.file_path))
+    download_path = osp.join(info.dl_dir, osp.basename(info.file_path))
     if osp.exists(download_path) and osp.getsize(download_path) == info.size:
         tqdm.write(f"File {download_path} already exists. Skipping download.")
     elif info.dry_run:
-        typer.echo(f"Would download and extract {info.file_path} to {download_path}")
-        return
+        typer.echo(f"Would download {info.file_path} to {download_path}")
     else:
         _download(download_path, dbx, info)
 
     if info.extract:
         if info.dry_run:
-            typer.echo(f"Would extract {download_path} to {info.output_dir}")
+            typer.echo(f"Would extract {download_path} to {info.extract_dir}")
             return
         else:
-            _extract(download_path, info.output_dir)
+            _extract(download_path, info.extract_dir)
 
     if info.rm and not info.dry_run:
         os.remove(download_path)
@@ -225,12 +230,14 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
 def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSettings, dirname: str):
     dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
     url, entries = _list_folder(dl_settings.url, dbx, dirname)
+    dl_dir = osp.join(dl_settings.output_dir, "downloads", dirname)
     files_to_download = [
-        ExtractInfo(
-            file_path=f"/{dirname}/" + entry.name,
-            size=entry.size,
+        DownloadExtractInfo(
             url=url,
-            output_dir=dl_settings.output_dir,
+            file_path=f"/{dirname}/" + entry.name,
+            dl_dir=dl_dir,
+            extract_dir=dl_settings.output_dir,
+            size=entry.size,
             rm=dl_settings.rm,
             dry_run=dl_settings.dry_run,
             extract=dl_settings.extract,
@@ -244,7 +251,7 @@ def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSett
 
     if not dl_settings.dry_run:
         os.makedirs(dl_settings.output_dir, exist_ok=True)
-        os.makedirs(osp.join(dl_settings.output_dir, "downloads"), exist_ok=True)
+        os.makedirs(dl_dir, exist_ok=True)
     if dl_settings.parallel:
         with ThreadPoolExecutor() as pool:
             pool.map(lambda info: _download_and_extract(dbx, info), files_to_download)
