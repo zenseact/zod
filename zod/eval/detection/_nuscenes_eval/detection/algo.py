@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 
 from ..common.data_classes import EvalBoxes
-from ..common.utils import attr_acc, center_distance, cummean, scale_iou, velocity_l2, yaw_diff
+from ..common.utils import center_distance, cummean, scale_iou, yaw_diff
 from ..detection.data_classes import DetectionMetricData
 
 
@@ -71,10 +71,8 @@ def accumulate(
     # match_data holds the extra metrics we calculate for each match.
     match_data = {
         "trans_err": [],
-        "vel_err": [],
         "scale_err": [],
         "orient_err": [],
-        "attr_err": [],
         "conf": [],
     }
 
@@ -111,14 +109,12 @@ def accumulate(
             gt_box_match = gt_boxes[pred_box.sample_token][match_gt_idx]
 
             match_data["trans_err"].append(center_distance(gt_box_match, pred_box))
-            match_data["vel_err"].append(velocity_l2(gt_box_match, pred_box))
             match_data["scale_err"].append(1 - scale_iou(gt_box_match, pred_box))
 
             # Barrier orientation is only determined up to 180 degree. (For cones orientation is discarded later)
             period = np.pi if class_name == "barrier" else 2 * np.pi
             match_data["orient_err"].append(yaw_diff(gt_box_match, pred_box, period=period))
 
-            match_data["attr_err"].append(1 - attr_acc(gt_box_match, pred_box))
             match_data["conf"].append(pred_box.detection_score)
 
         else:
@@ -172,10 +168,8 @@ def accumulate(
         precision=prec,
         confidence=conf,
         trans_err=match_data["trans_err"],
-        vel_err=match_data["vel_err"],
         scale_err=match_data["scale_err"],
         orient_err=match_data["orient_err"],
-        attr_err=match_data["attr_err"],
     )
 
 

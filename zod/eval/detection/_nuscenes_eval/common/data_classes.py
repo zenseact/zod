@@ -3,7 +3,8 @@
 
 import abc
 from collections import defaultdict
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
+from warnings import warn
 
 import numpy as np
 
@@ -17,12 +18,6 @@ class EvalBox(abc.ABC):
         translation: Tuple[float, float, float] = (0, 0, 0),
         size: Tuple[float, float, float] = (0, 0, 0),
         rotation: Tuple[float, float, float, float] = (0, 0, 0, 0),
-        velocity: Tuple[float, float] = (0, 0),
-        ego_translation: Tuple[float, float, float] = (
-            0,
-            0,
-            0,
-        ),  # Translation to ego vehicle in meters.
         num_pts: int = -1,
     ):  # Nbr. LIDAR or RADAR inside the box. Only for gt boxes.
         # Assert data for shape and NaNs.
@@ -37,12 +32,6 @@ class EvalBox(abc.ABC):
         assert len(rotation) == 4, "Error: Rotation must have 4 elements!"
         assert not np.any(np.isnan(rotation)), "Error: Rotation may not be NaN!"
 
-        # Velocity can be NaN from our database for certain annotations.
-        assert len(velocity) == 2, "Error: Velocity must have 2 elements!"
-
-        assert len(ego_translation) == 3, "Error: Translation must have 3 elements!"
-        assert not np.any(np.isnan(ego_translation)), "Error: Translation may not be NaN!"
-
         assert type(num_pts) == int, "Error: num_pts must be int!"
         assert not np.any(np.isnan(num_pts)), "Error: num_pts may not be NaN!"
 
@@ -51,14 +40,12 @@ class EvalBox(abc.ABC):
         self.translation = translation
         self.size = size
         self.rotation = rotation
-        self.velocity = velocity
-        self.ego_translation = ego_translation
         self.num_pts = num_pts
 
     @property
     def ego_dist(self) -> float:
         """Compute the distance from this box to the ego vehicle in 2D."""
-        return np.sqrt(np.sum(np.array(self.ego_translation[:2]) ** 2))
+        return np.sqrt(np.sum(np.array(self.translation[:2]) ** 2))
 
     def __repr__(self):
         return str(self.serialize())

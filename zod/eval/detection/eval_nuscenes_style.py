@@ -4,6 +4,8 @@ import json
 import os
 from typing import Callable, Dict
 
+import numpy as np
+
 from zod.eval.detection._nuscenes_eval.common.data_classes import EvalBoxes
 from zod.eval.detection._nuscenes_eval.common.utils import center_distance
 from zod.eval.detection._nuscenes_eval.detection.algo import accumulate, calc_ap, calc_tp
@@ -58,8 +60,12 @@ def evaluate_nuscenes_style(
     det_boxes: EvalBoxes,
     verbose: bool = False,
     output_path: str = None,
+    verify_coordinate_system: bool = True,
 ) -> Dict[str, float]:
     """Perform nuscenes evaluation based on a number of groundtruths and detections."""
+    if verify_coordinate_system:
+        _check_coordinate_system(gt_boxes)
+
     detection_cfg = DetectionConfig(**NUSCENES_DEFAULT_SETTINGS)
     detection_metrics = DetectionMetrics(detection_cfg)
 
@@ -100,6 +106,27 @@ def evaluate_nuscenes_style(
             json.dump(serialized, f)
 
     return serialized
+
+
+def _check_coordinate_system(gt_boxes: EvalBoxes):
+    """Use heuristics to check if the boxes were provided in the ego coordinate system."""
+    # The key assumption is x axis has the longest range in the ego coordinate system
+    # whereas for camera and lidar the z and y axis are the longest range respectively
+    centers = np.array([box.translation for box in gt_boxes.all])
+    center_means = np.mean(centers, axis=0)
+    max_avgdist_axis = np.argmax(center_means)
+    error_msg = (
+        "Looks like the boxes were provided in the {sensor} coordinate system. "
+        "Please convert them to the ego coordinate system. If you know what you are doing, "
+        " you can disable this check by setting `verify_coordinate_system=False`."
+    )
+    desired_axis = 0  # EGO
+    if max_avgdist_axis == 0 and desired_axis != 0:
+        raise ValueError(error_msg.format(sensor="ego"))
+    elif max_avgdist_axis == 1 and desired_axis != 1:
+        raise ValueError(error_msg.format(sensor="lidar"))
+    elif max_avgdist_axis == 2 and desired_axis != 2:
+        raise ValueError(error_msg.format(sensor="camera"))
 
 
 def _nuscenes_evaluate(

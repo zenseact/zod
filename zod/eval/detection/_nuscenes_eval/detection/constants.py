@@ -35,28 +35,6 @@ DETECTION_COLORS = {
     "barrier": "C9",
 }
 
-ATTRIBUTE_NAMES = [
-    "pedestrian.moving",
-    "pedestrian.sitting_lying_down",
-    "pedestrian.standing",
-    "cycle.with_rider",
-    "cycle.without_rider",
-    "vehicle.moving",
-    "vehicle.parked",
-    "vehicle.stopped",
-]
-
-PRETTY_ATTRIBUTE_NAMES = {
-    "pedestrian.moving": "Ped. Moving",
-    "pedestrian.sitting_lying_down": "Ped. Sitting",
-    "pedestrian.standing": "Ped. Standing",
-    "cycle.with_rider": "Cycle w/ Rider",
-    "cycle.without_rider": "Cycle w/o Rider",
-    "vehicle.moving": "Veh. Moving",
-    "vehicle.parked": "Veh. Parked",
-    "vehicle.stopped": "Veh. Stopped",
-}
-
 TP_METRICS = ["trans_err", "scale_err", "orient_err"]
 
 PRETTY_TP_METRICS = {

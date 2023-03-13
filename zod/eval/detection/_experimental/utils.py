@@ -7,7 +7,7 @@ from shapely import geometry
 
 from zod.anno.object import AnnotatedObject
 from zod.data_classes.box import Box2D, Box3D
-from zod.eval.detection.nuscenes_eval.detection.data_classes import DetectionBox
+from zod.eval.detection._nuscenes_eval.detection.data_classes import DetectionBox
 
 
 def convert_to_detection_box(frame_id: str, obj: AnnotatedObject) -> DetectionBox:
@@ -17,12 +17,9 @@ def convert_to_detection_box(frame_id: str, obj: AnnotatedObject) -> DetectionBo
         translation=tuple(obj.box3d.center),
         size=tuple(obj.box3d.size),
         rotation=tuple(obj.box3d.orientation.elements),
-        velocity=(0, 0),  # we dont have velocity in zod
-        ego_translation=tuple(0, 0, 0),  # gt is always at (0, 0, 0)
         num_pts=10,
         detection_name=obj.name,
         detection_score=-1.0,  # ground truth boxes have no score
-        attribute_name="",  # we dont have attributes in zod
     )
 
     return det_box

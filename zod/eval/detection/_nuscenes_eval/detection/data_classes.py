@@ -8,7 +8,7 @@ import numpy as np
 
 from ..common.data_classes import EvalBox, MetricData
 from ..common.utils import center_distance
-from ..detection.constants import ATTRIBUTE_NAMES, DETECTION_NAMES, TP_METRICS
+from ..detection.constants import DETECTION_NAMES, TP_METRICS
 
 
 class DetectionConfig:
@@ -92,20 +92,16 @@ class DetectionMetricData(MetricData):
         precision: np.array,
         confidence: np.array,
         trans_err: np.array,
-        vel_err: np.array,
         scale_err: np.array,
         orient_err: np.array,
-        attr_err: np.array,
     ):
         # Assert lengths.
         assert len(recall) == self.nelem
         assert len(precision) == self.nelem
         assert len(confidence) == self.nelem
         assert len(trans_err) == self.nelem
-        assert len(vel_err) == self.nelem
         assert len(scale_err) == self.nelem
         assert len(orient_err) == self.nelem
-        assert len(attr_err) == self.nelem
 
         # Assert ordering.
         assert all(
@@ -118,10 +114,8 @@ class DetectionMetricData(MetricData):
         self.precision = precision
         self.confidence = confidence
         self.trans_err = trans_err
-        self.vel_err = vel_err
         self.scale_err = scale_err
         self.orient_err = orient_err
-        self.attr_err = attr_err
 
     def __eq__(self, other):
         eq = True
@@ -155,10 +149,8 @@ class DetectionMetricData(MetricData):
             "precision": self.precision.tolist(),
             "confidence": self.confidence.tolist(),
             "trans_err": self.trans_err.tolist(),
-            "vel_err": self.vel_err.tolist(),
             "scale_err": self.scale_err.tolist(),
             "orient_err": self.orient_err.tolist(),
-            "attr_err": self.attr_err.tolist(),
         }
 
     @classmethod
@@ -169,10 +161,8 @@ class DetectionMetricData(MetricData):
             precision=np.array(content["precision"]),
             confidence=np.array(content["confidence"]),
             trans_err=np.array(content["trans_err"]),
-            vel_err=np.array(content["vel_err"]),
             scale_err=np.array(content["scale_err"]),
             orient_err=np.array(content["orient_err"]),
-            attr_err=np.array(content["attr_err"]),
         )
 
     @classmethod
@@ -183,10 +173,8 @@ class DetectionMetricData(MetricData):
             precision=np.zeros(cls.nelem),
             confidence=np.zeros(cls.nelem),
             trans_err=np.ones(cls.nelem),
-            vel_err=np.ones(cls.nelem),
             scale_err=np.ones(cls.nelem),
             orient_err=np.ones(cls.nelem),
-            attr_err=np.ones(cls.nelem),
         )
 
     @classmethod
@@ -197,10 +185,8 @@ class DetectionMetricData(MetricData):
             precision=np.random.random(cls.nelem),
             confidence=np.linspace(0, 1, cls.nelem)[::-1],
             trans_err=np.random.random(cls.nelem),
-            vel_err=np.random.random(cls.nelem),
             scale_err=np.random.random(cls.nelem),
             orient_err=np.random.random(cls.nelem),
-            attr_err=np.random.random(cls.nelem),
         )
 
 
@@ -337,24 +323,15 @@ class DetectionBox(EvalBox):
         translation: Tuple[float, float, float] = (0, 0, 0),
         size: Tuple[float, float, float] = (0, 0, 0),
         rotation: Tuple[float, float, float, float] = (0, 0, 0, 0),
-        velocity: Tuple[float, float] = (0, 0),
-        ego_translation: Tuple[float, float, float] = (
-            0,
-            0,
-            0,
-        ),  # Translation to ego vehicle in meters.
         num_pts: int = -1,  # Nbr. LIDAR or RADAR inside the box. Only for gt boxes.
         detection_name: str = "car",  # The class name used in the detection challenge.
         detection_score: float = -1.0,  # GT samples do not have a score.
-        attribute_name: str = "",
-    ):  # Box attribute. Each box can have at most 1 attribute.
+    ):
         super().__init__(
             sample_token,
             translation,
             size,
             rotation,
-            velocity,
-            ego_translation,
             num_pts,
         )
 
@@ -363,17 +340,12 @@ class DetectionBox(EvalBox):
             "Error: Unknown detection_name %s" % detection_name
         )
 
-        assert attribute_name in ATTRIBUTE_NAMES or attribute_name == "", (
-            "Error: Unknown attribute_name %s" % attribute_name
-        )
-
         assert type(detection_score) == float, "Error: detection_score must be a float!"
         assert not np.any(np.isnan(detection_score)), "Error: detection_score may not be NaN!"
 
         # Assign.
         self.detection_name = detection_name
         self.detection_score = detection_score
-        self.attribute_name = attribute_name
 
     def __eq__(self, other):
         return (
@@ -381,12 +353,9 @@ class DetectionBox(EvalBox):
             and self.translation == other.translation
             and self.size == other.size
             and self.rotation == other.rotation
-            and self.velocity == other.velocity
-            and self.ego_translation == other.ego_translation
             and self.num_pts == other.num_pts
             and self.detection_name == other.detection_name
             and self.detection_score == other.detection_score
-            and self.attribute_name == other.attribute_name
         )
 
     def serialize(self) -> dict:
@@ -396,12 +365,9 @@ class DetectionBox(EvalBox):
             "translation": self.translation,
             "size": self.size,
             "rotation": self.rotation,
-            "velocity": self.velocity,
-            "ego_translation": self.ego_translation,
             "num_pts": self.num_pts,
             "detection_name": self.detection_name,
             "detection_score": self.detection_score,
-            "attribute_name": self.attribute_name,
         }
 
     @classmethod
@@ -412,16 +378,11 @@ class DetectionBox(EvalBox):
             translation=tuple(content["translation"]),
             size=tuple(content["size"]),
             rotation=tuple(content["rotation"]),
-            velocity=tuple(content["velocity"]),
-            ego_translation=(0.0, 0.0, 0.0)
-            if "ego_translation" not in content
-            else tuple(content["ego_translation"]),
             num_pts=-1 if "num_pts" not in content else int(content["num_pts"]),
             detection_name=content["detection_name"],
             detection_score=-1.0
             if "detection_score" not in content
             else float(content["detection_score"]),
-            attribute_name=content["attribute_name"],
         )
 
 
