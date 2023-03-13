@@ -9,10 +9,9 @@ from typing import List, Tuple
 import typer
 from tqdm.contrib.concurrent import process_map
 
-import zod.constants as constants
 from zod import ZodFrames
 from zod.anno.object import OBJECT_CLASSES, AnnotatedObject
-from zod.constants import Anonymization
+from zod.constants import AnnotationProject, Anonymization
 from zod.data_classes.frame import ZodFrame
 from zod.utils.utils import str_from_datetime
 
@@ -24,16 +23,14 @@ OPEN_DATASET_URL = (
 
 
 def _convert_frame(
-    frame: ZodFrame, classes: List[str], anonymization: constants.Anonymization, use_png: bool
+    frame: ZodFrame, classes: List[str], anonymization: Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
-    objs: List[AnnotatedObject] = frame.get_annotation(constants.AnnotationProject.OBJECT_DETECTION)
+    objs: List[AnnotatedObject] = frame.get_annotation(AnnotationProject.OBJECT_DETECTION)
     camera_frame = frame.info.get_key_camera_frame(anonymization=anonymization)
     file_name = camera_frame.filepath
 
-    if anonymization == constants.Anonymization.ORIGINAL:
-        file_name = file_name.replace(
-            Anonymization.BLUR.value, constants.Anonymization.ORIGINAL.value
-        )
+    if anonymization == Anonymization.ORIGINAL:
+        file_name = file_name.replace(Anonymization.BLUR.value, Anonymization.ORIGINAL.value)
     if use_png:
         file_name = file_name.replace(".jpg", ".png")
 
@@ -65,7 +62,7 @@ def generate_coco_json(
     dataset: ZodFrames,
     split: str,
     classes: List[str],
-    anonymization: constants.Anonymization,
+    anonymization: Anonymization,
     use_png: bool,
 ) -> dict:
     """Generate COCO JSON file from the ZOD dataset."""
@@ -130,8 +127,8 @@ def convert_to_coco(
         help="Path to the output directory.",
     ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, mini."),
-    anonymization: constants.Anonymization = typer.Option(
-        constants.Anonymization.BLUR, help="Anonymization mode to use."
+    anonymization: Anonymization = typer.Option(
+        Anonymization.BLUR.value, help="Anonymization mode to use."
     ),
     use_png: bool = typer.Option(False, help="Whether to use PNG images instead of JPG."),
     classes: List[str] = typer.Option(
