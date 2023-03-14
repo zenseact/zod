@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 from pyquaternion import Quaternion
@@ -29,7 +29,7 @@ OBJECT_CLASSES = [
 
 
 @dataclass
-class AnnotatedObject:
+class ObjectAnnotation:
     """Class to store dynamic object information."""
 
     # These are always available
@@ -48,8 +48,8 @@ class AnnotatedObject:
     traffic_content_visible: Optional[bool]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AnnotatedObject":
-        """Create an AnnotatedObject from a dictionary."""
+    def from_dict(cls, data: Dict[str, Any]) -> "ObjectAnnotation":
+        """Create an ObjectAnnotation from a dictionary."""
         properties: Dict[str, Any] = data["properties"]
 
         box2d = Box2D.from_points(
@@ -138,15 +138,5 @@ class AnnotatedObject:
         return False
 
 
-@dataclass
-class PredictedObject:
-    """Class to store dynamic object prediction information."""
-
-    # TODO: maybe move to zod.eval?
-
-    name: str
-    confidence: float
-    box3d: Box3D
-
-    def __eq__(self, __o: Union[AnnotatedObject, "PredictedObject"]) -> bool:
-        return self.box3d == __o.box3d
+# Compatibility with old naming
+AnnotatedObject = ObjectAnnotation

@@ -10,7 +10,7 @@ import typer
 from tqdm.contrib.concurrent import process_map
 
 from zod import ZodFrames
-from zod.anno.object import OBJECT_CLASSES, AnnotatedObject
+from zod.anno.object import OBJECT_CLASSES, ObjectAnnotation
 from zod.constants import AnnotationProject, Anonymization
 from zod.data_classes.frame import ZodFrame
 from zod.utils.utils import str_from_datetime
@@ -25,7 +25,7 @@ OPEN_DATASET_URL = (
 def _convert_frame(
     frame: ZodFrame, classes: List[str], anonymization: Anonymization, use_png: bool
 ) -> Tuple[dict, List[dict]]:
-    objs: List[AnnotatedObject] = frame.get_annotation(AnnotationProject.OBJECT_DETECTION)
+    objs: List[ObjectAnnotation] = frame.get_annotation(AnnotationProject.OBJECT_DETECTION)
     camera_frame = frame.info.get_key_camera_frame(anonymization=anonymization)
     file_name = camera_frame.filepath
 

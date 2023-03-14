@@ -3,7 +3,7 @@ from typing import List, Sequence, Tuple
 import cv2
 import numpy as np
 
-from zod.anno.object import AnnotatedObject
+from zod.anno.object import ObjectAnnotation
 from zod.constants import Camera
 from zod.data_classes.box import Box2D, Box3D
 from zod.utils.visualization import render_3d_box
@@ -85,7 +85,7 @@ def overlay_object_3d_box_on_image(
 
 def overlay_object_properties_on_image(
     image: np.ndarray,
-    annotation: AnnotatedObject,
+    annotation: ObjectAnnotation,
     color: Tuple[int, int, int] = (255, 0, 0),
     properties_list: List[str] = ["name"],
     scale_factor: float = 1,

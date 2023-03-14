@@ -29,12 +29,12 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from shapely import geometry
 
-from zod.anno.object import AnnotatedObject, PredictedObject
+from zod.anno.object import ObjectAnnotation
 from zod.constants import Lidar
 from zod.data_classes import Calibration
-from zod.eval.detection.utils import polygon_iod2D
+from zod.eval.detection._experimental.utils import PredictedObject, polygon_iod2D
 
-GtPredMatch = Tuple[AnnotatedObject, PredictedObject]
+GtPredMatch = Tuple[ObjectAnnotation, PredictedObject]
 MIN_CAMERA_ONLY_DEPTH = 150  # in meters
 MAX_CAMERA_ONLY_DEPTH = 500  # in meters
 EVALUATION_FRAME = Lidar.VELODYNE  # TODO: this should be an input somehow
@@ -46,18 +46,18 @@ class MatchedFrame:
 
     matches: List[GtPredMatch]
     false_positives: List[PredictedObject]
-    false_negatives: List[AnnotatedObject]
+    false_negatives: List[ObjectAnnotation]
 
 
 def split_gt_objects(
-    ground_truth: List[AnnotatedObject], eval_classes: List[str]
-) -> Tuple[List[AnnotatedObject], List[AnnotatedObject]]:
+    ground_truth: List[ObjectAnnotation], eval_classes: List[str]
+) -> Tuple[List[ObjectAnnotation], List[ObjectAnnotation]]:
     """Split the ground truth objects into valid and dont-care objects."""
 
     # valid ground truth objects
-    valid_gt: List[AnnotatedObject] = []
+    valid_gt: List[ObjectAnnotation] = []
     # dont-care ground truth objects
-    dont_care_gt: List[AnnotatedObject] = []
+    dont_care_gt: List[ObjectAnnotation] = []
     for gt in ground_truth:
         if gt.name not in eval_classes or gt.should_ignore_object():
             dont_care_gt.append(gt)
@@ -68,7 +68,7 @@ def split_gt_objects(
 
 
 def match_dont_care_objects(
-    dont_care_gt: List[AnnotatedObject],
+    dont_care_gt: List[ObjectAnnotation],
     false_positives: List[PredictedObject],
     calibration: Calibration,
     fp_dist_fcn: Callable = polygon_iod2D,
@@ -132,7 +132,7 @@ def match_dont_care_objects(
 
 
 def greedy_match(
-    ground_truth: List[AnnotatedObject],
+    ground_truth: List[ObjectAnnotation],
     predictions: List[PredictedObject],
     calibration: Calibration,
     dist_fcn: Callable,
@@ -200,7 +200,7 @@ def greedy_match(
 
 
 def optimal_match(
-    ground_truth: List[AnnotatedObject],
+    ground_truth: List[ObjectAnnotation],
     predictions: List[PredictedObject],
     calibration: Calibration,
     dist_fcn: Callable,
@@ -269,7 +269,7 @@ def optimal_match(
 
 
 def match_one_frame(
-    ground_truth: List[AnnotatedObject],
+    ground_truth: List[ObjectAnnotation],
     predictions: List[PredictedObject],
     calibration: Calibration,
     dist_fcn: Callable,

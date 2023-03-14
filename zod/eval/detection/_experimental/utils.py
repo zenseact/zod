@@ -1,16 +1,33 @@
 """Utility functions for object detection evaluation."""
 
+from dataclasses import dataclass
+from typing import Union
+
 import numpy as np
 
 # NOTE: we need to add shapely to the requirements once this is enabled
 from shapely import geometry
 
-from zod.anno.object import AnnotatedObject
+from zod.anno.object import ObjectAnnotation
 from zod.data_classes.box import Box2D, Box3D
 from zod.eval.detection._nuscenes_eval.detection.data_classes import DetectionBox
 
 
-def convert_to_detection_box(frame_id: str, obj: AnnotatedObject) -> DetectionBox:
+@dataclass
+class PredictedObject:
+    """Class to store dynamic object prediction information."""
+
+    # TODO: maybe move to zod.eval?
+
+    name: str
+    confidence: float
+    box3d: Box3D
+
+    def __eq__(self, __o: Union[ObjectAnnotation, "PredictedObject"]) -> bool:
+        return self.box3d == __o.box3d
+
+
+def convert_to_detection_box(frame_id: str, obj: ObjectAnnotation) -> DetectionBox:
     """Convert a DynamicObject to a DetectionBox."""
     det_box = DetectionBox(
         sample_token=frame_id,

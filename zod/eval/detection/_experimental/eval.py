@@ -6,12 +6,13 @@ from typing import Callable, Dict, Iterator, List, Tuple
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
-from zod.anno.object import AnnotatedObject, PredictedObject
+from zod.anno.object import ObjectAnnotation
 from zod.data_classes.calibration import Calibration
+from zod.eval.detection._experimental.matching import MatchedFrame
+from zod.eval.detection._experimental.utils import PredictedObject
 from zod.eval.detection.constants import EVALUATION_CLASSES
-from zod.eval.detection.matching import MatchedFrame
 
-EvalFrame = Tuple[List[AnnotatedObject], List[PredictedObject], Calibration]
+EvalFrame = Tuple[List[ObjectAnnotation], List[PredictedObject], Calibration]
 
 
 class Evalset:

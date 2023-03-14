@@ -6,7 +6,7 @@ from zod.anno.tsr.class_map import get_class_idx
 from zod.constants import AnnotationProject, Camera
 from zod.data_classes.box import Box2D
 
-from .object import AnnotatedObject
+from .object import ObjectAnnotation
 from .tsr.traffic_sign import TrafficSignAnnotation
 
 
@@ -17,10 +17,10 @@ def _read_annotation_file(annotation_file: str) -> List[Dict[str, Any]]:
     return annotation
 
 
-def parse_object_detection_annotation(annotation_path: str) -> List[AnnotatedObject]:
+def parse_object_detection_annotation(annotation_path: str) -> List[ObjectAnnotation]:
     """Parse the objects annotation from the annotation string."""
     annotation = _read_annotation_file(annotation_path)
-    return [AnnotatedObject.from_dict(obj) for obj in annotation]
+    return [ObjectAnnotation.from_dict(obj) for obj in annotation]
 
 
 def parse_traffic_sign_annotation(annotation_path: str) -> List[TrafficSignAnnotation]:
