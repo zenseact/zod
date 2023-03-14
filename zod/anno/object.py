@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -48,22 +50,13 @@ class ObjectAnnotation:
     traffic_content_visible: Optional[bool]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ObjectAnnotation":
+    def from_dict(cls, data: Dict[str, Any]) -> ObjectAnnotation:
         """Create an ObjectAnnotation from a dictionary."""
         properties: Dict[str, Any] = data["properties"]
-
-        box2d = Box2D.from_points(
-            points=data["geometry"]["coordinates"],
-            frame=Camera.FRONT,
-        )
-        if properties["class"] == "Inconclusive":
-            unclear = True
-        else:
-            unclear = properties["unclear"]
-
-        if "location_3d" not in properties:
-            box3d = None
-        else:
+        unclear = (properties["class"] == "Inconclusive") or properties["unclear"]
+        box2d = Box2D.from_points(points=data["geometry"]["coordinates"], frame=Camera.FRONT)
+        box3d = None
+        if "location_3d" in properties:
             box3d = Box3D(
                 center=np.array(properties["location_3d"]["coordinates"]),
                 size=np.array(
@@ -81,7 +74,6 @@ class ObjectAnnotation:
                 ),
                 frame=Lidar.VELODYNE,
             )
-
         return cls(
             uuid=properties["annotation_uuid"],
             box2d=box2d,

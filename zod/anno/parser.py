@@ -13,8 +13,7 @@ from .tsr.traffic_sign import TrafficSignAnnotation
 def _read_annotation_file(annotation_file: str) -> List[Dict[str, Any]]:
     """Read an annotation file."""
     with open(annotation_file, "r") as file:
-        annotation = json.load(file)
-    return annotation
+        return json.load(file)
 
 
 def parse_object_detection_annotation(annotation_path: str) -> List[ObjectAnnotation]:

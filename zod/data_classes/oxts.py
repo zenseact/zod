@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -46,7 +48,7 @@ class EgoMotion:
             self.poses[closest_idxs - 1], self.poses[closest_idxs], fractions
         )
 
-    def interpolate(self, timestamps: np.ndarray) -> "EgoMotion":
+    def interpolate(self, timestamps: np.ndarray) -> EgoMotion:
         """Interpolate ego motion to find ego motion for each target timestamp.
 
         Args:
@@ -69,7 +71,7 @@ class EgoMotion:
         )
 
     @classmethod
-    def from_oxts_path(cls, file_path: str) -> "EgoMotion":
+    def from_oxts_path(cls, file_path: str) -> EgoMotion:
         """Load ego motion from a sequence or frame oxts file."""
         with h5py.File(file_path, "r") as file:
             return cls(
@@ -88,7 +90,7 @@ class EgoMotion:
             )
 
     @classmethod
-    def from_json_path(cls, json_path: str) -> "EgoMotion":
+    def from_json_path(cls, json_path: str) -> EgoMotion:
         """Load ego motion from a json file."""
         with open(json_path, "r") as file:
             data = json.load(file)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 import numpy as np
@@ -26,14 +28,14 @@ class Pose:
         return self.transform[:3, :3]
 
     @property
-    def inverse(self) -> "Pose":
+    def inverse(self) -> Pose:
         """Return the inverse of the pose."""
         return Pose(np.linalg.inv(self.transform))
 
     @classmethod
     def from_translation_rotation(
         cls, translation: np.ndarray, rotation_matrix: np.ndarray
-    ) -> "Pose":
+    ) -> Pose:
         """Create a pose from a translation and a rotation."""
         transform = np.eye(4, 4)
         transform[:3, :3] = rotation_matrix
@@ -41,6 +43,6 @@ class Pose:
         return cls(transform)
 
     @classmethod
-    def identity(cls) -> "Pose":
+    def identity(cls) -> Pose:
         """Create an identity pose."""
         return cls(np.eye(4, 4))

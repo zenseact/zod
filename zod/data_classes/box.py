@@ -1,4 +1,6 @@
 """ZOD Object detection containers."""
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -109,7 +111,7 @@ class Box3D:
         )
         return pos2d
 
-    def __eq__(self, __o: "Box3D") -> bool:
+    def __eq__(self, __o: Box3D) -> bool:
         b1 = np.allclose(self.center, __o.center)
         b2 = np.allclose(self.size, __o.size)
         b3 = self.orientation == __o.orientation
@@ -125,7 +127,7 @@ class Box2D:
     frame: Camera
 
     @classmethod
-    def from_points(cls, points: List[List[float]], frame=Camera.FRONT) -> "Box2D":
+    def from_points(cls, points: List[List[float]], frame=Camera.FRONT) -> Box2D:
         """Compute outer points from a polygon.
 
         Args:

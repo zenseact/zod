@@ -1,4 +1,6 @@
 """ZOD dataclasses."""
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, List, Union
@@ -24,7 +26,7 @@ class LidarData:
     diode_idx: np.ndarray  # (N,) uint8
     core_timestamp: float  # core epoch timestamp
 
-    def copy(self) -> "LidarData":
+    def copy(self) -> LidarData:
         """Return a copy of the lidar data."""
         return LidarData(
             points=self.points.copy(),
@@ -35,7 +37,7 @@ class LidarData:
         )
 
     @classmethod
-    def empty(cls) -> "LidarData":
+    def empty(cls) -> LidarData:
         """Create an empty lidar data object."""
         return cls(
             points=np.empty((0, 3), dtype=np.float32),
@@ -46,7 +48,7 @@ class LidarData:
         )
 
     @classmethod
-    def from_npy(cls, path: str) -> "LidarData":
+    def from_npy(cls, path: str) -> LidarData:
         """Load lidar data from a .npy file."""
         data = np.load(path)
         core_timestamp = parse_datetime_from_filename(path).timestamp()
@@ -93,7 +95,7 @@ class LidarData:
             self.points[..., None, :] @ rotations.swapaxes(-2, -1) + translations[..., None, :]
         ).squeeze(-2)
 
-    def extend(self, *other: "LidarData"):
+    def extend(self, *other: LidarData):
         """Extend this LidarData with data from another LidarData object.
 
         Args:
@@ -109,7 +111,7 @@ class LidarData:
             + sum(o.core_timestamp * len(o.timestamps) for o in other)
         ) / (len(self.timestamps) + sum(len(o.timestamps) for o in other))
 
-    def __eq__(self, other: "LidarData") -> bool:
+    def __eq__(self, other: LidarData) -> Union[bool, np.bool_]:
         """Check if two LidarData objects are equal."""
         return (
             np.allclose(self.points, other.points)

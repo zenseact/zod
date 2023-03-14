@@ -1,4 +1,6 @@
 """Calibration dataclasses."""
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from typing import Any, Dict
@@ -31,7 +33,7 @@ class Calibration:
     cameras: Dict[Camera, CameraCalibration]
 
     @classmethod
-    def from_dict(cls, calib_dict: Dict[str, Any]) -> "Calibration":
+    def from_dict(cls, calib_dict: Dict[str, Any]) -> Calibration:
         lidars = {
             Lidar.VELODYNE: LidarCalibration(
                 extrinsics=Pose(np.array(calib_dict["FC"]["lidar_extrinsics"]))
@@ -50,7 +52,7 @@ class Calibration:
         return cls(lidars=lidars, cameras=cameras)
 
     @classmethod
-    def from_json_path(cls, json_path: str) -> "Calibration":
+    def from_json_path(cls, json_path: str) -> Calibration:
         with open(json_path) as f:
             calib_dict = json.load(f)
         return cls.from_dict(calib_dict)
