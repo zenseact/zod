@@ -2,9 +2,9 @@
 import json
 from typing import Any, Dict, List
 
-from zod.anno.tsr.class_map import get_class_idx
-from zod.constants import AnnotationProject, Camera
-from zod.data_classes.box import Box2D
+from zod.anno.lane import LaneAnnotation, parse_lane_annotation
+from zod.anno.road_condition import RoadConditionAnnotation
+from zod.constants import AnnotationProject
 
 from .object import ObjectAnnotation
 from .tsr.traffic_sign import TrafficSignAnnotation
@@ -26,48 +26,32 @@ def parse_object_detection_annotation(annotation_path: str) -> List[ObjectAnnota
 def parse_traffic_sign_annotation(annotation_path: str) -> List[TrafficSignAnnotation]:
     """Parse the traffic sign annotation from the annotation string."""
     annotation = _read_annotation_file(annotation_path)
-    annotated_objects = []
-    for annotated_object in annotation:
-        # Ignore all unclear traffic signs
-        if annotated_object["properties"]["unclear"]:
-            continue
-        bounding_box = Box2D.from_points(annotated_object["geometry"]["coordinates"], Camera.FRONT)
-        annotated_objects.append(
-            TrafficSignAnnotation(
-                bounding_box=bounding_box,
-                traffic_sign_class=annotated_object["properties"]["class"],
-                traffic_sign_idx=get_class_idx(annotated_object["properties"]["class"]),
-                occlusion_ratio=annotated_object["properties"]["occlusion_ratio"],
-                annotation_uuid=annotated_object["properties"]["annotation_uuid"],
-                electronic_sign=annotated_object["properties"]["is_electronic"],
-                uuid=annotated_object["properties"]["annotation_uuid"],
-            )
-        )
-    return annotated_objects
+    return [TrafficSignAnnotation.from_dict(sign) for sign in annotation]
 
 
-def parse_lane_markings_annotation(annotation_path: str, classes=["lm_dashed", "lm_solid"]):
+def parse_lane_markings_annotation(annotation_path: str) -> List[LaneAnnotation]:
     """Parse the lane markings annotation from the annotation string."""
     annotations = _read_annotation_file(annotation_path)
-    polygons = []
-    for annotation in annotations:
-        if "class" in annotation["properties"]:
-            annotated_class = annotation["properties"]["class"]
-            if annotated_class in classes:
-                polygons.append(annotation["geometry"]["coordinates"])
-    return polygons
+    return [parse_lane_annotation(marker) for marker in annotations]
 
 
-def parse_ego_road_annotation(annotation_path: str, classes=["EgoRoad_Road"]):
+def parse_ego_road_annotation(annotation_path: str) -> List[Dict]:
     """Parse the egoroad annotation from the annotation string."""
     annotations = _read_annotation_file(annotation_path)
     polygons = []
     for annotation in annotations:
         if "class" in annotation["properties"]:
-            annotated_class = annotation["properties"]["class"]
-            if annotated_class in classes:
-                polygons.append(annotation["geometry"]["coordinates"])
+            polygons.append(annotation["geometry"]["coordinates"])
+        else:
+            # TODO: what does it mean if we end up here?
+            pass
     return polygons
+
+
+def parse_road_condition_annotation(annotation_path) -> RoadConditionAnnotation:
+    with open(annotation_path, "r") as file:
+        annotation = json.load(file)
+    return RoadConditionAnnotation.from_dict(annotation["properties"])
 
 
 ANNOTATION_PARSERS = {
@@ -75,8 +59,5 @@ ANNOTATION_PARSERS = {
     AnnotationProject.EGO_ROAD: parse_ego_road_annotation,
     AnnotationProject.OBJECT_DETECTION: parse_object_detection_annotation,
     AnnotationProject.TRAFFIC_SIGNS: parse_traffic_sign_annotation,
+    AnnotationProject.ROAD_CONDITION: parse_road_condition_annotation,
 }
-
-
-if __name__ == "__main__":
-    pass
