@@ -60,7 +60,7 @@ def sequences(
     version: str = typer.Option(..., help="Version of the dataset"),
     sequence_id: int = typer.Option(..., help="Frame id to visualize"),
     start: int = typer.Option(0, help="Index of the first frame to visualize"),
-    end: int = typer.Option(-1, help="Index of the last frame to visualize (-1 means last)"),
+    end: int = typer.Option(None, help="Index of the last frame to visualize (None means last)"),
     downsampling: int = typer.Option(10, help="Downsampling factor (random point dropping)"),
 ):
     """Visualize the lidar data for a given frame id."""
