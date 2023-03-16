@@ -1,4 +1,9 @@
 # Zenseact Open Dataset
+
+[![Stable Version](https://img.shields.io/pypi/v/zod?label=stable)](https://pypi.org/project/zod/#history)
+[![Python Versions](https://img.shields.io/pypi/pyversions/zod)](https://pypi.org/project/zod/)
+[![Download Stats](https://img.shields.io/pypi/dm/zod)](https://pypistats.org/packages/zod)
+
 The Zenseact Open Dataset (ZOD) is a large multi-modal autonomous driving dataset developed by a team of researchers at [Zenseact](https://zenseact.com/). The dataset is split into three categories: *Frames*, *Sequences*, and *Drives*. For more information about the dataset, please refer to our [coming soon](), or visit our [website](https://zod.zenseact.com).
 
 ## Examples
