@@ -12,7 +12,6 @@ from zod.constants import AnnotationProject
 from zod.visualization.bev_utils import BEVSettings
 
 
-
 def get_header(name):
     """Create an HTML header."""
     title = html.H4(name, style={"margin-top": 5})
@@ -83,7 +82,7 @@ class Viz3D:
                         classes[obj_idx],
                         positions[obj_idx],
                         dimensions[obj_idx],
-                        rotations[obj_idx]
+                        rotations[obj_idx],
                     )
                 )
 
@@ -222,15 +221,13 @@ if __name__ == "__main__":
 
     viz = Viz3D()
     viz.add_pointcloud(pcd.points[:, 0], pcd.points[:, 1], pcd.points[:, 2], pcd.intensity)
-    viz.add_zod_annotations((
-        np.array([obj.name for obj in annotations if obj.box3d]),
-        np.concatenate(
-            [obj.box3d.center[None, :] for obj in annotations if obj.box3d], axis=0
-        ),
-        np.concatenate(
-            [obj.box3d.size[None, :] for obj in annotations if obj.box3d], axis=0
-        ),
-        np.array([obj.box3d.orientation for obj in annotations if obj.box3d]),
-    ))
+    viz.add_zod_annotations(
+        (
+            np.array([obj.name for obj in annotations if obj.box3d]),
+            np.concatenate([obj.box3d.center[None, :] for obj in annotations if obj.box3d], axis=0),
+            np.concatenate([obj.box3d.size[None, :] for obj in annotations if obj.box3d], axis=0),
+            np.array([obj.box3d.orientation for obj in annotations if obj.box3d]),
+        )
+    )
 
     viz.show()
