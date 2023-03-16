@@ -1,0 +1,21 @@
+name: Poetry Publish
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Install Poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+      - name: Add Poetry to path
+        run: echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+      - run: poetry install
+      - run: poetry run pytest
+      - run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+      - run: poetry publish --build
