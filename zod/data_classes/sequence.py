@@ -53,6 +53,7 @@ class ZodSequence:
 
     def get_lidar(self, start: int = 0, end: int = -1) -> List[LidarData]:
         """Get the point clouds."""
+        end = end if end != -1 else len(self.info.get_lidar_frames(Lidar.VELODYNE))
         return [
             lidar_frame.read()
             for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]
