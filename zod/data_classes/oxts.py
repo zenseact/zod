@@ -34,13 +34,24 @@ class EgoMotion:
         """
         selfmin, selfmax = np.min(self.timestamps), np.max(self.timestamps)
         assert (selfmin <= np.min(target_ts)) and (
-            selfmax > np.max(target_ts)
-        ), f"targets not between pose timestamps, must be [{selfmin}, {selfmax})"
-        # TODO: check if the timestamp exists, then we don't need to interpolate
-        # else interpolate according to below.
+            selfmax >= np.max(target_ts)
+        ), f"targets not between pose timestamps, must be [{selfmin}, {selfmax}]"
+
+        if np.isin(target_ts, self.timestamps).all():
+            return self.poses[self.timestamps.searchsorted(target_ts)]
+
         closest_idxs = self.timestamps.searchsorted(
             target_ts, side="right", sorter=self.timestamps.argsort()
         )
+
+        # if the target timestamp is exactly the same as the largest timestamp
+        # then the searchsorted will return the length of the array, which is
+        # out of bounds. The assert above ensures that the target timestamp is
+        # less or equal than the largest timestamp, so we can just clip the index 
+        # to the last element.
+        closest_idxs = np.clip(closest_idxs, 1, len(self.timestamps) - 1)
+
+
         time_diffs = target_ts - self.timestamps[closest_idxs - 1]
         total_times = self.timestamps[closest_idxs] - self.timestamps[closest_idxs - 1]
         fractions = time_diffs / total_times
