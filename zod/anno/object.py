@@ -9,25 +9,25 @@ from pyquaternion import Quaternion
 from zod.constants import Camera, Lidar
 from zod.data_classes.box import Box2D, Box3D
 
-OBJECT_CLASSES_DYNAMIC = [
+OBJECT_CLASSES_DYNAMIC = (
     "Vehicle",
     "VulnerableVehicle",
     "Pedestrian",
     "Animal",
-]
-OBJECT_CLASSES_STATIC = [
+)
+OBJECT_CLASSES_STATIC = (
     "PoleObject",
     "TrafficBeacon",
     "TrafficSign",
     "TrafficSignal",
     "TrafficGuide",
     "DynamicBarrier",
-]
-OBJECT_CLASSES = [
+)
+OBJECT_CLASSES = (
     *OBJECT_CLASSES_DYNAMIC,
     *OBJECT_CLASSES_STATIC,
     "Inconclusive",
-]
+)
 
 
 @dataclass
