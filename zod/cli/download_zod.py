@@ -1,4 +1,4 @@
-"""This script is to be used to download the zenseact open dataset."""
+"""This script is to be used to download the Zenseact Open Dataset."""
 import contextlib
 import os
 import os.path as osp
@@ -316,7 +316,7 @@ def frames(
     oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
     calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
 ):
-    """Download the zenseact open dataset."""
+    """Download the Zenseact Open Dataset."""
 
     if images:
         assert blur or dnat, "Must download at least one type of image"
@@ -347,7 +347,7 @@ def sequences(
     oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
     calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
 ):
-    """Download the zenseact open dataset."""
+    """Download the Zenseact Open Dataset."""
     dl_settings: DownloadSettings = ctx.obj
     filter_settings = FilterSettings(
         mini=mini,
