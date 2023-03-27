@@ -1,5 +1,7 @@
 """Module to perform Lidar extraction and visualization of projections on image plane."""
 
+from typing import Tuple, Union
+
 import cv2
 import numpy as np
 
@@ -31,25 +33,26 @@ def project_lidar_to_image(
     calib: Calibration,
     lidar: Lidar = Lidar.VELODYNE,
     camera: Camera = Camera.FRONT,
-) -> np.ndarray:
-    """Project lidar pointcloud to camera."""
-    # TODO: use lidar param here
-    t_lidar_to_camera = get_3d_transform_camera_lidar(calib)
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Project lidar pointcloud to camera (also returns mask)."""
+    t_lidar_to_camera = get_3d_transform_camera_lidar(calib, lidar, camera)
 
     camera_data = transform_points(lidar_data.points, t_lidar_to_camera.transform)
     positive_depth = camera_data[:, 2] > 0
     camera_data = camera_data[positive_depth]
     if not camera_data.any():
-        return camera_data
-    camera_data = get_points_in_camera_fov(calib.cameras[camera].field_of_view, camera_data)
+        return camera_data, positive_depth
 
+    camera_data, mask = get_points_in_camera_fov(calib.cameras[camera].field_of_view, camera_data)
     xy_array = project_3d_to_2d_kannala(
         camera_data,
         calib.cameras[camera].intrinsics[..., :3],
         calib.cameras[camera].distortion,
     )
     xyd_array = np.concatenate([xy_array, camera_data[:, 2:3]], axis=1)
-    return xyd_array
+    final_mask = np.zeros_like(positive_depth)
+    final_mask[positive_depth] = mask
+    return xyd_array, final_mask
 
 
 def draw_projections_as_points(
@@ -110,6 +113,6 @@ def draw_projection_as_jet_circles(
 
 def visualize_lidar_on_image(lidar_data: LidarData, calib: Calibration, image: np.ndarray):
     """Visualize GPS track on image."""
-    xyd = project_lidar_to_image(lidar_data, calib)
+    xyd, _ = project_lidar_to_image(lidar_data, calib)
     image = draw_projection_as_jet_circles(image, xyd, radius=2)
     return image
