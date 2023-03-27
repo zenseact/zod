@@ -32,7 +32,9 @@ def visualize_oxts_on_image(
     print(f"Number of points: {points.shape[0]}")
 
     # filter points that are not in the camera field of view
-    points_in_fov = get_points_in_camera_fov(calibs.cameras[camera].field_of_view, camerapoints)
+    points_in_fov, _ = get_points_in_camera_fov(
+        calibs.cameras[camera].field_of_view, camerapoints, horizontal_only=True
+    )
     print(f"Number of points in fov: {len(points_in_fov)}")
 
     # project points to image plane

@@ -1,5 +1,5 @@
 """Geometry utility functions."""
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -99,20 +99,26 @@ def transform_points(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     return transformed_points
 
 
-def get_points_in_camera_fov(fov: np.ndarray, camera_data: np.ndarray) -> np.ndarray:
+def get_points_in_camera_fov(
+    fov: np.ndarray, camera_data: np.ndarray, horizontal_only: bool = False
+) -> Tuple[np.ndarray, np.ndarray]:
     """Get points that are present in camera field of view.
 
     Args:
         fov: camera field of view
         camera_data: data to filter inside the camera field of view
+        horizontal_only: if True, only horizontal field of view is used
 
     Returns:
         points only visible in the camera
+        mask of the points that are visible in the camera
 
     """
     horizontal_fov, vertical_fov = fov
-    if horizontal_fov == 0:
-        return camera_data
-    angles = np.rad2deg(np.arctan2(camera_data[:, 0], camera_data[:, 2]))
-    mask = np.logical_and(angles > -horizontal_fov / 2, angles < horizontal_fov / 2)
-    return camera_data[mask.flatten()]
+    h_angles = np.rad2deg(np.arctan2(camera_data[:, 0], camera_data[:, 2]))
+    v_angles = np.rad2deg(np.arctan2(camera_data[:, 1], camera_data[:, 2]))
+    mask = np.logical_and(h_angles > -horizontal_fov / 2, h_angles < horizontal_fov / 2)
+    if not horizontal_only:
+        v_mask = np.logical_and(v_angles > -vertical_fov / 2, v_angles < vertical_fov / 2)
+        mask = np.logical_and(mask, v_mask)
+    return camera_data[mask], mask
