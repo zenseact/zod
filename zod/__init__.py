@@ -4,6 +4,8 @@ from .constants import AnnotationProject as AnnotationProject
 from .constants import Anonymization as Anonymization
 from .constants import Camera as Camera
 from .constants import Lidar as Lidar
+from .data_classes.frame import ZodFrame as ZodFrame
+from .data_classes.sequence import ZodSequence as ZodSequence
 from .zod_frames import ZodFrames as ZodFrames
 from .zod_sequences import ZodSequences as ZodSequences
 
