@@ -74,6 +74,10 @@ class ObjectAnnotation:
                 ),
                 frame=Lidar.VELODYNE,
             )
+        with_rider = properties.get("with_rider")
+        with_rider = with_rider if with_rider is None else with_rider == "True"
+        tcv = properties.get("traffic_content_visible")
+        tcv = tcv if tcv is None else tcv == "True"
         return cls(
             uuid=properties["annotation_uuid"],
             box2d=box2d,
@@ -83,9 +87,9 @@ class ObjectAnnotation:
             object_type=properties.get("type", None),
             occlusion_level=properties.get("occlusion_ratio", None),
             artificial=properties.get("artificial", None),
-            with_rider=properties.get("with_rider", None) == "True",
+            with_rider=with_rider,
             emergency=properties.get("emergency", None),
-            traffic_content_visible=properties.get("traffic_content_visible", None) == "True",
+            traffic_content_visible=tcv,
         )
 
     def should_ignore_object(self, require_3d: bool = True) -> bool:
@@ -118,7 +122,7 @@ class ObjectAnnotation:
         elif self.name == "VulnerableVehicle":
             if self.object_type not in ("Bicycle", "Motorcycle"):
                 return True
-            return bool(self.with_rider)
+            return not self.with_rider
         elif self.name == "Pedestrian":
             pass
         elif self.name == "TrafficSign":
