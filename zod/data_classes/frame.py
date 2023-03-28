@@ -6,9 +6,9 @@ from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 from zod.utils.compensation import motion_compensate_scanwise
 
 from .calibration import Calibration
+from .ego_motion import EgoMotion
 from .info import Information
 from .metadata import FrameMetaData
-from .oxts import EgoMotion
 from .sensor import CameraFrame, LidarData, LidarFrame
 
 

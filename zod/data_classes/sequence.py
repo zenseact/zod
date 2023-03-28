@@ -4,9 +4,9 @@ from zod.constants import AnnotationProject, Lidar
 from zod.utils.compensation import motion_compensate_scanwise
 
 from .calibration import Calibration
+from .ego_motion import EgoMotion
 from .info import Information
 from .metadata import SequenceMetadata
-from .oxts import EgoMotion
 from .sensor import LidarData
 
 

@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 
 from zod.data_classes.calibration import LidarCalibration
-from zod.data_classes.oxts import EgoMotion
+from zod.data_classes.ego_motion import EgoMotion
 from zod.data_classes.sensor import LidarData
 
 
