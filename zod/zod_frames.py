@@ -20,7 +20,7 @@ def _create_frame(frame: dict, dataset_root: str) -> Information:
     return info
 
 
-class ZodFrames(object):
+class ZodFrames:
     """ZOD Frames."""
 
     def __init__(self, dataset_root: Union[Path, str], version: str, mp: bool = True):
