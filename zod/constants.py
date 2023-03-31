@@ -20,6 +20,7 @@ TRAIN = "train"
 VAL = "val"
 FULL = "full"
 MINI = "mini"
+VERSIONS = (FULL, MINI)
 TRAINVAL_FILES = {
     FRAMES: {
         FULL: f"trainval_frames_full.json",
@@ -35,16 +36,6 @@ TRAINVAL_FILES = {
     },
 }
 SPLIT_FILES = {
-    SEQUENCES: {
-        FULL: {
-            TRAIN: "splits/sequences_full_train.txt",
-            VAL: "splits/sequences_full_val.txt",
-        },
-        MINI: {
-            TRAIN: "splits/sequences_mini_train.txt",
-            VAL: "splits/sequences_mini_val.txt",
-        },
-    },
     FRAMES: {
         FULL: {
             TRAIN: "splits/frames_full_train.txt",
@@ -53,6 +44,16 @@ SPLIT_FILES = {
         MINI: {
             TRAIN: "splits/frames_mini_train.txt",
             VAL: "splits/frames_mini_val.txt",
+        },
+    },
+    SEQUENCES: {
+        FULL: {
+            TRAIN: "splits/sequences_full_train.txt",
+            VAL: "splits/sequences_full_val.txt",
+        },
+        MINI: {
+            TRAIN: "splits/sequences_mini_train.txt",
+            VAL: "splits/sequences_mini_val.txt",
         },
     },
     DRIVES: {
@@ -66,9 +67,6 @@ SPLIT_FILES = {
         },
     },
 }
-
-
-VERSIONS = (FULL, MINI)
 
 
 class Anonymization(Enum):

@@ -10,4 +10,4 @@ class ZodDrives(ZodSequences):
 
     """
 
-    TRAINVAL = TRAINVAL_FILES[DRIVES]
+    _TRAINVAL_FILES = TRAINVAL_FILES[DRIVES]
