@@ -29,6 +29,10 @@ TRAINVAL_FILES = {
         FULL: f"trainval_sequences_full.json",
         MINI: f"trainval_sequences_mini.json",
     },
+    DRIVES: {
+        FULL: f"trainval_drives_full.json",
+        MINI: f"trainval_drives_mini.json",
+    },
 }
 SPLIT_FILES = {
     SEQUENCES: {
@@ -49,6 +53,16 @@ SPLIT_FILES = {
         MINI: {
             TRAIN: "splits/frames_mini_train.txt",
             VAL: "splits/frames_mini_val.txt",
+        },
+    },
+    DRIVES: {
+        FULL: {
+            TRAIN: "splits/drives_full_train.txt",
+            VAL: "splits/drives_full_val.txt",
+        },
+        MINI: {
+            TRAIN: "splits/drives_mini_train.txt",
+            VAL: "splits/drives_mini_val.txt",
         },
     },
 }

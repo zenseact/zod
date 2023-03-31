@@ -103,14 +103,14 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
     image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     for traffic_sign in traffic_signs:
         cls_name = traffic_sign.traffic_sign_class
-        train_or_val = constants.TRAIN if frame.frame_id in train_ids else constants.VAL
+        train_or_val = constants.TRAIN if frame.info.id in train_ids else constants.VAL
         cls_folder = os.path.join(args.output_folder, train_or_val, cls_name)
 
         if not os.path.exists(cls_folder):
             os.makedirs(cls_folder)
             os.chmod(cls_folder, 0o775)
 
-        new_frame_id = f"{frame.frame_id}_{traffic_sign.uuid}"
+        new_frame_id = f"{frame.info.id}_{traffic_sign.uuid}"
         output_file = os.path.join(
             cls_folder,
             f"{new_frame_id}.png",
@@ -170,7 +170,7 @@ def main(args: Args):
 
     traffic_sign_frames = process_map(
         _process_frame,
-        zod_frames.get_all_frames().values(),
+        zod_frames,
         repeat(args),
         desc="Processing frames in ZOD",
         max_workers=args.num_workers,

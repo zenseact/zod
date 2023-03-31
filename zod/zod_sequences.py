@@ -1,8 +1,6 @@
 import json
 import os.path as osp
 from functools import partial
-from itertools import repeat
-from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
@@ -22,7 +20,9 @@ def _create_sequence(sequence: dict, dataset_root: str) -> Information:
 class ZodSequences:
     """ZOD Sequences."""
 
-    def __init__(self, dataset_root: Union[Path, str], version: str, mp: bool = True):
+    _TRAINVAL_FILES = TRAINVAL_FILES[SEQUENCES]
+
+    def __init__(self, dataset_root: str, version: str, mp: bool = True):
         self._dataset_root = dataset_root
         self._version = version
         self._mp = mp
@@ -50,7 +50,7 @@ class ZodSequences:
 
     def _load_sequences(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load sequences for the given version."""
-        filename = TRAINVAL_FILES[SEQUENCES][self._version]
+        filename = self._TRAINVAL_FILES[self._version]
         with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 

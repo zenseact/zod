@@ -1,3 +1,4 @@
+from zod.constants import DRIVES, TRAINVAL_FILES
 from zod.zod_sequences import ZodSequences
 
 
@@ -8,3 +9,5 @@ class ZodDrives(ZodSequences):
     Therefore
 
     """
+
+    TRAINVAL = TRAINVAL_FILES[DRIVES]

@@ -2,8 +2,6 @@
 import json
 import os.path as osp
 from functools import partial
-from itertools import repeat
-from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
@@ -23,7 +21,9 @@ def _create_frame(frame: dict, dataset_root: str) -> Information:
 class ZodFrames:
     """ZOD Frames."""
 
-    def __init__(self, dataset_root: Union[Path, str], version: str, mp: bool = True):
+    _TRAINVAL_FILES = TRAINVAL_FILES[FRAMES]
+
+    def __init__(self, dataset_root: str, version: str, mp: bool = True):
         self._dataset_root = dataset_root
         self._version = version
         self._mp = mp
@@ -47,7 +47,7 @@ class ZodFrames:
 
     def _load_frames(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
         """Load frames for the given version."""
-        filename = TRAINVAL_FILES[FRAMES][self._version]
+        filename = self._TRAINVAL_FILES[self._version]
         with open(osp.join(self._dataset_root, filename), "r") as f:
             all_ids = json.load(f)
 
