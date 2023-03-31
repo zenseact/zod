@@ -85,6 +85,10 @@ class ZodSequences:
         else:
             raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 
+    def get_all_infos(self) -> Dict[str, Information]:
+        """Get all infos."""
+        return self._sequences
+
     def get_all_ids(self) -> Set[str]:
         """Get all sequence ids."""
         return set(self._sequences.keys())

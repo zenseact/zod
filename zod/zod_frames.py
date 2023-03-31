@@ -82,8 +82,8 @@ class ZodFrames:
         else:
             raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 
-    def get_all_frame_infos(self) -> Dict[str, Information]:
-        """Get all frames."""
+    def get_all_infos(self) -> Dict[str, Information]:
+        """Get all infos."""
         return self._frames
 
     def get_all_ids(self) -> Set[str]:
