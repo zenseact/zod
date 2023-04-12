@@ -1,6 +1,7 @@
 import json
 import os.path as osp
 from functools import partial
+from itertools import chain
 from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
@@ -27,11 +28,7 @@ class ZodSequences:
         self._version = version
         self._mp = mp
         assert version in VERSIONS, f"Unknown version: {version}, must be one of: {VERSIONS}"
-        self._train_sequences, self._val_sequences = self._load_sequences()
-        self._sequences: Dict[str, Information] = {
-            **self._train_sequences,
-            **self._val_sequences,
-        }
+        self._sequences, self._train_ids, self._val_ids = self._load_sequences()
 
     def __len__(self) -> int:
         return len(self._sequences)
@@ -48,7 +45,7 @@ class ZodSequences:
         for frame_id in self._sequences:
             yield self.__getitem__(frame_id)
 
-    def _load_sequences(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
+    def _load_sequences(self) -> Tuple[Dict[str, Information], List[str], List[str]]:
         """Load sequences for the given version."""
         filename = self._TRAINVAL_FILES[self._version]
         with open(osp.join(self._dataset_root, filename), "r") as f:
@@ -56,32 +53,26 @@ class ZodSequences:
 
         func = partial(_create_sequence, dataset_root=self._dataset_root)
         if self._mp and self._version == FULL:
-            train_sequences = process_map(
+            frames = process_map(
                 func,
-                all_ids[TRAIN],
-                desc="Loading train sequences",
-                chunksize=10 if self._version == FULL else 1,
+                chain.from_iterable(all_ids.values()),
+                desc="Loading sequences",
+                chunksize=50 if self._version == FULL else 1,
             )
-            val_sequences = process_map(
-                func,
-                all_ids[VAL],
-                desc="Loading val sequences",
-                chunksize=10 if self._version == FULL else 1,
-            )
-            train_sequences = {s.id: s for s in train_sequences}
-            val_sequences = {s.id: s for s in val_sequences}
+            frames = {frame.id: frame for frame in frames}
         else:
-            train_sequences = {s.id: s for s in map(func, all_ids[TRAIN])}
-            val_sequences = {s.id: s for s in map(func, all_ids[VAL])}
+            frames = {frame.id: frame for frame in map(func, chain.from_iterable(all_ids.values()))}
 
-        return train_sequences, val_sequences
+        train_ids = [f["id"] for f in all_ids[TRAIN]]
+        val_ids = [f["id"] for f in all_ids[VAL]]
+        return frames, train_ids, val_ids
 
     def get_split(self, split: str) -> List[str]:
         """Get split by name (e.g. train / val)."""
         if split == TRAIN:
-            return list(self._train_sequences.keys())
+            return self._train_ids
         elif split == VAL:
-            return list(self._val_sequences.keys())
+            return self._val_ids
         else:
             raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 

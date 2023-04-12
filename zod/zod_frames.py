@@ -2,6 +2,7 @@
 import json
 import os.path as osp
 from functools import partial
+from itertools import chain
 from typing import Dict, List, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
@@ -28,8 +29,7 @@ class ZodFrames:
         self._version = version
         self._mp = mp
         assert version in VERSIONS, f"Unknown version: {version}, must be one of: {VERSIONS}"
-        self._train_frames, self._val_frames = self._load_frames()
-        self._frames: Dict[str, Information] = {**self._train_frames, **self._val_frames}
+        self._frames, self._train_ids, self._val_ids = self._load_frames()
 
     def __len__(self) -> int:
         return len(self._frames)
@@ -45,7 +45,7 @@ class ZodFrames:
         for frame_id in self._frames:
             yield self.__getitem__(frame_id)
 
-    def _load_frames(self) -> Tuple[Dict[str, Information], Dict[str, Information]]:
+    def _load_frames(self) -> Tuple[Dict[str, Information], List[str], List[str]]:
         """Load frames for the given version."""
         filename = self._TRAINVAL_FILES[self._version]
         with open(osp.join(self._dataset_root, filename), "r") as f:
@@ -53,32 +53,26 @@ class ZodFrames:
 
         func = partial(_create_frame, dataset_root=self._dataset_root)
         if self._mp and self._version == FULL:
-            train_frames = process_map(
+            frames = process_map(
                 func,
-                all_ids[TRAIN],
-                desc="Loading train frames",
+                chain.from_iterable(all_ids.values()),
+                desc="Loading frames",
                 chunksize=50 if self._version == FULL else 1,
             )
-            val_frames = process_map(
-                func,
-                all_ids[VAL],
-                desc="Loading val frames",
-                chunksize=50 if self._version == FULL else 1,
-            )
-            train_frames = {frame.id: frame for frame in train_frames}
-            val_frames = {frame.id: frame for frame in val_frames}
+            frames = {frame.id: frame for frame in frames}
         else:
-            train_frames = {frame.id: frame for frame in map(func, all_ids[TRAIN])}
-            val_frames = {frame.id: frame for frame in map(func, all_ids[VAL])}
+            frames = {frame.id: frame for frame in map(func, chain.from_iterable(all_ids.values()))}
 
-        return train_frames, val_frames
+        train_ids = [f["id"] for f in all_ids[TRAIN]]
+        val_ids = [f["id"] for f in all_ids[VAL]]
+        return frames, train_ids, val_ids
 
     def get_split(self, split: str) -> List[str]:
         """Get split by name (e.g. train / val)."""
         if split == TRAIN:
-            return list(self._train_frames.keys())
+            return self._train_ids
         elif split == VAL:
-            return list(self._val_frames.keys())
+            return self._val_ids
         else:
             raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
 
