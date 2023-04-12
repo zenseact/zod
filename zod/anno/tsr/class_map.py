@@ -1,6 +1,7 @@
 """Class map for the traffic sign classification dataset."""
 
 CLASS_NAME_TO_CLASS_IDX = {
+    "Unclear": None,
     "NotListed": 0,
     "Indication_CameraSurveillance": 1,
     "Mandatory_PassOnEitherSide": 2,
