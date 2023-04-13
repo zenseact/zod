@@ -75,3 +75,26 @@ class ZodSequence:
         aggregated = lidar_scans[0]
         aggregated.extend(*lidar_scans[1:])
         return aggregated
+
+    def get_keyframe_lidar(self, motion_compensated=True) -> LidarData:
+        """Get the keyframe point cloud.
+
+        Args:
+            motion_compensated (bool, optional): Whether to motion compensate the point cloud
+             to camera (and annotation) timestamp. Defaults to True.
+
+        Returns:
+            LidarData: The point cloud.
+        """
+
+        lidar_scan = self.info.get_key_lidar_frame(Lidar.VELODYNE).read()
+
+        if not motion_compensated:
+            return lidar_scan
+
+        return motion_compensate_scanwise(
+            lidar_scan,
+            self.ego_motion,
+            self.calibration.lidars[Lidar.VELODYNE],
+            self.info.keyframe_time.timestamp(),
+        )
