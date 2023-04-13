@@ -78,8 +78,9 @@ def overlay_object_3d_box_on_image(
     camera: Camera = Camera.FRONT,
 ):
     """Visualize 2D box of annotated object on the image."""
-    box3d.convert_to(camera, calib)
-    render_3d_box(image, box3d, calib, color, line_thickness)
+    box3d_copy = box3d.copy()
+    box3d_copy.convert_to(camera, calib)
+    render_3d_box(image, box3d_copy, calib, color, line_thickness)
     return image
 
 

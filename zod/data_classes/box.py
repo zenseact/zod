@@ -45,6 +45,14 @@ class Box3D:
         self._transform(calib.get_extrinsics(self.frame), new_frame=EGO)
         self._transform_inv(calib.get_extrinsics(frame), new_frame=frame)
 
+    def copy(self):
+        return Box3D(
+            center=self.center.copy(),
+            size=self.size.copy(),
+            orientation=self.orientation.copy(),
+            frame=self.frame,
+        )
+
     @property
     def corners(self) -> np.ndarray:
         """Get the corners of the bounding box in the current frame.
