@@ -28,27 +28,27 @@ pip install "zod[all]"
 
 ## Download using the CLI
 
-This is an example of how to download the ZOD Frames mini-dataset using the CLI. Prerequisites are that you have applied for access and received a download link. To download the mini-dataset, run:
+This is an example of how to download the ZOD Frames mini-dataset using the CLI. Prerequisites are that you have applied for access and received a download link.
+The simplest way to download the dataset is to use the CLI interactively:
 ```bash
-zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --mini
+zod download
 ```
-similarly, to download the full dataset (including all lidar scans before and after the keyframe), run:
+This will prompt you for the required information, present you with a summary of the download, and then ask for confirmation. You can of course also specify all the required information directly on the command line, and avoid the confirmation using `--no-confirm` or `-y`. For example:
 ```bash
-zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --lidar --num-scans-before -1 --num-scans-after -1 --oxts --images --blur --dnat --calibrations --annotations
+zod download -y --url="<download-link>" --output-dir=<path/to/outputdir> --subset=frames --version=mini
 ```
-this will download all the previous and future lidar scans (as `num-scans-before=-1` and `num-scans-after=-1`), the OxTS data, the images (with both the blur and DNAT anonymization), the calibration files, the annotations, and all other necessary files. If you dont want any previous or future lidar scans, run:
+By default, all data streams are downloaded for ZodSequences and ZodDrives. For ZodFrames, DNAT versions of the images, and surrounding (non-keyframe) lidar scans are excluded. To download them as well, run:
 ```bash
-zod download --url "<download-link>" --output-dir <path/to/outputdir> frames --lidar --num-scans-before 0 --num-scans-after 0 --oxts --images --blur --dnat --calibrations --annotations
+zod download -y --url="<download-link>" --output-dir=<path/to/outputdir> --subset=frames --version=full --num-scans-before=-1 --num-scans-after=-1 --dnat
 ```
-
-For a full list of options for ZOD download, run:
+If you want to exclude some of the data streams, you can do so by specifying the `--no-<stream>` flag. For example, to download only the DNAT images, infos, and annotations, run:
+```bash
+zod download --dnat --no-blur --no-lidar --no-oxts --no-vehicle-data
+```
+Finally, for a full list of options you can of course run:
 ```bash
 zod download --help
-zod download --url="<url>" --output-dir=<dir> frames --help
-zod download --url="<url>" --output-dir=<dir> sequences --help
 ```
-depending on which dataset you want to download.
-
 
 ## Anonymization
 To preserve privacy, the dataset is anonymized. The anonymization is performed by [brighterAI](https://brighter.ai/), and we provide two separate modes of anonymization: deep fakes (DNAT) and blur. In our paper, we show that the performance of an object detector is not affected by the anonymization method. For more details regarding this experiment, please refer to our [coming soon]().

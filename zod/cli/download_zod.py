@@ -7,8 +7,11 @@ import tarfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from enum import Enum
 
 from tqdm import tqdm
+
+from zod.cli.utils import SubDataset
 
 try:
     import click.exceptions
@@ -30,6 +33,11 @@ TIMEOUT = 60 * 60  # 1 hour
 app = typer.Typer(help="Zenseact Open Dataset Donwloader", no_args_is_help=True)
 
 
+class Version(str, Enum):
+    FULL = "full"
+    MINI = "mini"
+
+
 @dataclass
 class DownloadExtractInfo:
     """Information about a file to extract."""
@@ -48,16 +56,20 @@ class DownloadExtractInfo:
 class FilterSettings:
     """Filter settings."""
 
-    mini: bool
+    version: Version
     annotations: bool
     images: bool
     blur: bool
     dnat: bool
     lidar: bool
     oxts: bool
-    calibrations: bool
+    infos: bool
+    vehicle_data: bool
     num_scans_before: int
     num_scans_after: int
+
+    def __str__(self):
+        return "\n".join([f"    {key}: {value}" for key, value in self.__dict__.items()])
 
 
 @dataclass
@@ -70,6 +82,9 @@ class DownloadSettings:
     dry_run: bool
     extract: bool
     parallel: bool
+
+    def __str__(self):
+        return "\n".join([f"    {key}: {value}" for key, value in self.__dict__.items()])
 
 
 class ResumableDropbox(dropbox.Dropbox):
@@ -196,11 +211,9 @@ def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
 
 def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bool:
     """Filter the entry based on the flags."""
-    if settings.mini and "mini" not in entry.name:
-        # If mini is set, we only want to download the mini dataset
-        return False
-    # If we are downloading the full dataset, we don't want the mini dataset
-    if not settings.mini and "mini" in entry.name:
+    if settings.version == "mini":
+        return "mini" in entry.name
+    elif "mini" in entry.name:
         return False
 
     if not settings.annotations and "annotations" in entry.name:
@@ -214,7 +227,7 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
             return False
     if not settings.oxts and "oxts" in entry.name:
         return False
-    if not settings.calibrations and "calibrations" in entry.name:
+    if not settings.infos and "infos" in entry.name:
         return False
     if "lidar" in entry.name:
         if not settings.lidar:
@@ -276,19 +289,94 @@ def _list_folder(url, dbx, path):
     return url, entries
 
 
-@app.callback(no_args_is_help=True)
-def common(
-    ctx: typer.Context,
-    url: str = typer.Option(..., help="The dropbox shared folder url"),
-    output_dir: str = typer.Option(..., help="The output directory"),
-    rm: bool = typer.Option(False, help="Whether to remove the downloaded archives"),
-    dry_run: bool = typer.Option(
-        False, help="Whether to only print the files that would be downloaded"
+def _print_summary(download_settings, filter_settings, subset):
+    print("\nDownload settings:")
+    print(download_settings)
+    print("\nFilter settings:")
+    if filter_settings.version == Version.MINI:
+        print("    version: mini\n    (other settings are ignored for mini)")
+    else:
+        print(filter_settings)
+    if subset == SubDataset.FRAMES and (
+        filter_settings.num_scans_before == filter_settings.num_scans_after == 0
+    ):
+        typer.secho(
+            "Note! The current settings will only download the core lidar frames. "
+            "If you need surrounding scans, set --num-scans-before and/or --num-scans-after.",
+            fg=typer.colors.YELLOW,
+        )
+    print("\n")
+
+
+REQ = "Required Arguments"
+GEN = "General Download Settings"
+FIL = "General Filter Settings"
+FRA = "Frames Filter Settings"
+SEQ = "Sequences/Drives Filter Settings"
+
+
+@app.command()
+def download(
+    url: str = typer.Option(
+        ...,
+        help="The dropbox shared folder url",
+        prompt="What is the dropbox url to the dataset (you can get it from zod.zenseact.com)?",
+        prompt_required=False,
+        rich_help_panel=REQ,
     ),
-    extract: bool = typer.Option(True, help="Whether to unpack the archives"),
-    parallel: bool = typer.Option(True, help="Whether to download files in parallel"),
+    output_dir: str = typer.Option(
+        ...,
+        help="Output directory where dataset will be extracted",
+        prompt="Where do you want to extract the dataset (e.g. ~/data/zod)?",
+        prompt_required=False,
+        rich_help_panel=REQ,
+    ),
+    subset: SubDataset = typer.Option(
+        ...,
+        help="The sub-dataset to download",
+        prompt="Which sub-dataset do you want to download?",
+        prompt_required=False,
+        rich_help_panel=REQ,
+    ),
+    version: Version = typer.Option(
+        ...,
+        help="The version of the dataset to download",
+        prompt="Which version do you want to download?",
+        prompt_required=False,
+        rich_help_panel=REQ,
+    ),
+    # General download settings
+    rm: bool = typer.Option(False, help="Remove the downloaded archives", rich_help_panel=GEN),
+    dry_run: bool = typer.Option(False, help="Print what would be downloaded", rich_help_panel=GEN),
+    extract: bool = typer.Option(True, help="Unpack the archives", rich_help_panel=GEN),
+    parallel: bool = typer.Option(True, help="Download files in parallel", rich_help_panel=GEN),
+    no_confirm: bool = typer.Option(
+        False,
+        "-y",
+        "--no-confirm/--confirm",
+        help="Don't ask for confirmation",
+        is_flag=True,
+        flag_value=False,
+        rich_help_panel=GEN,
+    ),
+    # Filter settings
+    annotations: bool = typer.Option(True, help="Download annotations", rich_help_panel=FIL),
+    images: bool = typer.Option(True, help="Whether to download the images", rich_help_panel=FIL),
+    blur: bool = typer.Option(True, help="Download blur images", rich_help_panel=FIL),
+    lidar: bool = typer.Option(True, help="Download lidar data", rich_help_panel=FIL),
+    oxts: bool = typer.Option(True, help="Download oxts data", rich_help_panel=FIL),
+    infos: bool = typer.Option(True, help="Download infos", rich_help_panel=FIL),
+    vehicle_data: bool = typer.Option(True, help="Download the vehicle data", rich_help_panel=SEQ),
+    dnat: bool = typer.Option(False, help="Download DNAT images", rich_help_panel=FRA),
+    num_scans_before: int = typer.Option(
+        0, help="Number of earlier lidar scans to download (-1 == all)", rich_help_panel=FRA
+    ),
+    num_scans_after: int = typer.Option(
+        0, help="Number of later lidar scans to download (-1 == all)", rich_help_panel=FRA
+    ),
 ):
-    ctx.obj = DownloadSettings(
+    """Download the Zenseact Open Dataset."""
+    download_settings = DownloadSettings(
         url=url,
         output_dir=output_dir,
         rm=rm,
@@ -296,72 +384,26 @@ def common(
         extract=extract,
         parallel=parallel,
     )
-
-
-@app.command()
-def frames(
-    ctx: typer.Context,
-    mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
-    annotations: bool = typer.Option(True, help="Whether to download the annotations"),
-    images: bool = typer.Option(True, help="Whether to download the images"),
-    blur: bool = typer.Option(True, help="Whether to download the blur images"),
-    dnat: bool = typer.Option(False, help="Whether to download the dnat images"),
-    lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
-    num_scans_before: int = typer.Option(
-        0, help="Number of earlier lidar scans to download (-1 == all)"
-    ),
-    num_scans_after: int = typer.Option(
-        0, help="Number of later lidar scans to download (-1 == all)"
-    ),
-    oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
-    calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
-):
-    """Download the Zenseact Open Dataset."""
-
-    if images:
-        assert blur or dnat, "Must download at least one type of image"
-
-    dl_settings: DownloadSettings = ctx.obj
     filter_settings = FilterSettings(
-        mini=mini,
+        version=version,
         annotations=annotations,
         images=images,
         blur=blur,
         dnat=dnat,
         lidar=lidar,
         oxts=oxts,
-        calibrations=calibrations,
-        num_scans_before=num_scans_before,
-        num_scans_after=num_scans_after,
+        infos=infos,
+        vehicle_data=vehicle_data,
+        num_scans_before=num_scans_before if subset == SubDataset.FRAMES else -1,
+        num_scans_after=num_scans_after if subset == SubDataset.FRAMES else -1,
     )
-    _download_dataset(dl_settings, filter_settings, "single_frames")
-
-
-@app.command()
-def sequences(
-    ctx: typer.Context,
-    mini: bool = typer.Option(False, help="Whether to download the mini dataset"),
-    annotations: bool = typer.Option(True, help="Whether to download the annotations"),
-    images: bool = typer.Option(True, help="Whether to download the images"),
-    lidar: bool = typer.Option(True, help="Whether to download the lidar data"),
-    oxts: bool = typer.Option(True, help="Whether to download the oxts data"),
-    calibrations: bool = typer.Option(True, help="Whether to download the calibration data"),
-):
-    """Download the Zenseact Open Dataset."""
-    dl_settings: DownloadSettings = ctx.obj
-    filter_settings = FilterSettings(
-        mini=mini,
-        annotations=annotations,
-        images=images,
-        blur=True,
-        dnat=False,
-        lidar=lidar,
-        oxts=oxts,
-        calibrations=calibrations,
-        num_scans_before=-1,
-        num_scans_after=-1,
-    )
-    _download_dataset(dl_settings, filter_settings, "sequences")
+    if not no_confirm:
+        _print_summary(download_settings, filter_settings, subset)
+        typer.confirm(
+            f"Download with the above settings?",
+            abort=True,
+        )
+    _download_dataset(download_settings, filter_settings, subset.folder)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Top-level package for Zenseact Open Dataset (ZOD)."""
 
+from ._zod_dataset import ZodDataset as ZodDataset  # For type hinting
 from .constants import AnnotationProject as AnnotationProject
 from .constants import Anonymization as Anonymization
 from .constants import Camera as Camera
