@@ -49,7 +49,7 @@ class Box3D:
         return Box3D(
             center=self.center.copy(),
             size=self.size.copy(),
-            orientation=self.orientation.copy(),
+            orientation=Quaternion(self.orientation),
             frame=self.frame,
         )
 
