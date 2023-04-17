@@ -97,3 +97,7 @@ class Lidar(Enum):
 
 
 CoordinateFrame = Union[Camera, Lidar, Literal[EGO]]
+
+# ZodFrame properties
+FRAMES_IMAGE_MEAN = [0.337, 0.345, 0.367]
+FRAMES_IMAGE_STD = [0.160, 0.180, 0.214]
