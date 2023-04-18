@@ -51,6 +51,7 @@ class ZodFrame:
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
         assert project in self.info.annotation_frames, f"Project {project} not available."
+        assert self.info.annotation_frames.get(project), f"Project {project} is empty."
         return self.info.get_key_annotation_frame(project).read()
 
     def get_camera_frame(self, anonymization: Anonymization = Anonymization.BLUR) -> CameraFrame:
