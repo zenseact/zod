@@ -8,6 +8,7 @@ from .ego_motion import EgoMotion
 from .info import Information
 from .metadata import SequenceMetadata
 from .sensor import LidarData
+from .vehicle_data import VehicleData
 
 
 class ZodSequence:
@@ -17,6 +18,7 @@ class ZodSequence:
         self._oxts: EgoMotion = None
         self._calibration: Calibration = None
         self._metadata: SequenceMetadata = None
+        self._vehicle_data: VehicleData = None
 
     @property
     def ego_motion(self) -> EgoMotion:
@@ -46,10 +48,18 @@ class ZodSequence:
             self._metadata = SequenceMetadata.from_json_path(self.info.metadata_path)
         return self._metadata
 
+    @property
+    def vehicle_data(self) -> VehicleData:
+        """Get the vehicle data."""
+        if self._vehicle_data is None:
+            assert self.info.vehicle_data_path is not None, "Vehicle data path is missing."
+            self._vehicle_data = VehicleData.from_hdf5(self.info.vehicle_data_path)
+        return self._vehicle_data
+
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        anno_frame = self.info.get_key_annotation_frame(project)
-        return anno_frame and anno_frame.read()  # read if not None
+        anno = self.info.annotations[project]
+        return anno and anno.read()  # read if not None
 
     def get_lidar(self, start: int = 0, end: int = None) -> List[LidarData]:
         """Get the point clouds."""

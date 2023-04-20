@@ -2,12 +2,13 @@ import os.path as osp
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import chain
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 
+from zod.anno.parser import AnnotationFile
 from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
 
 from ._serializable import JSONSerializable
-from .sensor import AnnotationFrame, CameraFrame, LidarFrame, SensorFrame
+from .sensor import CameraFrame, LidarFrame, SensorFrame
 
 
 @dataclass
@@ -23,8 +24,9 @@ class Information(JSONSerializable):
     ego_motion_path: str
     metadata_path: str
     oxts_path: str
+    vehicle_data_path: Optional[str]
 
-    annotation_frames: Dict[AnnotationProject, List[AnnotationFrame]]
+    annotations: Dict[AnnotationProject, AnnotationFile]
     camera_frames: Dict[str, List[CameraFrame]]  # key is a combination of Camera and Anonymization
     lidar_frames: Dict[Lidar, List[LidarFrame]]
 
@@ -34,7 +36,6 @@ class Information(JSONSerializable):
         return chain(
             *self.lidar_frames.values(),
             *self.camera_frames.values(),
-            *self.annotation_frames.values(),
         )
 
     def convert_paths_to_absolute(self, root_path: str):
@@ -74,14 +75,6 @@ class Information(JSONSerializable):
 
     ### Keyframe accessors ###
 
-    def get_key_annotation_frame(self, project: AnnotationProject) -> AnnotationFrame:
-        if project not in self.annotation_frames:
-            raise ValueError(f"No annotations found for project {project.value}.")
-        if len(self.annotation_frames[project]) == 1:
-            return self.annotation_frames[project][0]
-        else:
-            return self.get_annotation_frame(self.keyframe_time, project)
-
     def get_key_camera_frame(
         self,
         anonymization: Anonymization,
@@ -100,19 +93,6 @@ class Information(JSONSerializable):
         return self.get_lidar_frame(self.keyframe_time, lidar)
 
     ### Timestamp accessors ###
-
-    def get_annotation_frame(
-        self,
-        time: datetime,
-        project: AnnotationProject,
-        # TODO: implement exact flag?
-    ) -> AnnotationFrame:
-        if project not in self.annotation_frames:
-            raise ValueError(f"No annotations found for project {project.value}.")
-        return min(
-            self.annotation_frames[project],
-            key=lambda annotation_frame: abs(annotation_frame.time - time),
-        )
 
     def get_camera_frame(
         self,
@@ -133,11 +113,6 @@ class Information(JSONSerializable):
         )
 
     ### Full accessors ###
-
-    def get_annotation_frames(self, project: AnnotationProject) -> List[AnnotationFrame]:
-        if project not in self.annotation_frames:
-            return []
-        return self.annotation_frames[project]
 
     def get_camera_frames(
         self,

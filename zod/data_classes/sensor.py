@@ -155,14 +155,3 @@ class CameraFrame(SensorFrame):
     def read(self) -> np.ndarray:
         """Read the image."""
         return np.array(Image.open(self.filepath))
-
-
-@dataclass
-class AnnotationFrame(SensorFrame):
-    """Class to store information about an annotation frame."""
-
-    project: AnnotationProject
-
-    def read(self) -> List[Any]:
-        """Read (and parse) the annotation json."""
-        return ANNOTATION_PARSERS[self.project](self.filepath)

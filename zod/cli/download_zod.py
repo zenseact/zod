@@ -297,14 +297,14 @@ def _print_summary(download_settings, filter_settings, subset):
         print("    version: mini\n    (other settings are ignored for mini)")
     else:
         print(filter_settings)
-    if subset == SubDataset.FRAMES and (
-        filter_settings.num_scans_before == filter_settings.num_scans_after == 0
-    ):
-        typer.secho(
-            "Note! The current settings will only download the core lidar frames. "
-            "If you need surrounding scans, set --num-scans-before and/or --num-scans-after.",
-            fg=typer.colors.YELLOW,
-        )
+        if subset == SubDataset.FRAMES and (
+            filter_settings.num_scans_before == filter_settings.num_scans_after == 0
+        ):
+            typer.secho(
+                "Note! The current settings will only download the core lidar frames. "
+                "If you need surrounding scans, set --num-scans-before and/or --num-scans-after.",
+                fg=typer.colors.YELLOW,
+            )
     print("\n")
 
 

@@ -1,13 +1,27 @@
 """Annotation parsers."""
 import json
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from zod.anno.lane import LaneAnnotation, parse_lane_annotation
 from zod.anno.road_condition import RoadConditionAnnotation
 from zod.constants import AnnotationProject
+from zod.data_classes._serializable import JSONSerializable
 
 from .object import ObjectAnnotation
 from .tsr.traffic_sign import TrafficSignAnnotation
+
+
+@dataclass
+class AnnotationFile(JSONSerializable):
+    """Class to store information about an annotation frame."""
+
+    filepath: str
+    project: AnnotationProject
+
+    def read(self) -> Any:
+        """Read (and parse) the annotation json."""
+        return ANNOTATION_PARSERS[self.project](self.filepath)
 
 
 def _read_annotation_file(annotation_file: str) -> List[Dict[str, Any]]:

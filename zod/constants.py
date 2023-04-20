@@ -1,5 +1,6 @@
 """Relevant constants for ZOD."""
 
+import typing
 from enum import Enum
 from typing import Union
 
@@ -15,24 +16,26 @@ SEQUENCES = "sequences"
 DRIVES = "drives"
 DB_DATE_STRING_FORMAT_W_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-# Train-val splits
-TRAIN = "train"
-VAL = "val"
-FULL = "full"
-MINI = "mini"
-VERSIONS = (FULL, MINI)
+Split = Literal["train", "val", "blacklisted"]
+SPLITS = typing.get_args(Split)
+TRAIN, VAL, BLACKLISTED = SPLITS
+
+Version = Literal["full", "mini"]
+VERSIONS = typing.get_args(Version)
+FULL, MINI = VERSIONS
+
 TRAINVAL_FILES = {
     FRAMES: {
-        FULL: f"trainval_frames_full.json",
-        MINI: f"trainval_frames_mini.json",
+        FULL: f"trainval-frames-full.json",
+        MINI: f"trainval-frames-mini.json",
     },
     SEQUENCES: {
-        FULL: f"trainval_sequences_full.json",
-        MINI: f"trainval_sequences_mini.json",
+        FULL: f"trainval-sequences-full.json",
+        MINI: f"trainval-sequences-mini.json",
     },
     DRIVES: {
-        FULL: f"trainval_drives_full.json",
-        MINI: f"trainval_drives_mini.json",
+        FULL: f"trainval-drives-full.json",
+        MINI: f"trainval-drives-mini.json",
     },
 }
 SPLIT_FILES = {
@@ -85,8 +88,6 @@ class AnnotationProject(Enum):
 
 ### Coordinate Frames ###
 
-EGO = "ego"
-
 
 class Camera(Enum):
     FRONT = "front"
@@ -96,7 +97,10 @@ class Lidar(Enum):
     VELODYNE = "velodyne"
 
 
-CoordinateFrame = Union[Camera, Lidar, Literal[EGO]]
+Ego = Literal["ego"]
+EGO = typing.get_args(Ego)[0]
+CoordinateFrame = Union[Camera, Lidar, Ego]
+
 
 # ZodFrame properties
 FRAMES_IMAGE_MEAN = [0.337, 0.345, 0.367]

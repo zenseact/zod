@@ -4,11 +4,11 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from functools import partial
 from itertools import chain
-from typing import Any, Dict, Set, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple, Union
 
 from tqdm.contrib.concurrent import process_map
 
-from zod.constants import FULL, TRAIN, VAL, VERSIONS
+from zod.constants import FULL, TRAIN, VAL, VERSIONS, AnnotationProject, Split, Version
 from zod.data_classes.info import Information
 from zod.utils.utils import zfill_id
 
@@ -22,7 +22,7 @@ def _create_frame(frame: dict, dataset_root: str) -> Information:
 class ZodDataset(ABC):
     """Base class for all ZOD sub-datasets (frames, sequences, drives)."""
 
-    def __init__(self, dataset_root: str, version: str, mp: bool = True):
+    def __init__(self, dataset_root: str, version: Version, mp: bool = True):
         self._dataset_root = dataset_root
         self._version = version
         self._mp = mp
@@ -52,14 +52,19 @@ class ZodDataset(ABC):
         """Mapping of version to trainval file."""
         raise NotImplementedError
 
-    def get_split(self, split: str) -> Set[str]:
+    def get_split(self, split: Split, project: Optional[AnnotationProject] = None) -> Set[str]:
         """Get split by name (e.g. train / val)."""
         if split == TRAIN:
-            return self._train_ids
+            ids = self._train_ids
         elif split == VAL:
-            return self._val_ids
+            ids = self._val_ids
         else:
             raise ValueError(f"Unknown split: {split}, should be {TRAIN} or {VAL}")
+
+        if project is None:
+            return ids
+        else:
+            return {id_ for id_ in ids if project in self._infos[id_].annotations}
 
     def get_all_infos(self) -> Dict[str, Information]:
         """Get all infos (including blacklisted ones)."""
@@ -71,8 +76,16 @@ class ZodDataset(ABC):
 
     def _load_infos(self) -> Tuple[Dict[str, Information], Set[str], Set[str]]:
         """Load frames for the given version."""
-        filename = self.trainval_files[self._version]
-        with open(osp.join(self._dataset_root, filename), "r") as f:
+        trainval_path = osp.join(self._dataset_root, self.trainval_files[self._version])
+        if not osp.exists(trainval_path):
+            msg = "Could not find trainval file: {trainval_path}."
+            if osp.exists(trainval_path.replace("-", "_")):
+                msg += (
+                    "However, found old, incompatible trainval files. Please either downgrade zod "
+                    "to < 0.2 or download new files with `zod download --no-images --no-lidar`"
+                )
+            raise FileNotFoundError(msg)
+        with open(trainval_path, "r") as f:
             all_ids = json.load(f)
 
         func = partial(_create_frame, dataset_root=self._dataset_root)
