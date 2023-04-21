@@ -43,6 +43,10 @@ class Information(JSONSerializable):
         self.ego_motion_path = osp.join(root_path, self.ego_motion_path)
         self.metadata_path = osp.join(root_path, self.metadata_path)
         self.oxts_path = osp.join(root_path, self.oxts_path)
+        if self.vehicle_data_path is not None:
+            self.vehicle_data_path = osp.join(root_path, self.vehicle_data_path)
+        for annotation in self.annotations.values():
+            annotation.filepath = osp.join(root_path, annotation.filepath)
         for frame in self.all_frames:
             frame.filepath = osp.join(root_path, frame.filepath)
 
