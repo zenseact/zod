@@ -9,12 +9,14 @@ import json
 import os
 from dataclasses import dataclass
 from itertools import repeat
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import cv2
+import typer
 from tqdm.contrib.concurrent import process_map
 
-import zod.annotations.parser as parser
+import zod.anno.parser as parser
 import zod.constants as constants
 from zod import ZodFrames
 from zod.data_classes.frame import ZodFrame
@@ -31,6 +33,32 @@ Each image is padded with a factor of {}. Note that the padding might be limited
 Images are saved in the following folder structure:
     <output_folder>/<traffic_sign_class>/<frame_id>_<annotation_uuid>.png
 """
+
+
+def cli_dummy(
+    dataset_root: Path = typer.Option(
+        ...,
+        exists=True,
+        dir_okay=True,
+        writable=False,
+        readable=True,
+        resolve_path=True,
+        help="Path to the root of the ZOD dataset.",
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        readable=True,
+        resolve_path=True,
+        help="Path to the output directory.",
+    ),
+    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
+    path_size: Tuple[int, int] = typer.Option((64, 64), help="Path resultion."),
+):
+    typer.echo("Not Implemented Yet")
 
 
 @dataclass

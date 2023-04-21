@@ -30,7 +30,7 @@ REFRESH_TOKEN = "z2h_5rjphJEAAAAAAAAAAUWtQlltCYlMbZ2WqMgtymELhiSuKIksxAYeArubKnZ
 CHUNK_SIZE = 1024 * 1024  # 1 MB
 TIMEOUT = 60 * 60  # 1 hour
 
-app = typer.Typer(help="Zenseact Open Dataset Donwloader", no_args_is_help=True)
+app = typer.Typer(help="Zenseact Open Dataset Downloader", no_args_is_help=True)
 
 
 class Version(str, Enum):

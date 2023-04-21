@@ -8,52 +8,31 @@ except ImportError:
     exit(1)
 
 from zod.cli.download_zod import app as download_app
+from zod.cli.extract_tsr_patches import cli_dummy as tsr_dummy
 from zod.cli.generate_coco_json import convert_to_coco
 from zod.cli.visualize_lidar import app as visualize_lidar_app
 
-app = typer.Typer(help="Zenseact Open Dataset CLI.", no_args_is_help=True)
-
-app.add_typer(download_app, name="download")
-
-visualize_app = typer.Typer(help="Visualization tools", no_args_is_help=True)
-app.add_typer(visualize_app, name="visualize")
+visualize_app = typer.Typer(help="Visualize ZOD.", no_args_is_help=True)
 visualize_app.add_typer(visualize_lidar_app, name="lidar")
 
-
-convert_app = typer.Typer(
-    help="Convert the Zenseact Open Dataset to a different format.", no_args_is_help=True
-)
-
-
-def tsr_dummy(
-    dataset_root: Path = typer.Option(
-        ...,
-        exists=True,
-        dir_okay=True,
-        writable=False,
-        readable=True,
-        resolve_path=True,
-        help="Path to the root of the ZOD dataset.",
-    ),
-    output_dir: Path = typer.Option(
-        ...,
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        writable=True,
-        readable=True,
-        resolve_path=True,
-        help="Path to the output directory.",
-    ),
-    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
-    path_size: Tuple[int, int] = typer.Option((64, 64), help="Path resultion."),
-):
-    typer.echo("Not Implemented Yet")
-
-
+convert_app = typer.Typer(help="Convert ZOD to a different format.", no_args_is_help=True)
 convert_app.command("coco", no_args_is_help=True)(convert_to_coco)
 convert_app.command("tsr-patches", no_args_is_help=True)(tsr_dummy)
-app.add_typer(convert_app, name="generate")
+
+
+def add_child(parent: typer.Typer, child: typer.Typer, name: str):
+    """Workaround to handle single-command sub-apps."""
+    if len(child.registered_commands) == 1:
+        parent.command(name)(child.registered_commands[0].callback)
+    else:
+        parent.add_typer(child, name=name)
+
+
+app = typer.Typer(help="Zenseact Open Dataset CLI.", no_args_is_help=True)
+
+add_child(app, download_app, "download")
+add_child(app, visualize_app, "visualize")
+add_child(app, convert_app, "generate")
 
 
 if __name__ == "__main__":
