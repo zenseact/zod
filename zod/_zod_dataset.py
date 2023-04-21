@@ -78,7 +78,7 @@ class ZodDataset(ABC):
         """Load frames for the given version."""
         trainval_path = osp.join(self._dataset_root, self.trainval_files[self._version])
         if not osp.exists(trainval_path):
-            msg = "Could not find trainval file: {trainval_path}."
+            msg = f"Could not find trainval file: {trainval_path}."
             if osp.exists(trainval_path.replace("-", "_")):
                 msg += (
                     "However, found old, incompatible trainval files. Please either downgrade zod "
