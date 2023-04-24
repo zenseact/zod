@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, List, Optional
 
 from zod.constants import AnnotationProject, Lidar
@@ -67,6 +68,17 @@ class ZodSequence:
             lidar_frame.read()
             for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]
         ]
+
+    def get_compensated_lidar(self, time: datetime) -> LidarData:
+        """Get the point cloud at a given timestamp."""
+        lid_frame = self.info.get_lidar_frame(time, Lidar.VELODYNE)
+        pcd = lid_frame.read()
+        return motion_compensate_scanwise(
+            pcd,
+            self.ego_motion,
+            self.calibration.lidars[Lidar.VELODYNE],
+            time.timestamp(),
+        )
 
     def get_aggregated_lidar(
         self, start: int = 0, end: int = None, timestamp: Optional[float] = None

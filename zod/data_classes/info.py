@@ -51,7 +51,10 @@ class Information(JSONSerializable):
             frame.filepath = osp.join(root_path, frame.filepath)
 
     def get_camera_lidar_map(
-        self, anonymization: Anonymization, camera: Camera, lidar: Lidar
+        self,
+        anonymization: Anonymization = Anonymization.BLUR,
+        camera: Camera = Camera.FRONT,
+        lidar: Lidar = Lidar.VELODYNE,
     ) -> Iterator[Tuple[CameraFrame, SensorFrame]]:
         """Iterate over all camera frames and their corresponding lidar frames.
 
@@ -81,7 +84,7 @@ class Information(JSONSerializable):
 
     def get_key_camera_frame(
         self,
-        anonymization: Anonymization,
+        anonymization: Anonymization = Anonymization.BLUR,
         camera: Camera = Camera.FRONT,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
@@ -101,7 +104,7 @@ class Information(JSONSerializable):
     def get_camera_frame(
         self,
         time: datetime,
-        anonymization: Anonymization,
+        anonymization: Anonymization = Anonymization.BLUR,
         camera: Camera = Camera.FRONT,
     ) -> CameraFrame:
         camera_name = f"{camera.value}_{anonymization.value}"
@@ -120,7 +123,7 @@ class Information(JSONSerializable):
 
     def get_camera_frames(
         self,
-        anonymization: Anonymization,
+        anonymization: Anonymization = Anonymization.BLUR,
         camera: Camera = Camera.FRONT,
     ) -> List[CameraFrame]:
         camera_name = f"{camera.value}_{anonymization.value}"
