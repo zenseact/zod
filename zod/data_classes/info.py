@@ -59,6 +59,7 @@ class Information(JSONSerializable):
         """Iterate over all camera frames and their corresponding lidar frames.
 
         Args:
+            anonymization: The anonymization to use. e.g., blur
             camera: The camera to use. e.g., camera_front_blur
             lidar: The lidar to use. e.g., lidar_velodyne
         Yields:

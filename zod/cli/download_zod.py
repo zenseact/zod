@@ -229,6 +229,8 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
         return False
     if not settings.infos and "infos" in entry.name:
         return False
+    if not settings.vehicle_data and "vehicle_data" in entry.name:
+        return False
     if "lidar" in entry.name:
         if not settings.lidar:
             return False
