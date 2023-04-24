@@ -27,13 +27,14 @@ def polygon_to_mask(polygon, img_shape=(2168, 3848, 3), fill_color=(100, 0, 0)):
     return image_mask
 
 
-def polygons_to_binary_mask(polygons, img_shape=(2168, 3848)):
+def polygons_to_binary_mask(multi_polygons, img_shape=(2168, 3848)):
     """
-    Create binary mask for list of polygons
+    Create binary mask for list of multi-polygons
     """
     assert len(img_shape) == 2
 
     mask = _create_image_mask(img_shape)
-    for polygon in polygons:
-        mask += polygon_to_mask(polygon, img_shape, 1)
+    for multi_polygon in multi_polygons:
+        for polygon in multi_polygon:
+            mask += polygon_to_mask(polygon, img_shape, 1)
     return mask.astype(bool)
