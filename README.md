@@ -54,15 +54,15 @@ zod download --help
 To preserve privacy, the dataset is anonymized. The anonymization is performed by [brighterAI](https://brighter.ai/), and we provide two separate modes of anonymization: deep fakes (DNAT) and blur. In our paper, we show that the performance of an object detector is not affected by the anonymization method. For more details regarding this experiment, please refer to our [coming soon]().
 
 ## Citation
-If you publish work that uses Zenseact Open Dataset, please cite: [coming soon]()
+If you publish work that uses Zenseact Open Dataset, please cite [our arxiv paper](https://arxiv.org/abs/2305.02008):
 
 ```
-@misc{zod2021,
-  author = {TODO},
-  title = {Zenseact Open Dataset},
+@article{zod2023,
+  author = {Alibeigi, Mina and Ljungbergh, William and Tonderski, Adam and Hess, Georg and Lilja, Adam and Lindstr{\"o}m, Carl and Motorniuk, Daria and Fu, Junsheng and Widahl, Jenny and Petersson, Christoffer},
+  title = {Zenseact Open Dataset: A large-scale and diverse multimodal dataset for autonomous driving},
   year = {2023},
-  publisher = {TODO},
-  journal = {TODO},
+  journal = {arXiv preprint arXiv:2305.02008},
+}
 ```
 
 ## Contact
