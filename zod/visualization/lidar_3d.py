@@ -98,14 +98,14 @@ class Viz3D:
         coord2 = np.vstack([coord1[0], coord3[1]])
         coord4 = np.vstack([coord3[0], coord1[1]])
 
-        all_coords = np.hstack(
+        all_coords = np.vstack(
             [
-                rotation.rotate(coord1)[:, None] + position,
-                rotation.rotate(np.vstack([coord2, coord1[2]]))[:, None] + position,
-                rotation.rotate(coord3)[:, None] + position,
-                rotation.rotate(np.vstack([coord4, coord1[2]]))[:, None] + position,
+                (rotation.rotate(coord1) + position),
+                rotation.rotate(np.vstack([coord2, coord1[2]])) + position,
+                rotation.rotate(coord3) + position,
+                rotation.rotate(np.vstack([coord4, coord1[2]])) + position,
             ]
-        )
+        ).T
         a = (coord1[2] + position[2]) * np.ones(4)
         b = (coord3[2] + position[2]) * np.ones(4)
 
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     zod_frame = zod_frames[0]
 
     # get the LiDAR point cloud
-    pcd = zod_frame.get_lidar_data()[0]
+    pcd = zod_frame.get_lidar()[0]
 
     # get the object annotations
     annotations = zod_frame.get_annotation(AnnotationProject.OBJECT_DETECTION)
