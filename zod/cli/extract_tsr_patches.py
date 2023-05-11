@@ -12,7 +12,10 @@ from itertools import repeat
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    pass  # TODO: rewrite to use PIL
 import typer
 from tqdm.contrib.concurrent import process_map
 
