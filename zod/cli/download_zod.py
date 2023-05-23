@@ -234,11 +234,13 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
     if "lidar" in entry.name:
         if not settings.lidar:
             return False
-        distance = entry.name.split("_")[2][:2]
-        if "after" in entry.name and (int(distance) > settings.num_scans_after):
-            return False
-        if "before" in entry.name and (int(distance) > settings.num_scans_before):
-            return False
+        if "after" in entry.name or "before" in entry.name:
+            # this is only the case for frames, where we have surrounding frames
+            distance = entry.name.split("_")[2][:2]
+            if "after" in entry.name and (int(distance) > settings.num_scans_after):
+                return False
+            if "before" in entry.name and (int(distance) > settings.num_scans_before):
+                return False
     return True
 
 
