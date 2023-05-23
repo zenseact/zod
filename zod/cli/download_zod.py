@@ -283,7 +283,10 @@ def _list_folder(url, dbx, path):
         res = dbx.files_list_folder(path=f"/{path}", shared_link=shared_link)
     except dropbox.exceptions.ApiError as err:
         raise click.exceptions.ClickException(
-            f"Dropbox raised the following error:\n\t{err}\nThis could be due to a bad url."
+            f"Dropbox raised the following error:\n\t{err}\nThis could be due to:"
+            '\n\ta) bad url. Please try it in a browser and specify with quotes (--url="<url>").'
+            "\n\tb) zod bandwidth limit. Sorry about this, and please try again the next day."
+            "\n\tc) other error (bad internet connection, dropbox outage, etc.)."
         )
 
     entries = res.entries
