@@ -39,7 +39,7 @@ VEHICLE_SUBCLASSES = (
     "TramTrain",
     "HeavyEquip",
     "Emergency",
-    "InconclusiveOrOther",
+    "Other",
 )
 VULNERABLE_VEHICLE_SUBCLASSES = (
     "Bicycle",
@@ -48,7 +48,7 @@ VULNERABLE_VEHICLE_SUBCLASSES = (
     "Wheelchair",
     "PersonalTransporter",
     "NoRider",
-    "InconclusiveOrOther",
+    "Other",
 )
 OBJECT_SUBCLASSES = (
     *[cls_ for cls_ in OBJECT_CLASSES if cls_ not in CLASSES_WITH_SUBCLASSES],
