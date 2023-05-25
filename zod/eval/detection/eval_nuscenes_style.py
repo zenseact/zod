@@ -37,6 +37,7 @@ PER_CLASS_SUMMARY = """
     mASE: {mASE:.4f}
     mAOE: {mAOE:.4f}"""
 
+# for reference
 NUSCENES_DEFAULT_SETTINGS = {
     "class_range": {
         "Vehicle": 50,
@@ -45,6 +46,18 @@ NUSCENES_DEFAULT_SETTINGS = {
         "TrafficSign": 30,
         "TrafficSignal": 30,
     },
+    "dist_fcn": "center_distance",
+    "dist_ths": [0.5, 1.0, 2.0, 4.0],
+    "dist_th_tp": 2.0,
+    "min_recall": 0.1,
+    "min_precision": 0.1,
+    "max_boxes_per_sample": 500,
+    "mean_ap_weight": 5,
+}
+
+# our settings
+ZOD_DEFAULT_SETTINGS = {
+    "class_range": {cls_name: 250 for cls_name in EVALUATION_CLASSES},
     "dist_fcn": "center_distance",
     "dist_ths": [0.5, 1.0, 2.0, 4.0],
     "dist_th_tp": 2.0,
@@ -66,10 +79,10 @@ def evaluate_nuscenes_style(
     if verify_coordinate_system:
         _check_coordinate_system(gt_boxes)
 
-    detection_cfg = DetectionConfig(**NUSCENES_DEFAULT_SETTINGS)
+    detection_cfg = DetectionConfig(**ZOD_DEFAULT_SETTINGS)
     detection_metrics = DetectionMetrics(detection_cfg)
 
-    class_ranges = {k: (0, v) for k, v in NUSCENES_DEFAULT_SETTINGS["class_range"].items()}
+    class_ranges = {k: (0, v) for k, v in ZOD_DEFAULT_SETTINGS["class_range"].items()}
 
     # filter according to the default nuscenes settings
     gt_boxes = _filter_eval_boxes_on_ranges(gt_boxes, class_ranges)
@@ -140,11 +153,15 @@ def _nuscenes_evaluate(
     """Perform nuscenes evaluation based on a number of groundtruths and detections."""
     metrics = {}
 
+    existing_classes = set()
+    for box in gt_boxes.all:
+        existing_classes.add(box.detection_name)
+
     for cls in EVALUATION_CLASSES:
-        # ensure that we have samples for this class in the gt data
-        n_samples = sum(1 for box in gt_boxes.all if box.detection_name == cls)
-        if n_samples == 0:
+        if cls not in existing_classes:
+            # ensure that we have samples for this class in the gt data
             continue
+
         md = accumulate(
             gt_boxes,
             det_boxes,

@@ -1,39 +1,10 @@
 # nuScenes dev-kit.
 # Code written by Oscar Beijbom and Varun Bankiti, 2019.
 
-DETECTION_NAMES = [
-    "Vehicle",
-    "VulnerableVehicle",
-    "Pedestrian",
-    "TrafficSign",
-    "TrafficSignal",
-]
+from zod.eval.detection.constants import EVALUATION_CLASSES
 
-PRETTY_DETECTION_NAMES = {
-    "car": "Car",
-    "truck": "Truck",
-    "bus": "Bus",
-    "trailer": "Trailer",
-    "construction_vehicle": "Constr. Veh.",
-    "pedestrian": "Pedestrian",
-    "motorcycle": "Motorcycle",
-    "bicycle": "Bicycle",
-    "traffic_cone": "Traffic Cone",
-    "barrier": "Barrier",
-}
 
-DETECTION_COLORS = {
-    "car": "C0",
-    "truck": "C1",
-    "bus": "C2",
-    "trailer": "C3",
-    "construction_vehicle": "C4",
-    "pedestrian": "C5",
-    "motorcycle": "C6",
-    "bicycle": "C7",
-    "traffic_cone": "C8",
-    "barrier": "C9",
-}
+DETECTION_NAMES = EVALUATION_CLASSES
 
 TP_METRICS = ["trans_err", "scale_err", "orient_err"]
 
