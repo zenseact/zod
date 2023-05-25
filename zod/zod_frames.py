@@ -1,8 +1,11 @@
 """ZOD Frames module."""
+from collections import defaultdict
 from typing import Dict, Union
 
+from tqdm import tqdm
+
 from zod._zod_dataset import ZodDataset
-from zod.constants import FRAMES, TRAINVAL_FILES
+from zod.constants import FRAMES, TRAINVAL_FILES, AnnotationProject
 from zod.data_classes.frame import ZodFrame
 
 
@@ -17,3 +20,11 @@ class ZodFrames(ZodDataset):
     @property
     def trainval_files(self) -> Dict[str, str]:
         return TRAINVAL_FILES[FRAMES]
+
+    def get_subclass_counts(self) -> Dict[str, int]:
+        """Will scan the dataset and return all subclasses and their counts."""
+        subclasses = defaultdict(int)
+        for frame in tqdm(self, desc="Processing annotations..."):
+            for obj in frame.get_annotation(AnnotationProject.OBJECT_DETECTION):
+                subclasses[obj.subclass] += 1
+        return subclasses
