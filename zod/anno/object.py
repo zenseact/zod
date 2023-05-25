@@ -88,7 +88,7 @@ class ObjectAnnotation:
     @property
     def subclass(self):
         """Get the sub-class of the object."""
-        if self.unclear:
+        if self.unclear or self.object_type == "Inconclusive":
             return f"Unclear"
         superclass = self.superclass
         if superclass not in CLASSES_WITH_SUBCLASSES:
@@ -102,10 +102,7 @@ class ObjectAnnotation:
         if self.emergency is True and superclass == "Vehicle":
             return f"{superclass}_Emergency"  # other superclasses have too few emergency objs
         if self.object_type is not None:
-            type_name = self.object_type
-            if type_name in ("Inconclusive", "Other"):
-                type_name = "InconclusiveOrOther"
-            return f"{superclass}_{type_name}"
+            return f"{superclass}_{self.object_type}"
         # the above should have been exhaustive
         raise ValueError("Object subclass could not be determined")
 
