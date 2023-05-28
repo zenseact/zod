@@ -5,6 +5,7 @@ import os
 from typing import Callable, Dict
 
 import numpy as np
+import tqdm
 
 from zod.eval.detection._nuscenes_eval.common.data_classes import EvalBoxes
 from zod.eval.detection._nuscenes_eval.common.utils import center_distance
@@ -94,20 +95,24 @@ def evaluate_nuscenes_style(
     }
 
     evaluated_clses = set(metrics[detection_cfg.dist_ths[0]].keys())
+    n_eval_steps = len(evaluated_clses) * len(detection_cfg.dist_ths)
+    pbar = tqdm.tqdm(total=n_eval_steps, desc="Evaluating...", unit="class")
     for zod_cls in evaluated_clses:
         # They evaluate the ap across all thresholds
         for dist_th in detection_cfg.dist_ths:
+            pbar.set_description(f"Evaluating {zod_cls} AP @ {dist_th:.2f}m...")
             detection_metrics.add_label_ap(
                 detection_name=zod_cls,
                 dist_th=dist_th,
                 ap=metrics[dist_th][zod_cls]["ap"],
             )
-
         # They evaluate the tp across only one threshold
         for metric in VALID_TP_METRICS:
+            pbar.set_description(f"Evaluating {zod_cls} {metric}...")
             detection_metrics.add_label_tp(
                 zod_cls, metric, metrics[detection_cfg.dist_th_tp][zod_cls][metric]
             )
+        pbar.update(1)
 
     if verbose:
         _print_nuscenes_metrics(detection_metrics)
