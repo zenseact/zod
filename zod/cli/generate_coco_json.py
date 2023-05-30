@@ -50,7 +50,7 @@ def _convert_frame(
             "category_id": CATEGORY_NAME_TO_ID[obj.name],
             "bbox": [round(val, 2) for val in obj.box2d.xywh.tolist()],
             "area": round(obj.box2d.area, 2),
-            "iscrowd": obj.should_ignore_object(require_3d=False),
+            "iscrowd": obj.subclass == "Unclear",
         }
         for obj_idx, obj in enumerate(objs)
         if obj.name in classes

@@ -59,7 +59,7 @@ def split_gt_objects(
     # dont-care ground truth objects
     dont_care_gt: List[ObjectAnnotation] = []
     for gt in ground_truth:
-        if gt.name not in eval_classes or gt.should_ignore_object():
+        if gt.name not in eval_classes or gt.unclear:
             dont_care_gt.append(gt)
         else:
             valid_gt.append(gt)

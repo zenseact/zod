@@ -88,7 +88,7 @@ class ObjectAnnotation:
     @property
     def subclass(self):
         """Get the sub-class of the object."""
-        if self.unclear or self.object_type == "Inconclusive":
+        if self.unclear:
             return f"Unclear"
         superclass = self.superclass
         if superclass not in CLASSES_WITH_SUBCLASSES:
@@ -110,7 +110,7 @@ class ObjectAnnotation:
     def from_dict(cls, data: Dict[str, Any]) -> ObjectAnnotation:
         """Create an ObjectAnnotation from a dictionary."""
         properties: Dict[str, Any] = data["properties"]
-        unclear = (properties["class"] == "Inconclusive") or properties["unclear"]
+
         box2d = Box2D.from_points(points=data["geometry"]["coordinates"], frame=Camera.FRONT)
         box3d = None
         if "location_3d" in properties:
@@ -131,68 +131,27 @@ class ObjectAnnotation:
                 ),
                 frame=Lidar.VELODYNE,
             )
-        with_rider = properties.get("with_rider")
-        with_rider = with_rider if with_rider is None else with_rider == "True"
-        tcv = properties.get("traffic_content_visible")
-        tcv = tcv if tcv is None else tcv == "True"
-        name = properties["class"]
-        if name == "Inconclusive":
-            assert unclear, "Inconclusive objects should be unclear"
-            name = "Unclear"  # Rename Inconclusive to Unclear
+
+        def _parse_bool_prop(key: str) -> Optional[bool]:
+            return None if key not in properties else properties[key] == "True"
+
+        superclass, obj_type = properties["class"], properties.get("type")
+        unclear = "Inconclusive" in (superclass, obj_type) or properties["unclear"]
+        if superclass == "Inconclusive":
+            superclass = "Unclear"
         return cls(
             uuid=properties["annotation_uuid"],
             box2d=box2d,
             box3d=box3d,
             unclear=unclear,
-            name=name,
-            object_type=properties.get("type", None),
+            name=superclass,
+            object_type=obj_type,
             occlusion_level=properties.get("occlusion_ratio", None),
             artificial=properties.get("artificial", None),
-            with_rider=with_rider,
+            with_rider=_parse_bool_prop("with_rider"),
             emergency=properties.get("emergency", None),
-            traffic_content_visible=tcv,
+            traffic_content_visible=_parse_bool_prop("traffic_content_visible"),
         )
-
-    def should_ignore_object(self, require_3d: bool = True) -> bool:
-        """Check if the object should be ignored.
-
-        Returns:
-            True if the object should be ignored.
-        """
-        # Remove unclear objects
-        if self.unclear:
-            return True
-        # Remove objects that dont have 3d box
-        if self.box3d is None and require_3d:
-            return True
-        # If the object is artificial, reflection or an image, ignore it
-        if self.artificial not in (None, "None"):
-            return True
-
-        # Class specific removals
-        if self.name == "Vehicle":
-            if self.object_type not in (
-                "Car",
-                "Bus",
-                "Truck",
-                "Van",
-                "Trailer",
-                "HeavyEquip",
-            ):
-                return True
-        elif self.name == "VulnerableVehicle":
-            if self.object_type not in ("Bicycle", "Motorcycle"):
-                return True
-            return not self.with_rider
-        elif self.name == "Pedestrian":
-            pass
-        elif self.name == "TrafficSign":
-            return not self.traffic_content_visible
-
-        elif self.name == "TrafficSignal":
-            return not self.traffic_content_visible
-
-        return False
 
 
 # Compatibility with old naming
