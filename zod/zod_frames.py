@@ -21,10 +21,12 @@ class ZodFrames(ZodDataset):
     def trainval_files(self) -> Dict[str, str]:
         return TRAINVAL_FILES[FRAMES]
 
-    def get_subclass_counts(self) -> Dict[str, int]:
+    def get_subclass_counts(self, require_3d=False) -> Dict[str, int]:
         """Will scan the dataset and return all subclasses and their counts."""
         subclasses = defaultdict(int)
         for frame in tqdm(self, desc="Processing annotations..."):
             for obj in frame.get_annotation(AnnotationProject.OBJECT_DETECTION):
+                if require_3d and obj.box3d is None:
+                    continue
                 subclasses[obj.subclass] += 1
         return subclasses

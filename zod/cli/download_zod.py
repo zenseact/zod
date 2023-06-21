@@ -50,6 +50,7 @@ class DownloadExtractInfo:
     dry_run: bool
     size: int
     extract: bool
+    extract_already_downloaded: bool
 
 
 @dataclass
@@ -81,6 +82,7 @@ class DownloadSettings:
     rm: bool
     dry_run: bool
     extract: bool
+    extract_already_downloaded: bool
     parallel: bool
 
     def __str__(self):
@@ -190,15 +192,20 @@ def _extract(tar_path: str, output_dir: str):
 
 def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
+    should_extract = info.extract
     download_path = osp.join(info.dl_dir, osp.basename(info.file_path))
     if osp.exists(download_path) and osp.getsize(download_path) == info.size:
-        tqdm.write(f"File {download_path} already exists. Skipping download.")
+        if not info.extract_already_downloaded:
+            tqdm.write(f"File {download_path} already exists. Skipping download and extraction.")
+            should_extract = False
+        else:
+            tqdm.write(f"File {download_path} already exists. Skipping download.")
     elif info.dry_run:
         typer.echo(f"Would download {info.file_path} to {download_path}")
     else:
         _download(download_path, dbx, info)
 
-    if info.extract:
+    if should_extract:
         if info.dry_run:
             typer.echo(f"Would extract {download_path} to {info.extract_dir}")
             return
@@ -257,6 +264,7 @@ def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSett
             rm=dl_settings.rm,
             dry_run=dl_settings.dry_run,
             extract=dl_settings.extract,
+            extract_already_downloaded=dl_settings.extract_already_downloaded,
         )
         for entry in entries
         if _filter_entry(entry, filter_settings)
@@ -355,6 +363,9 @@ def download(
     rm: bool = typer.Option(False, help="Remove the downloaded archives", rich_help_panel=GEN),
     dry_run: bool = typer.Option(False, help="Print what would be downloaded", rich_help_panel=GEN),
     extract: bool = typer.Option(True, help="Unpack the archives", rich_help_panel=GEN),
+    extract_already_downloaded: bool = typer.Option(
+        False, help="Extract already downloaded archives", rich_help_panel=GEN
+    ),
     parallel: bool = typer.Option(True, help="Download files in parallel", rich_help_panel=GEN),
     no_confirm: bool = typer.Option(
         False,
@@ -388,6 +399,7 @@ def download(
         rm=rm,
         dry_run=dry_run,
         extract=extract,
+        extract_already_downloaded=extract_already_downloaded,
         parallel=parallel,
     )
     filter_settings = FilterSettings(
