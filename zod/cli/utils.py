@@ -17,11 +17,11 @@ class SubDataset(enum.Enum):
 
     @property
     def dataset_cls(self):
-        if self == SubDataset.FRAMES:
-            return ZodFrames
-        elif self == SubDataset.SEQUENCES:
-            return ZodSequences
-        elif self == SubDataset.DRIVES:
-            return ZodDrives
-        else:
-            raise ValueError(f"Unknown subdataset: {self}")
+        return _cls_map[self]
+
+
+_cls_map = {
+    SubDataset.FRAMES: ZodFrames,
+    SubDataset.SEQUENCES: ZodSequences,
+    SubDataset.DRIVES: ZodDrives,
+}

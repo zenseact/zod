@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zod"
-version = "0.2.9"
+version = "0.2.10"
 description = "Zenseact Open Dataset"
 authors = ["Zenseact <opendataset@zenseact.com>"]
 license = "MIT"

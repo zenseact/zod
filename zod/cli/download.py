@@ -84,6 +84,7 @@ class DownloadSettings:
     extract: bool
     extract_already_downloaded: bool
     parallel: bool
+    max_workers: int = 8
 
     def __str__(self):
         return "\n".join([f"    {key}: {value}" for key, value in self.__dict__.items()])
@@ -253,6 +254,12 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
 def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSettings, dirname: str):
     dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
     url, entries = _list_folder(dl_settings.url, dbx, dirname)
+    if not entries:
+        typer.echo(
+            "Warning! No files found. Check the url, but this could be a known dropbox error.\n"
+            "We are working on a fix, so please try again layer. Sorry for the inconvenience."
+        )
+        return
     dl_dir = osp.join(dl_settings.output_dir, "downloads", dirname)
     files_to_download = [
         DownloadExtractInfo(
@@ -277,14 +284,14 @@ def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSett
         os.makedirs(dl_settings.output_dir, exist_ok=True)
         os.makedirs(dl_dir, exist_ok=True)
     if dl_settings.parallel:
-        with ThreadPoolExecutor() as pool:
+        with ThreadPoolExecutor(max_workers=dl_settings.max_workers) as pool:
             pool.map(lambda info: _download_and_extract(dbx, info), files_to_download)
     else:
         for info in files_to_download:
             _download_and_extract(dbx, info)
 
 
-def _list_folder(url, dbx, path):
+def _list_folder(url, dbx: ResumableDropbox, path: str):
     shared_link = dropbox.files.SharedLink(url=url)
     try:
         res = dbx.files_list_folder(path=f"/{path}", shared_link=shared_link)
@@ -367,6 +374,9 @@ def download(
         False, help="Extract already downloaded archives", rich_help_panel=GEN
     ),
     parallel: bool = typer.Option(True, help="Download files in parallel", rich_help_panel=GEN),
+    max_workers: int = typer.Option(
+        8, help="Max number of workers for parallel downloads", rich_help_panel=GEN
+    ),
     no_confirm: bool = typer.Option(
         False,
         "-y",
@@ -401,6 +411,7 @@ def download(
         extract=extract,
         extract_already_downloaded=extract_already_downloaded,
         parallel=parallel,
+        max_workers=max_workers,
     )
     filter_settings = FilterSettings(
         version=version,

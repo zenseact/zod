@@ -1,13 +1,10 @@
-from pathlib import Path
-from typing import Tuple
-
 try:
     import typer
 except ImportError:
     print('Warning! zod is installed without the CLI dependencies:\npip install "zod[cli]"')
     exit(1)
 
-from zod.cli.download_zod import app as download_app
+from zod.cli.download import app as download_app
 from zod.cli.extract_tsr_patches import cli_dummy as tsr_dummy
 from zod.cli.generate_coco_json import convert_to_coco
 from zod.cli.visualize_lidar import app as visualize_lidar_app
