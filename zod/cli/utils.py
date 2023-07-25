@@ -1,6 +1,7 @@
 import enum
+from typing import Type
 
-from zod import ZodDrives, ZodFrames, ZodSequences
+from zod import ZodDataset, ZodDrives, ZodFrames, ZodSequences
 
 
 class SubDataset(enum.Enum):
@@ -16,7 +17,7 @@ class SubDataset(enum.Enum):
             return self.value
 
     @property
-    def dataset_cls(self):
+    def dataset_cls(self) -> Type[ZodDataset]:
         return _cls_map[self]
 
 
