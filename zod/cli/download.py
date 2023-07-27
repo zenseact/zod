@@ -208,9 +208,11 @@ def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
             tqdm.write(f"{data_name} already exists. Skipping download and extraction.")
             should_extract = False
         else:
-            tqdm.write(f"File {data_name} already exists. Skipping download.")
+            tqdm.write(f"{data_name} already exists. Skipping download.")
     elif info.dry_run:
-        typer.echo(f"Would download {info.file_path} to {download_path}")
+        msg = "download" if not should_extract else "download and extract"
+        typer.echo(f"Would {msg} {info.file_path} to {download_path}")
+        return
     else:
         try:
             _download(download_path, dbx, info)
@@ -219,15 +221,11 @@ def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
             return
 
     if should_extract:
-        if info.dry_run:
-            typer.echo(f"Would extract {data_name} to {info.extract_dir}")
+        try:
+            _extract(download_path, info.extract_dir)
+        except Exception as e:
+            print(f"Error extracting {data_name}: {e}. Please retry")
             return
-        else:
-            try:
-                _extract(download_path, info.extract_dir)
-            except Exception as e:
-                print(f"Error extracting {data_name}: {e}. Please retry")
-                return
 
     if info.rm and not info.dry_run:
         os.remove(download_path)
@@ -392,7 +390,7 @@ def download(
     ),
     parallel: bool = typer.Option(True, help="Download files in parallel", rich_help_panel=GEN),
     max_workers: int = typer.Option(
-        8, help="Max number of workers for parallel downloads", rich_help_panel=GEN
+        None, help="Max number of workers for parallel downloads", rich_help_panel=GEN
     ),
     no_confirm: bool = typer.Option(
         False,
