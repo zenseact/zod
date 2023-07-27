@@ -42,7 +42,7 @@ def _verify_info(
                     name += "_core"
                 stats["lidar"][name] = exists
             else:
-                if name not in stats:
+                if name not in stats["lidar"]:
                     stats["lidar"][name] = []
                 stats["lidar"][name].append(exists)
     for camera, camera_frames in info.camera_frames.items():
@@ -53,15 +53,16 @@ def _verify_info(
 
 
 def _print_results(verified_infos):
+    percentages = []
     groups = sorted(set().union(*verified_infos))
     for group in groups:
         keys = sorted(set().union(*(v[group] for v in verified_infos)))
         stats = {
             k: [d[group][k] for d in verified_infos if group in d and k in d[group]] for k in keys
         }
-        print(f"\n\n{group.upper():^45}\n{'-' * 50}")
-        print(f"{'Data':<20} {'Downloaded (%)':<15} {'Expected (count)':<15}")
-        print("-" * 50)
+        print(f"\n\n{group.upper():^45}\n{'-' * 55}")
+        print(f"{'Data':<20} {'Downloaded (%)':<15} {'Expected (count)':<20}")
+        print("-" * 55)
         for data_name, data_stats in stats.items():
             if isinstance(data_stats[0], bool):
                 successes = sum(data_stats)
@@ -70,7 +71,21 @@ def _print_results(verified_infos):
                 successes = sum(sum(substats) for substats in data_stats)
                 totals = sum(len(substats) for substats in data_stats)
             percentage = 100 * successes / totals
-            print(f"{data_name:<20} {percentage:<15.2f} {totals:<15}")
+            print(f"{data_name:<20} {percentage:<15.2f} {totals:<20}")
+            percentages.append(percentage)
+    if all(p == 100 for p in percentages):
+        print("\n\033[92m" + f"All files downloaded succesfully!" + "\033[0m")
+    elif all(p == 0 for p in percentages):
+        print("\n\033[91m" + f"No files were found" + "\033[0m")
+    else:
+        # print yellow with average percentage
+        avg_percentage = sum(percentages) / len(percentages)
+        print(
+            "\n\033[93m"
+            + f"Found {avg_percentage:.1f}% of the dataset. "
+            + "This is could be intentional, look at the table above for full details."
+            + "\033[0m"
+        )
 
 
 @app.command(no_args_is_help=True)
