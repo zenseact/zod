@@ -187,35 +187,46 @@ def _extract(tar_path: str, output_dir: str):
     tqdm.write(f"Extracted {pbar.n} files from {osp.basename(tar_path)}.")
 
 
+def _already_downloaded(download_path: str, target_size: int):
+    """Check if the file is already downloaded."""
+    old_format_path = download_path.rsplit("_", 1)[0]  # /path/to/file_abc123 -> /path/to/file
+    if osp.exists(download_path) and osp.getsize(download_path) == target_size:
+        return True
+    elif osp.exists(old_format_path) and osp.getsize(old_format_path) == target_size:
+        return True
+    return False
+
+
 def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
     should_extract = info.extract
     file_name = osp.basename(info.file_path)
-    download_path = osp.join(info.dl_dir, f"{file_name}_{info.content_hash}")
-    if osp.exists(download_path) and osp.getsize(download_path) == info.size:
+    data_name = file_name.split(".")[0]
+    download_path = osp.join(info.dl_dir, f"{file_name}_{info.content_hash[:8]}")
+    if _already_downloaded(download_path, info.size):
         if not info.extract_already_downloaded:
-            tqdm.write(f"File {download_path} already exists. Skipping download and extraction.")
+            tqdm.write(f"{data_name} already exists. Skipping download and extraction.")
             should_extract = False
         else:
-            tqdm.write(f"File {download_path} already exists. Skipping download.")
+            tqdm.write(f"File {data_name} already exists. Skipping download.")
     elif info.dry_run:
         typer.echo(f"Would download {info.file_path} to {download_path}")
     else:
         try:
             _download(download_path, dbx, info)
         except Exception as e:
-            print(f"Error downloading {file_name.split('.')[0]}: {e}. Please retry")
+            print(f"Error downloading {data_name}: {e}. Please retry")
             return
 
     if should_extract:
         if info.dry_run:
-            typer.echo(f"Would extract {download_path} to {info.extract_dir}")
+            typer.echo(f"Would extract {data_name} to {info.extract_dir}")
             return
         else:
             try:
                 _extract(download_path, info.extract_dir)
             except Exception as e:
-                print(f"Error extracting {file_name.split('.')[0]}: {e}. Please retry")
+                print(f"Error extracting {data_name}: {e}. Please retry")
                 return
 
     if info.rm and not info.dry_run:
@@ -224,7 +235,7 @@ def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
 
 def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bool:
     """Filter the entry based on the flags."""
-    if settings.version == "mini":
+    if settings.version == Version.MINI:
         return "mini" in entry.name
     elif "mini" in entry.name:
         return False
