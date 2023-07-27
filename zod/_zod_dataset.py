@@ -78,12 +78,15 @@ class ZodDataset(ABC):
         """Load frames for the given version."""
         trainval_path = osp.join(self._dataset_root, self.trainval_files[self._version])
         if not osp.exists(trainval_path):
-            msg = f"Could not find trainval file: {trainval_path}."
+            msg = f"Could not find trainval file: {trainval_path}.\n"
             if osp.exists(trainval_path.replace("-", "_")):
                 msg += (
                     "However, found old, incompatible trainval files. Please either downgrade zod "
                     "to < 0.2 or download new files with `zod download --no-images --no-lidar`"
                 )
+            else:
+                cls_name = f"{self.__class__.__name__}-{self._version}"
+                msg += f"Make sure you have downloaded {cls_name} to {self._dataset_root}"
             raise FileNotFoundError(msg)
         with open(trainval_path, "r") as f:
             all_ids = json.load(f)
