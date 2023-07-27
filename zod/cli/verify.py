@@ -7,8 +7,7 @@ from typing import Dict, List, Union
 import typer
 from tqdm.contrib.concurrent import process_map
 
-from zod.cli.download import Version
-from zod.cli.utils import SubDataset
+from zod.cli.utils import SubDataset, Version
 from zod.data_classes.info import Information
 
 app = typer.Typer(help="ZOD Download Verifyer", no_args_is_help=True)

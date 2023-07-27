@@ -7,11 +7,11 @@ import tarfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from enum import Enum
 
+import requests
 from tqdm import tqdm
 
-from zod.cli.utils import SubDataset
+from zod.cli.utils import SubDataset, Version
 
 try:
     import click.exceptions
@@ -27,15 +27,10 @@ except ImportError:
 
 APP_KEY = "kcvokw7c7votepo"
 REFRESH_TOKEN = "z2h_5rjphJEAAAAAAAAAAUWtQlltCYlMbZ2WqMgtymELhiSuKIksxAYeArubKnZV"
-CHUNK_SIZE = 1024 * 1024  # 1 MB
-TIMEOUT = 60 * 60  # 1 hour
+CHUNK_SIZE = 8 * 1024 * 1024  # 8 MB
+TIMEOUT = 8 * 60 * 60  # 8 hours
 
 app = typer.Typer(help="Zenseact Open Dataset Downloader", no_args_is_help=True)
-
-
-class Version(str, Enum):
-    FULL = "full"
-    MINI = "mini"
 
 
 @dataclass
@@ -49,6 +44,7 @@ class DownloadExtractInfo:
     rm: bool
     dry_run: bool
     size: int
+    content_hash: str
     extract: bool
     extract_already_downloaded: bool
 
@@ -113,19 +109,16 @@ class ResumableDropbox(dropbox.Dropbox):
 def _print_final_msg(pbar: tqdm, basename: str):
     """Print a final message for each downloaded file, with stats and nice padding."""
     msg = "Downloaded " + basename + " " * (45 - len(basename))
-
-    # Print various download stats
     total_time = pbar.format_dict["elapsed"]
     size_in_mb = pbar.n / 1024 / 1024
-    speed = size_in_mb / total_time
+    speed_in_mb = size_in_mb / total_time
     for name, val, unit in [
         ("time", total_time, "s"),
         ("size", size_in_mb, "MB"),
-        ("speed", speed, "MB/s"),
+        ("speed", speed_in_mb, "MB/s"),
     ]:
         val = f"{val:.2f}{unit}"
         msg += f"{name}: {val}" + " " * (14 - len(val))
-
     tqdm.write(msg)
 
 
@@ -147,20 +140,23 @@ def _download(download_path: str, dbx: ResumableDropbox, info: DownloadExtractIn
             f"Error! File {download_path} already exists and is larger than expected. "
             "Please delete and try again."
         )
+    if pbar.n > 0:
+        # this means we are retrying or resuming a previously interrupted download
+        tqdm.write(f"Resuming download of {download_path} from {current_size} bytes.")
     # Retry download if partial file exists (e.g. due to network error)
     while pbar.n < info.size:
-        if pbar.n > 0:
-            # this means we are retrying or resuming a previously interrupted download
-            tqdm.write(f"Resuming download of {download_path} from {current_size} bytes.")
-        _, response = dbx.sharing_get_shared_link_file(
-            url=info.url, path=info.file_path, start=pbar.n
-        )
-        with open(download_path, "ab") as f:
-            with contextlib.closing(response):
-                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                    if chunk:  # filter out keep-alive new chunks
-                        size = f.write(chunk)
-                        pbar.update(size)
+        try:
+            _, response = dbx.sharing_get_shared_link_file(
+                url=info.url, path=info.file_path, start=pbar.n
+            )
+            with open(download_path, "ab") as f:
+                with contextlib.closing(response):
+                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                        if chunk:  # filter out keep-alive new chunks
+                            size = f.write(chunk)
+                            pbar.update(size)
+        except requests.exceptions.ChunkedEncodingError:
+            continue  # This can happen when dropbox unexpectly closes the connection
     # Final checks and printouts
     assert osp.getsize(download_path) == info.size
     _print_final_msg(pbar, basename)
@@ -194,7 +190,8 @@ def _extract(tar_path: str, output_dir: str):
 def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
     """Download a file from a Dropbox share link to a local path."""
     should_extract = info.extract
-    download_path = osp.join(info.dl_dir, osp.basename(info.file_path))
+    file_name = osp.basename(info.file_path)
+    download_path = osp.join(info.dl_dir, f"{file_name}_{info.content_hash}")
     if osp.exists(download_path) and osp.getsize(download_path) == info.size:
         if not info.extract_already_downloaded:
             tqdm.write(f"File {download_path} already exists. Skipping download and extraction.")
@@ -204,14 +201,22 @@ def _download_and_extract(dbx: ResumableDropbox, info: DownloadExtractInfo):
     elif info.dry_run:
         typer.echo(f"Would download {info.file_path} to {download_path}")
     else:
-        _download(download_path, dbx, info)
+        try:
+            _download(download_path, dbx, info)
+        except Exception as e:
+            print(f"Error downloading {file_name.split('.')[0]}: {e}. Please retry")
+            return
 
     if should_extract:
         if info.dry_run:
             typer.echo(f"Would extract {download_path} to {info.extract_dir}")
             return
         else:
-            _extract(download_path, info.extract_dir)
+            try:
+                _extract(download_path, info.extract_dir)
+            except Exception as e:
+                print(f"Error extracting {file_name.split('.')[0]}: {e}. Please retry")
+                return
 
     if info.rm and not info.dry_run:
         os.remove(download_path)
@@ -253,7 +258,7 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
 
 def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSettings, dirname: str):
     dbx = ResumableDropbox(app_key=APP_KEY, oauth2_refresh_token=REFRESH_TOKEN, timeout=TIMEOUT)
-    url, entries = _list_folder(dl_settings.url, dbx, dirname)
+    entries = _list_folder(dl_settings.url, dbx, dirname)
     if not entries:
         typer.echo(
             "Warning! No files found. Check the url, but this could be a known dropbox error.\n"
@@ -263,11 +268,12 @@ def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSett
     dl_dir = osp.join(dl_settings.output_dir, "downloads", dirname)
     files_to_download = [
         DownloadExtractInfo(
-            url=url,
+            url=dl_settings.url,
             file_path=f"/{dirname}/" + entry.name,
             dl_dir=dl_dir,
             extract_dir=dl_settings.output_dir,
             size=entry.size,
+            content_hash=entry.content_hash,
             rm=dl_settings.rm,
             dry_run=dl_settings.dry_run,
             extract=dl_settings.extract,
@@ -307,7 +313,7 @@ def _list_folder(url, dbx: ResumableDropbox, path: str):
     while res.has_more:
         res = dbx.files_list_folder_continue(res.cursor)
         entries.extend(res.entries)
-    return url, entries
+    return entries
 
 
 def _print_summary(download_settings, filter_settings, subset):
