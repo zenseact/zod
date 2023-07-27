@@ -100,7 +100,7 @@ def verify(
     verified_infos = process_map(
         partial(_verify_info, separate_lidar=subset == SubDataset.FRAMES),
         infos.values(),
-        chunksize=1 if version == "mini" else min(len(infos) // 100, 100),
+        chunksize=1 if version == "mini" else min(len(infos) // 100 + 1, 100),
         desc="Verifying files...",
     )
     _print_results(verified_infos)
