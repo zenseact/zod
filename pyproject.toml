@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zod"
-version = "0.3.3"
+version = "0.3.4"
 description = "Zenseact Open Dataset"
 authors = ["Zenseact <opendataset@zenseact.com>"]
 license = "MIT"
@@ -61,9 +61,7 @@ build-backend = "poetry.core.masonry.api"
 line-length = 100
 # isort, Warning, pycodestyle (see here: https://github.com/charliermarsh/ruff#supported-rules)
 select = ["I", "W", "E"]
-exclude = [
-    "zod/eval/detection/_nuscenes_eval/*"
-]
+exclude = ["zod/eval/detection/_nuscenes_eval/*"]
 
 [tool.black]
 line-length = 100
