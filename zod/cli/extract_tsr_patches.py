@@ -74,6 +74,7 @@ class Args:
     padding_factor: Optional[float]
     padding_px: Optional[Tuple[int, int]]
     overwrite: bool
+    exclude_unclear: bool
 
 
 def _parse_args():
@@ -108,6 +109,11 @@ def _parse_args():
         action="store_true",
         help="Whether to overwrite existing files.",
     )
+    parser.add_argument(
+        "--exclude-unclear",
+        action="store_true",
+        help="Whether to exclude unclear traffic signs.",
+    )
 
     args = parser.parse_args()
 
@@ -133,7 +139,9 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
     image_path = frame.info.get_key_camera_frame(constants.Anonymization.BLUR).filepath
     image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     for traffic_sign in traffic_signs:
-        cls_name = traffic_sign.traffic_sign_class
+        if args.exclude_unclear and traffic_sign.unclear:
+            continue
+        cls_name = "unclear" if traffic_sign.unclear else traffic_sign.traffic_sign_class
         train_or_val = constants.TRAIN if frame.info.id in train_ids else constants.VAL
         cls_folder = os.path.join(args.output_folder, train_or_val, cls_name)
 
