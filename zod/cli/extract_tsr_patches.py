@@ -203,6 +203,7 @@ def main(args: Args):
         _process_frame,
         zod_frames,
         repeat(args),
+        repeat(zod_frames.get_split(constants.TRAIN)),
         desc="Processing frames in ZOD",
         max_workers=args.num_workers,
         chunksize=1 if args.num_workers == 1 else 100,
