@@ -4,14 +4,14 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/zod)](https://pypi.org/project/zod/)
 [![Download Stats](https://img.shields.io/pypi/dm/zod)](https://pypistats.org/packages/zod)
 
-The Zenseact Open Dataset (ZOD) is a large multi-modal autonomous driving dataset developed by a team of researchers at [Zenseact](https://zenseact.com/). The dataset is split into three categories: *Frames*, *Sequences*, and *Drives*. For more information about the dataset, please refer to our [coming soon](), or visit our [website](https://zod.zenseact.com).
+The Zenseact Open Dataset (ZOD) is a large multi-modal autonomous driving dataset developed by a team of researchers at [Zenseact](https://zenseact.com/). The dataset is split into three categories: *Frames*, *Sequences*, and *Drives*. For more information about the dataset, please refer to our [paper](https://arxiv.org/abs/2305.02008), or visit our [website](https://zod.zenseact.com).
 
 ## Examples
 Find examples of how to use the dataset in the [examples](examples/) folder. Here you will find a set of jupyter notebooks that demonstrate how to use the dataset, as well as an example of how to train an object detection model using [Detectron2](https://github.com/facebookresearch/detectron2).
 
 ## Installation
 
-The install the library with minimal dependencies, for instance to be used in a training environment without need for interactivity och visualization, run:
+The install the library with minimal dependencies, for instance, to be used in a training environment without the need for interactivity or visualization, run:
 ```bash
 pip install zod
 ```
