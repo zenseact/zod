@@ -420,7 +420,7 @@ def download(
     """Download the Zenseact Open Dataset."""
     download_settings = DownloadSettings(
         url=url,
-        output_dir=output_dir,
+        output_dir=os.path.expanduser(output_dir),
         rm=rm,
         dry_run=dry_run,
         extract=extract,
