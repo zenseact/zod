@@ -7,7 +7,6 @@ except ImportError:
 from zod.cli.download import app as download_app
 from zod.cli.extract_tsr_patches import cli_dummy as tsr_dummy
 from zod.cli.generate_coco_json import convert_to_coco
-from zod.cli.torrent_download import app as torrent_download_app
 from zod.cli.verify import app as verify_app
 from zod.cli.visualize_lidar import app as visualize_lidar_app
 
@@ -30,7 +29,6 @@ def add_child(parent: typer.Typer, child: typer.Typer, name: str):
 app = typer.Typer(help="Zenseact Open Dataset CLI.", no_args_is_help=True)
 
 add_child(app, download_app, "download")
-add_child(app, torrent_download_app, "torrent_download")
 add_child(app, verify_app, "verify")
 add_child(app, visualize_app, "visualize")
 add_child(app, convert_app, "generate")

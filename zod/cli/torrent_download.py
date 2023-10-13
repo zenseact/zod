@@ -9,17 +9,28 @@ import urllib.request
 from pathlib import Path
 from typing import List
 
-import typer
 from tqdm import tqdm
 
-from zod.cli.download import DownloadSettings, FilterSettings, _print_summary
+from zod.cli.dropbox_download import DownloadSettings, FilterSettings
 from zod.cli.utils import SubDataset, Version
 from zod.constants import MINI
 
+TORRENT_WEBSITE = "https://academictorrents.com/"
+
+ZOD_FRAMES_TORRENT = "329ae74426e067ef06b82241b5906400ca3caf03"
+ZOD_SEQUENCES_TORRENT = "95ece9c22470c4f7df51a82bcc3407cc038419be"
+ZOD_DRIVES_TORRENT = "a05ab2e524dc38c1498fcc9fb621329cc97e3837"
+
 TORRENT_FILEMAP = {
-    SubDataset.FRAMES: "https://academictorrents.com/download/329ae74426e067ef06b82241b5906400ca3caf03.torrent",  # noqa
-    SubDataset.SEQUENCES: "https://academictorrents.com/download/95ece9c22470c4f7df51a82bcc3407cc038419be.torrent",  # noqa
-    SubDataset.DRIVES: "https://academictorrents.com/download/a05ab2e524dc38c1498fcc9fb621329cc97e3837.torrent",  # noqa
+    SubDataset.FRAMES: f"{TORRENT_WEBSITE}/download/{ZOD_FRAMES_TORRENT}.torrent",
+    SubDataset.SEQUENCES: f"{TORRENT_WEBSITE}/download/{ZOD_SEQUENCES_TORRENT}.torrent",
+    SubDataset.DRIVES: f"{TORRENT_WEBSITE}/download/{ZOD_DRIVES_TORRENT}.torrent",
+}
+
+TORRENT_WEBSITEMAP = {
+    SubDataset.FRAMES: f"{TORRENT_WEBSITE}/details/{ZOD_FRAMES_TORRENT}",
+    SubDataset.SEQUENCES: f"{TORRENT_WEBSITE}/details/{ZOD_SEQUENCES_TORRENT}",
+    SubDataset.DRIVES: f"{TORRENT_WEBSITE}/details/{ZOD_DRIVES_TORRENT}",
 }
 
 SIZE_FILEMAP = {
@@ -78,10 +89,8 @@ FRAMES_FILES_TO_IDX = {
     "oxts": 27,
 }
 
-app = typer.Typer(help="Zenseact Open Dataset Downloader", no_args_is_help=True)
 
-
-def check_aria_install():
+def check_aria_install(subset: SubDataset):
     # assert that aria2c is installed
     try:
         subprocess.check_call(["aria2c", "--version"])
@@ -89,6 +98,8 @@ def check_aria_install():
         print(
             "aria2c is not installed. Please install aria2c to download the dataset. Using: `apt install aria2`"  # noqa
         )
+        print(f"Alternatively, you can download the dataset manually from: ")
+        print(f"\t {TORRENT_WEBSITEMAP[subset]}")
         sys.exit(1)
 
 
@@ -177,12 +188,18 @@ def download_torrent_file(subset: SubDataset, output_dir: Path):
         return output_dir / filename
     except Exception as e:
         print(f"Failed to download torrent file: {e}")
+        print("Please ensure that you have the latest stable version of the development kit.")
+        print("If the problem persists, please start a new issue on the GitHub repository.")
         exit(1)
 
 
-def _download_dataset(
+def download_dataset(
     dl_settings: DownloadSettings, filter_settings: FilterSettings, subset: SubDataset
 ):
+    # we have to make sure aria2c is installed
+    if not dl_settings.dry_run:
+        check_aria_install(subset)
+
     dl_dir = Path(dl_settings.output_dir) / "downloads"
     dl_dir.mkdir(parents=True, exist_ok=True)
 
@@ -190,6 +207,8 @@ def _download_dataset(
 
     files, file_indicies = get_files_to_download(subset, filter_settings)
     # create the aria2c command
+    # seed-time sets the number of seconds to seed the torrent after downloading
+    # continue will continue the download if the torrent has already been partially downloaded
     cmd = [
         "aria2c",
         f"--select-file={','.join([str(i) for i in file_indicies])}",
@@ -200,10 +219,17 @@ def _download_dataset(
     ]
 
     if dl_settings.dry_run:
-        print(cmd)
-        cmd.append("--dry-run")
+        print(f"Would download: {files}")
+        print("Would run: {}".format(" ".join(cmd)))
+        return
 
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd)
+    except Exception as e:
+        print("Failed to download the dataset. Error: {}".format(e))
+        print("Please ensure that you have the latest stable version of the development kit.")
+        print("If the problem persists, please start a new issue on the GitHub repository.")
+        exit(1)
 
     # aria2c will download adjacent files in the torrent, so we need to remove those files
     # that we don't want
@@ -227,121 +253,3 @@ def _download_dataset(
     # if we are removing the archives, remove them
     if dl_settings.rm:
         shutil.rmtree(dl_dir)
-
-
-REQ = "Required Arguments"
-GEN = "General Download Settings"
-FIL = "General Filter Settings"
-FRA = "Frames Filter Settings"
-SEQ = "Sequences/Drives Filter Settings"
-
-
-@app.command()
-def download(
-    output_dir: str = typer.Option(
-        ...,
-        help="Output directory where dataset will be extracted",
-        prompt="Where do you want to extract the dataset (e.g. ~/data/zod)?",
-        prompt_required=False,
-        rich_help_panel=REQ,
-    ),
-    subset: SubDataset = typer.Option(
-        ...,
-        help="The sub-dataset to download",
-        prompt="Which sub-dataset do you want to download?",
-        prompt_required=False,
-        rich_help_panel=REQ,
-    ),
-    version: Version = typer.Option(
-        ...,
-        help="The version of the dataset to download",
-        prompt="Which version do you want to download?",
-        prompt_required=False,
-        rich_help_panel=REQ,
-    ),
-    # General download settings
-    rm: bool = typer.Option(False, help="Remove the downloaded archives", rich_help_panel=GEN),
-    dry_run: bool = typer.Option(False, help="Print what would be downloaded", rich_help_panel=GEN),
-    extract: bool = typer.Option(True, help="Unpack the archives", rich_help_panel=GEN),
-    extract_already_downloaded: bool = typer.Option(
-        False, help="Extract already downloaded archives", rich_help_panel=GEN
-    ),
-    no_confirm: bool = typer.Option(
-        False,
-        "-y",
-        "--no-confirm/--confirm",
-        help="Don't ask for confirmation",
-        is_flag=True,
-        flag_value=False,
-        rich_help_panel=GEN,
-    ),
-    # Filter settings
-    annotations: bool = typer.Option(True, help="Download annotations", rich_help_panel=FIL),
-    images: bool = typer.Option(True, help="Whether to download the images", rich_help_panel=FIL),
-    blur: bool = typer.Option(True, help="Download blur images", rich_help_panel=FIL),
-    lidar: bool = typer.Option(True, help="Download lidar data", rich_help_panel=FIL),
-    oxts: bool = typer.Option(True, help="Download oxts data", rich_help_panel=FIL),
-    infos: bool = typer.Option(True, help="Download infos", rich_help_panel=FIL),
-    vehicle_data: bool = typer.Option(True, help="Download the vehicle data", rich_help_panel=SEQ),
-    dnat: bool = typer.Option(False, help="Download DNAT images", rich_help_panel=FRA),
-    num_scans_before: int = typer.Option(
-        0,
-        help="Number of earlier lidar scans to download (-1 == all)",
-        rich_help_panel=FRA,
-    ),
-    num_scans_after: int = typer.Option(
-        0, help="Number of later lidar scans to download (-1 == all)", rich_help_panel=FRA
-    ),
-    parallel: bool = typer.Option(
-        False,
-        help="Not used in this script. Exist for compatibility with zod/cli/download.py",
-        rich_help_panel=GEN,
-    ),
-    max_workers: int = typer.Option(
-        1,
-        help="Not used in this script. Exist for compatibility with zod/cli/download.py",
-        rich_help_panel=GEN,
-    ),
-):
-    # we have to make sure aria2c is installed
-    check_aria_install()
-
-    # initialize the download settings
-    download_settings = DownloadSettings(
-        url="",
-        output_dir=os.path.expanduser(output_dir),
-        rm=rm,
-        dry_run=dry_run,
-        extract=extract,
-        extract_already_downloaded=extract_already_downloaded,
-        parallel=False,
-        max_workers=1,
-    )
-
-    # initialize the filter settings
-    filter_settings = FilterSettings(
-        version=version,
-        annotations=annotations,
-        images=images,
-        blur=blur,
-        dnat=dnat,
-        lidar=lidar,
-        oxts=oxts,
-        infos=infos,
-        vehicle_data=vehicle_data,
-        num_scans_before=num_scans_before if subset == SubDataset.FRAMES else -1,
-        num_scans_after=num_scans_after if subset == SubDataset.FRAMES else -1,
-    )
-
-    if not no_confirm:
-        _print_summary(download_settings, filter_settings, subset)
-        typer.confirm(
-            f"Download with the above settings?",
-            abort=True,
-        )
-
-    _download_dataset(download_settings, filter_settings, subset)
-
-
-if __name__ == "__main__":
-    app()
