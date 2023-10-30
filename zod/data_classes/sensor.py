@@ -15,6 +15,11 @@ from zod.utils.utils import parse_datetime_from_filename
 from ._serializable import JSONSerializable
 from .geometry import Pose
 
+# we want to remove the points that get returns from the ego vehicle.
+# we do this by removing all points that are within the box defined by
+# EGO_RETURNS_BOX. This box is defined in the LiDAR frame.
+EGO_RETURNS_BOX = np.array([[-1.5, -3.0, -1.5], [1.5, 3.0, 0.5]])
+
 
 @dataclass
 class LidarData:
@@ -48,10 +53,17 @@ class LidarData:
         )
 
     @classmethod
-    def from_npy(cls, path: str) -> LidarData:
+    def from_npy(cls, path: str, remove_ego_lidar_returns: bool = True) -> LidarData:
         """Load lidar data from a .npy file."""
         data = np.load(path)
         core_timestamp = parse_datetime_from_filename(path).timestamp()
+        if remove_ego_lidar_returns:
+            ego_returns_mask = np.ones(len(data), dtype=np.bool_)
+            for idim, dim in enumerate(("x", "y", "z")):
+                ego_returns_mask &= np.logical_and(
+                    data[dim] > EGO_RETURNS_BOX[0, idim], data[dim] < EGO_RETURNS_BOX[1, idim]
+                )
+            data = data[~ego_returns_mask]
         return cls(
             points=np.vstack((data["x"], data["y"], data["z"])).T,
             timestamps=core_timestamp + data["timestamp"] / 1e6,
