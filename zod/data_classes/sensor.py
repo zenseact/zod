@@ -152,9 +152,9 @@ class LidarFrame(SensorFrame):
 
     is_compensated: bool  # Whether the cloud is pointwise compensated
 
-    def read(self) -> LidarData:
+    def read(self, remove_ego_lidar_returns: bool = True) -> LidarData:
         """Read the point cloud."""
-        return LidarData.from_npy(self.filepath)
+        return LidarData.from_npy(self.filepath, remove_ego_lidar_returns=remove_ego_lidar_returns)
 
 
 @dataclass
