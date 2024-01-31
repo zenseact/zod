@@ -8,6 +8,7 @@ from zod.anno.road_condition import RoadConditionAnnotation
 from zod.constants import AnnotationProject
 from zod.data_classes._serializable import JSONSerializable
 
+from .ego_road import EgoRoadAnnotation
 from .object import ObjectAnnotation
 from .tsr.traffic_sign import TrafficSignAnnotation
 
@@ -54,7 +55,7 @@ def parse_ego_road_annotation(annotation_path: str) -> List[Dict]:
     polygons = []
     for annotation in annotations:
         if "class" in annotation["properties"]:
-            polygons.append(annotation["geometry"]["coordinates"])
+            polygons.append(EgoRoadAnnotation.from_dict(annotation))
         else:
             # TODO: what does it mean if we end up here?
             pass
