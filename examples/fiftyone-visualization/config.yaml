@@ -1,0 +1,7 @@
+dataset_root: "/mnt/zod" # point this to the root folder of the zod dataset you are using
+pcd_files_dir: "/mnt/zod/pcd_files/pcd_files" # directory where pcd files are stored
+dataset_version: "full"  # "mini" or "full"
+dataset_split: "train" # "train", "val", or "all"
+dataset_name: "zod_train_test_50" # you can change this to anything you would like
+dataset_persistent: True # if true, dataset will be saved locally for later use
+test_run: True
