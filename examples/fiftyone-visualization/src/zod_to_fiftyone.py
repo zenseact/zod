@@ -25,7 +25,6 @@ def get_dataset_config(config_path: str) -> dict:
     Returns:
       dict: The loaded configuration dictionary.
     """
-    # Load config using appropriate library (e.g., yaml)
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     return config
@@ -49,17 +48,15 @@ def filter_zod_frames(zod_frames: ZodFrames, dataset_split: str) -> list[str]:
     if dataset_split == "all":
         return list(zod_frames.get_all_ids())
     else:
-        # constants = get_constants()  # Assuming constants module exists
         return list(
             zod_frames.get_split(constants.TRAIN if dataset_split == "train" else constants.VAL)
         )
 
 
 def process_zod_frame(zod_frame: ZodFrame, pcd_files_dir: str) -> tuple[str, list, str]:
-    # TODO convert to pcd
     """
-    Processes a single ZOD frame, extracting image, annotation and create a lidar data in
-    .pcd format.
+    Processes a single ZOD frame. Gets image path, annotations and converts the lidar data 
+    from provided .npy file into a .pcd file.
 
     Args:
       zod_frame (ZodFrame): The ZOD frame object.
@@ -71,8 +68,6 @@ def process_zod_frame(zod_frame: ZodFrame, pcd_files_dir: str) -> tuple[str, lis
     camera_core_frame = zod_frame.info.get_key_camera_frame(Anonymization.BLUR)
     core_image_path = camera_core_frame.filepath
     annotations = zod_frame.get_annotation(AnnotationProject.OBJECT_DETECTION)
-
-    # Handle point cloud creation (similar to original code)
     pcd_filename = f"{pcd_files_dir}/{zod_frame.info.id}.pcd"
 
     if not os.path.exists(pcd_filename):
@@ -85,9 +80,8 @@ def process_zod_frame(zod_frame: ZodFrame, pcd_files_dir: str) -> tuple[str, lis
 
 
 def convert_annotations(annotations: list) -> tuple[list[fo.Detection], list[fo.Detection]]:
-    # TODO split into 2 funcs?
     """
-    Converts ZOD annotations into FiftyOne detection format.
+    Converts 2D and 3D ZOD annotations to FiftyOne detection formats.
 
     Args:
       annotations (list): A list of ZOD annotations.
@@ -98,7 +92,6 @@ def convert_annotations(annotations: list) -> tuple[list[fo.Detection], list[fo.
     detections_3d, detections_2d = [], []
     for anno in annotations:
         if anno.box3d is not None:
-            # ... (logic for creating 3D detections, similar to original code)
             location = anno.box3d.center
             dimensions = anno.box3d.size
             qw = anno.box3d.orientation[0]
@@ -115,7 +108,6 @@ def convert_annotations(annotations: list) -> tuple[list[fo.Detection], list[fo.
             )
             detections_3d.append(detection_3d)
 
-            # ... (logic for creating 2D detections, similar to original code)
             detection_2d = fo.Detection(
                 bounding_box=normalize_bbox(anno.box2d.xywh),
                 label=anno.name,
@@ -129,7 +121,7 @@ def convert_annotations(annotations: list) -> tuple[list[fo.Detection], list[fo.
 
 def create_dataset_samples(zod_frame: ZodFrame, pcd_files_dir: str) -> list:
     """
-    Creates FiftyOne samples (image and point cloud) with detections.
+    Creates grouped FiftyOne samples with detections with image and point cloud.
 
     Args:
       zod_frame (ZodFrame): The ZOD frame object.
@@ -176,7 +168,7 @@ def create_dataset_samples(zod_frame: ZodFrame, pcd_files_dir: str) -> list:
 
 def create_fiftyone_dataset(config: dict, samples: list) -> None:
     """
-    Creates a FiftyOne dataset from extracted ZOD frame samples .
+    Creates a FiftyOne dataset from extracted ZOD frame samples.
 
     Args:
       config (dict): Configuration dictonary.
@@ -185,9 +177,8 @@ def create_fiftyone_dataset(config: dict, samples: list) -> None:
     dataset = fo.Dataset(name=config["dataset_name"])
     dataset.add_samples(samples)
 
-    # colour by label values by default
+    # Colour by label values by default
     # and change to colour blind friendly colour scheme
-    # TODO maybe this app config stuff can be it's own func?
     dataset.app_config.color_scheme = fo.ColorScheme(
         color_by="value",
         color_pool=[
@@ -201,7 +192,6 @@ def create_fiftyone_dataset(config: dict, samples: list) -> None:
         ],
     )
 
-    # if mapbox token is provided, add it to the app config
     if config["mapbox_token"]:
         print("Mapbox token found, enabling map plugin.")
         dataset.app_config.plugins["map"] = {"mapboxAccessToken": config["mapbox_token"]}
@@ -210,7 +200,6 @@ def create_fiftyone_dataset(config: dict, samples: list) -> None:
 
     dataset.save()
 
-    # keep dataset after session is terminated or not - set in config.yaml
     dataset.persistent = config["dataset_persistent"]
 
 
@@ -222,7 +211,7 @@ def create_zod_to_fiftyone_dataset(config_path: str) -> None:
       config_path (str): Path to the configuration YAML file.
     """
     config = get_dataset_config(config_path)
-    # Creates necessary directories for the dataset based on configuration.
+    # Creates directory to store .pcd files
     os.makedirs(config["pcd_files_dir"], exist_ok=True)
 
     zod_frames = ZodFrames(dataset_root=config["dataset_root"], version=config["dataset_version"])
@@ -249,8 +238,8 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(
         add_help=False,
-        description="A script that converts ZOD dataset to a \
-                                                    voxelfiftyone dataset.",
+        description="A script that converts the ZOD dataset \
+                     into a FiftyOne dataset.",
     )
     parser.add_argument("path", type=str, help="The path for the config file.")
     parser.add_argument(
