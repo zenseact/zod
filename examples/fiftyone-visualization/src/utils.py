@@ -1,9 +1,9 @@
-from typing import List
+from __future__ import annotations
 
 import numpy as np
 
 
-def quaternion_to_euler(qx: float, qy: float, qz: float, qw: float) -> List[float]:
+def quaternion_to_euler(qx: float, qy: float, qz: float, qw: float) -> list[float]:
     """
     Convert a quaternion into euler angles (roll, pitch, yaw).
 
@@ -31,7 +31,7 @@ def quaternion_to_euler(qx: float, qy: float, qz: float, qw: float) -> List[floa
     return [roll_x, pitch_y, yaw_z]
 
 
-def normalize_bbox(bbox, image_width=3848, image_height=2168):
+def normalize_bbox(bbox: list, image_width=3848, image_height=2168) -> list[float]:
     """
     Normalize the bounding box coordinates.
 
