@@ -1,4 +1,5 @@
 """Util to plot BEV."""
+
 from typing import Tuple
 
 import matplotlib.pyplot as plt
