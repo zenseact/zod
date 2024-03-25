@@ -1,4 +1,5 @@
 """Utilities for creating point cloud input representation."""
+
 from dataclasses import dataclass
 from typing import List, Tuple
 

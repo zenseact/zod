@@ -1,4 +1,5 @@
 """ZOD Frames module."""
+
 from collections import defaultdict
 from typing import Dict, Union
 

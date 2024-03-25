@@ -1,4 +1,5 @@
 """Geometry utility functions."""
+
 from typing import Tuple, Union
 
 import numpy as np

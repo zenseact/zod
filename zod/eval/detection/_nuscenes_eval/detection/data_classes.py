@@ -380,9 +380,9 @@ class DetectionBox(EvalBox):
             rotation=tuple(content["rotation"]),
             num_pts=-1 if "num_pts" not in content else int(content["num_pts"]),
             detection_name=content["detection_name"],
-            detection_score=-1.0
-            if "detection_score" not in content
-            else float(content["detection_score"]),
+            detection_score=(
+                -1.0 if "detection_score" not in content else float(content["detection_score"])
+            ),
         )
 
 

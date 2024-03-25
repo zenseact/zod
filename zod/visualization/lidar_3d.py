@@ -1,4 +1,5 @@
 """3D visualization tool."""
+
 from typing import Any, List, Tuple
 
 import dash
