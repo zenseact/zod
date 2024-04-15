@@ -52,6 +52,7 @@ all = [
 ruff = "^0.0.200"
 black = ">=20.0"
 pre-commit = ">=2"
+pytest = ">=7"
 
 [build-system]
 requires = ["poetry-core"]
