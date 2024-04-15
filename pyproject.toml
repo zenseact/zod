@@ -49,8 +49,7 @@ all = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.200"
-black = ">=20.0"
+ruff = "^0.3.7"
 pre-commit = ">=2"
 
 [build-system]
@@ -58,11 +57,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 100
-# isort, Warning, pycodestyle (see here: https://github.com/charliermarsh/ruff#supported-rules)
-select = ["I", "W", "E"]
+line-length = 120
 exclude = ["zod/eval/detection/_nuscenes_eval/*"]
 
-[tool.black]
-line-length = 100
-target-version = ["py38"]
+[tool.ruff.lint]
+select = [  # (see here: https://github.com/charliermarsh/ruff#supported-rules)
+    "I", # isort
+    "W", # warning
+    "E", # pycodestyle
+]
