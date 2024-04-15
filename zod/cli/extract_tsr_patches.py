@@ -50,7 +50,7 @@ def cli_dummy(
     ),
     output_dir: Path = typer.Option(
         ...,
-        exists=True,
+        exists=False,
         file_okay=False,
         dir_okay=True,
         writable=True,
@@ -59,9 +59,41 @@ def cli_dummy(
         help="Path to the output directory.",
     ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
-    path_size: Tuple[int, int] = typer.Option((64, 64), help="Path resultion."),
+    padding_factor: Optional[float] = typer.Option(
+        None, help="Factor to multiply the padding with."
+    ),
+    padding_px_y: Optional[int] = typer.Option(None, help="Padding in y direction."),
+    padding_px_x: Optional[int] = typer.Option(None, help="Padding in x direction."),
+    num_workers: Optional[int] = typer.Option(None, help="Number of workers to use."),
+    overwrite: bool = typer.Option(False, help="Whether to overwrite existing files."),
+    exclude_unclear: bool = typer.Option(False, help="Whether to exclude unclear traffic signs."),
 ):
-    typer.echo("Not Implemented Yet")
+    """Create a dataset for traffic sign classification."""
+
+    assert not (
+        padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)
+    ), "Cannot specify both padding and padding_factor"
+
+    padding = (
+        (padding_px_x, padding_px_y)
+        if (padding_px_x is not None and padding_px_y is not None)
+        else None
+    )
+
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+
+    args = Args(
+        dataset_root=dataset_root,
+        output_folder=output_dir,
+        num_workers=num_workers,
+        padding_factor=padding_factor,
+        padding_px=padding,
+        overwrite=overwrite,
+        exclude_unclear=exclude_unclear,
+        version=version,
+    )
+    main(args)
 
 
 @dataclass
@@ -75,6 +107,7 @@ class Args:
     padding_px: Optional[Tuple[int, int]]
     overwrite: bool
     exclude_unclear: bool
+    version: str = "full"
 
 
 def _parse_args():
@@ -114,6 +147,12 @@ def _parse_args():
         action="store_true",
         help="Whether to exclude unclear traffic signs.",
     )
+    parser.add_argument(
+        "--version",
+        type=str,
+        default="full",
+        help="Version of the dataset to use. One of: full, mini.",
+    )
 
     args = parser.parse_args()
 
@@ -126,6 +165,10 @@ def _parse_args():
 
 def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
+
+    # not all frames have traffic signs
+    if constants.AnnotationProject.TRAFFIC_SIGNS not in frame.info.annotations:
+        return []
 
     traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(
         constants.AnnotationProject.TRAFFIC_SIGNS
@@ -147,15 +190,12 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
 
         if not os.path.exists(cls_folder):
             os.makedirs(cls_folder)
-            os.chmod(cls_folder, 0o775)
 
         new_frame_id = f"{frame.info.id}_{traffic_sign.uuid}"
         output_file = os.path.join(
             cls_folder,
             f"{new_frame_id}.png",
         )
-        if not args.overwrite and os.path.exists(output_file):
-            continue
 
         # crop out the correct patch
         cropped_image, padding = traffic_sign.bounding_box.crop_from_image(
@@ -163,8 +203,10 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
             padding_factor=args.padding_factor,
             padding=args.padding_px,
         )
-        # save the image
-        cv2.imwrite(output_file, cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR))
+
+        if args.overwrite or not os.path.exists(output_file):
+            # save the image
+            cv2.imwrite(output_file, cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR))
 
         original_widht = traffic_sign.bounding_box.dimension[0]
         original_height = traffic_sign.bounding_box.dimension[1]
@@ -176,16 +218,16 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
             {
                 "frame_id": new_frame_id,
                 "image_path": os.path.join(cls_folder, f"{new_frame_id}.png"),
-                "padding_left": padding[0],
-                "padding_top": padding[1],
-                "padding_right": padding[2],
-                "padding_bottom": padding[3],
+                "padding_left": float(padding[0]),
+                "padding_top": float(padding[1]),
+                "padding_right": float(padding[2]),
+                "padding_bottom": float(padding[3]),
                 "padded_width": cropped_image.shape[1],
                 "padded_height": cropped_image.shape[0],
-                "center_x": center_x,
-                "center_y": center_y,
-                "original_width": traffic_sign.bounding_box.dimension[0],
-                "original_height": traffic_sign.bounding_box.dimension[1],
+                "center_x": float(center_x),
+                "center_y": float(center_y),
+                "original_width": float(traffic_sign.bounding_box.dimension[0]),
+                "original_height": float(traffic_sign.bounding_box.dimension[1]),
                 "annotation": {
                     key: val for key, val in traffic_sign.__dict__.items() if key != "bounding_box"
                 },
@@ -204,7 +246,7 @@ def main(args: Args):
     if not os.path.exists((args.output_folder)):
         os.makedirs(args.output_folder)
         os.chmod(args.output_folder, 0o775)
-    zod_frames = ZodFrames(args.dataset_root, version="full")
+    zod_frames = ZodFrames(args.dataset_root, version=args.version)
     print(f"Will process {len(zod_frames)} full frames.")
 
     traffic_sign_frames = process_map(
@@ -216,7 +258,6 @@ def main(args: Args):
         max_workers=args.num_workers,
         chunksize=1 if args.num_workers == 1 else 100,
     )
-
     # flatten the returned list
     traffic_sign_frames: List[Dict[str, Any]] = [
         frame for frames in traffic_sign_frames for frame in frames
