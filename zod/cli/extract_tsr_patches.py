@@ -11,6 +11,8 @@ from itertools import repeat
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from zod.cli.utils import Version
+
 try:
     import cv2
 except ImportError:
@@ -66,7 +68,7 @@ def extract_tsr_patches(
         resolve_path=True,
         help="Path to the output directory.",
     ),
-    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
+    version: Version = typer.Option(..., help="Version of the dataset to use."),
     padding_factor: Optional[float] = typer.Option(
         None, help="Factor to multiply the padding with."
     ),
@@ -97,7 +99,7 @@ def extract_tsr_patches(
         exclude_unclear=exclude_unclear,
     )
 
-    zod_frames = ZodFrames(str(dataset_root), version=version)
+    zod_frames = ZodFrames(str(dataset_root), version=version.value)
     print(f"Will process {len(zod_frames)} full frames.")
 
     results = process_map(
