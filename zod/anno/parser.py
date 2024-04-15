@@ -62,7 +62,7 @@ def parse_ego_road_annotation(annotation_path: str) -> List[EgoRoadAnnotation]:
 def parse_road_condition_annotation(annotation_path) -> RoadConditionAnnotation:
     with open(annotation_path, "r") as file:
         annotation = json.load(file)
-    return RoadConditionAnnotation.from_dict(annotation["properties"])
+    return RoadConditionAnnotation.from_dict(annotation)
 
 
 ANNOTATION_PARSERS = {
