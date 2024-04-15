@@ -1,4 +1,5 @@
 """Util to plot BEV."""
+
 from typing import Tuple
 
 import matplotlib.pyplot as plt
@@ -19,9 +20,7 @@ class BEVBox:
         # Exclude dark gray color
         self._color = px.colors.qualitative.Dark24[:5] + px.colors.qualitative.Dark24[6:]
 
-    def __call__(
-        self, bev: np.ndarray, objects: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
-    ) -> go.Figure:
+    def __call__(self, bev: np.ndarray, objects: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]) -> go.Figure:
         """Go through all objects for each batch, and write them on top the BEV."""
         input_ = create_pointcloud_input(bev, self._settings)
         classes, positions, dimensions, rotations = objects
@@ -78,21 +77,15 @@ class BEVBox:
         fig = go.Figure(layout=layout)
         return fig
 
-    def _calculate_ticks(
-        self, limits: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _calculate_ticks(self, limits: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         _, ax = plt.subplots(1, 1)
         ax.set_aspect("equal")
         ax.set_xlim(0, int(limits[0]))
         ax.set_ylim(0, int(limits[1]))
         x_ticks = ax.get_xticks()
         y_ticks = ax.get_yticks()
-        x_ticks_text = [
-            tick * self._settings.grid_cell_size + self._settings.grid_min[0] for tick in x_ticks
-        ]
-        y_ticks_text = [
-            tick * self._settings.grid_cell_size + self._settings.grid_min[1] for tick in y_ticks
-        ]
+        x_ticks_text = [tick * self._settings.grid_cell_size + self._settings.grid_min[0] for tick in x_ticks]
+        y_ticks_text = [tick * self._settings.grid_cell_size + self._settings.grid_min[1] for tick in y_ticks]
         plt.close()
         return x_ticks, x_ticks_text, y_ticks, y_ticks_text
 
@@ -163,8 +156,6 @@ class BEVBox:
     @staticmethod
     def _create_od_vis_background(input_array: np.ndarray) -> np.ndarray:
         """Create a gray occupancy grid as background to visualize over."""
-        occupancy = np.maximum.reduce(
-            np.cast["float32"](np.abs(input_array) > 0.0), axis=0, keepdims=True
-        )
+        occupancy = np.maximum.reduce(np.cast["float32"](np.abs(input_array) > 0.0), axis=0, keepdims=True)
         vis_bg = np.transpose(np.repeat(occupancy * 77, 3, axis=0), [2, 1, 0])
         return vis_bg

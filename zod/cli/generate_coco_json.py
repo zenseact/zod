@@ -17,9 +17,7 @@ from zod.utils.utils import str_from_datetime
 
 # Map classes to categories, starting from 1
 CATEGORY_NAME_TO_ID = {cls: i + 1 for i, cls in enumerate(OBJECT_CLASSES)}
-OPEN_DATASET_URL = (
-    "https://www.ai.se/en/data-factory/datasets/data-factory-datasets/zenseact-open-dataset"
-)
+OPEN_DATASET_URL = "https://www.ai.se/en/data-factory/datasets/data-factory-datasets/zenseact-open-dataset"
 
 
 def _convert_frame(
@@ -68,9 +66,7 @@ def generate_coco_json(
     """Generate COCO JSON file from the ZOD dataset."""
     assert split in ["train", "val"], f"Unknown split: {split}"
     frame_infos = [dataset[frame_id] for frame_id in dataset.get_split(split)]
-    _convert_frame_w_classes = partial(
-        _convert_frame, classes=classes, anonymization=anonymization, use_png=use_png
-    )
+    _convert_frame_w_classes = partial(_convert_frame, classes=classes, anonymization=anonymization, use_png=use_png)
     results = process_map(
         _convert_frame_w_classes,
         frame_infos,
@@ -127,9 +123,7 @@ def convert_to_coco(
         help="Path to the output directory.",
     ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, mini."),
-    anonymization: Anonymization = typer.Option(
-        Anonymization.BLUR.value, help="Anonymization mode to use."
-    ),
+    anonymization: Anonymization = typer.Option(Anonymization.BLUR.value, help="Anonymization mode to use."),
     use_png: bool = typer.Option(False, help="Whether to use PNG images instead of JPG."),
     classes: List[str] = typer.Option(
         ["Vehicle", "Pedestrian", "VulnerableVehicle"], help="Classes to include in the dataset."
@@ -141,8 +135,7 @@ def convert_to_coco(
             typer.echo(f"ERROR: Invalid class: {cls}.")
             raise typer.Exit(1)
     typer.echo(
-        "Converting ZOD to COCO format. "
-        f"Version: {version}, anonymization: {anonymization}, classes: {classes}"
+        "Converting ZOD to COCO format. " f"Version: {version}, anonymization: {anonymization}, classes: {classes}"
     )
 
     zod_frames = ZodFrames(dataset_root, version)

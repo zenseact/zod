@@ -40,9 +40,7 @@ class EgoMotion:
         if np.isin(target_ts, self.timestamps).all():
             return self.poses[self.timestamps.searchsorted(target_ts)]
 
-        closest_idxs = self.timestamps.searchsorted(
-            target_ts, side="right", sorter=self.timestamps.argsort()
-        )
+        closest_idxs = self.timestamps.searchsorted(target_ts, side="right", sorter=self.timestamps.argsort())
 
         # if the target timestamp is exactly the same as the largest timestamp
         # then the searchsorted will return the length of the array, which is
@@ -54,9 +52,7 @@ class EgoMotion:
         time_diffs = target_ts - self.timestamps[closest_idxs - 1]
         total_times = self.timestamps[closest_idxs] - self.timestamps[closest_idxs - 1]
         fractions = time_diffs / total_times
-        return interpolate_transforms(
-            self.poses[closest_idxs - 1], self.poses[closest_idxs], fractions
-        )
+        return interpolate_transforms(self.poses[closest_idxs - 1], self.poses[closest_idxs], fractions)
 
     def interpolate(self, timestamps: np.ndarray) -> EgoMotion:
         """Interpolate ego motion to find ego motion for each target timestamp.
@@ -86,15 +82,9 @@ class EgoMotion:
         with h5py.File(file_path, "r") as file:
             return cls(
                 poses=file["poses"][()],
-                accelerations=np.stack(
-                    [file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1
-                ),
-                velocities=np.stack(
-                    [file["velForward"][()], file["velLateral"][()], -file["velDown"][()]], axis=1
-                ),
-                angular_rates=np.stack(
-                    [file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1
-                ),
+                accelerations=np.stack([file["accelerationX"], file["accelerationY"], file["accelerationZ"]], axis=1),
+                velocities=np.stack([file["velForward"][()], file["velLateral"][()], -file["velDown"][()]], axis=1),
+                angular_rates=np.stack([file["angularRateX"], file["angularRateY"], file["angularRateZ"]], axis=1),
                 timestamps=OXTS_TIMESTAMP_OFFSET + file["timestamp"][()] + file["leapSeconds"][()],
                 origin_lat_lon=(file["posLat"][0], file["posLon"][0]),
             )
@@ -157,9 +147,7 @@ def interpolate_transforms(transform_1: np.ndarray, transform_2: np.ndarray, fra
     return transform
 
 
-def interpolate_vectors(
-    values: np.ndarray, source_timestamps: np.ndarray, target_timestamps: np.ndarray
-) -> np.ndarray:
+def interpolate_vectors(values: np.ndarray, source_timestamps: np.ndarray, target_timestamps: np.ndarray) -> np.ndarray:
     """Interpolate vectors to find vector for each (sorted) target timestamp.
 
     Args:

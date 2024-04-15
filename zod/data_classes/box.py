@@ -1,4 +1,5 @@
 """ZOD Object detection containers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -315,9 +316,7 @@ class Box2D:
             depth = np.array([max_depth] * 4)
 
         # Project the 2d corners to the max_depth using the calibration
-        frustum = unproject_2d_to_3d_kannala(
-            corners, camera_calib.intrinsics, camera_calib.undistortion, depth
-        )
+        frustum = unproject_2d_to_3d_kannala(corners, camera_calib.intrinsics, camera_calib.undistortion, depth)
 
         if min_depth == 0.0:
             frustum = np.concatenate((np.zeros((4, 3)), frustum), axis=0)

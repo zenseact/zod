@@ -1,4 +1,5 @@
 """ZOD dataclasses."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -103,9 +104,7 @@ class LidarData:
             pose = pose.transform
         rotations = pose[..., :3, :3]
         translations = pose[..., :3, 3]
-        self.points = (
-            self.points[..., None, :] @ rotations.swapaxes(-2, -1) + translations[..., None, :]
-        ).squeeze(-2)
+        self.points = (self.points[..., None, :] @ rotations.swapaxes(-2, -1) + translations[..., None, :]).squeeze(-2)
 
     def extend(self, *other: LidarData):
         """Extend this LidarData with data from another LidarData object.
@@ -119,8 +118,7 @@ class LidarData:
         self.diode_idx = np.hstack((self.diode_idx, *(o.diode_idx for o in other)))
         # Core timestamp is the weighted average
         self.core_timestamp = (
-            self.core_timestamp * len(self.timestamps)
-            + sum(o.core_timestamp * len(o.timestamps) for o in other)
+            self.core_timestamp * len(self.timestamps) + sum(o.core_timestamp * len(o.timestamps) for o in other)
         ) / (len(self.timestamps) + sum(len(o.timestamps) for o in other))
 
     def __eq__(self, other: LidarData) -> Union[bool, np.bool_]:

@@ -1,4 +1,5 @@
 """Calibration dataclasses."""
+
 from __future__ import annotations
 
 import json
@@ -35,9 +36,7 @@ class Calibration:
     @classmethod
     def from_dict(cls, calib_dict: Dict[str, Any]) -> Calibration:
         lidars = {
-            Lidar.VELODYNE: LidarCalibration(
-                extrinsics=Pose(np.array(calib_dict["FC"]["lidar_extrinsics"]))
-            ),
+            Lidar.VELODYNE: LidarCalibration(extrinsics=Pose(np.array(calib_dict["FC"]["lidar_extrinsics"]))),
         }
         cameras = {
             Camera.FRONT: CameraCalibration(

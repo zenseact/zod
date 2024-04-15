@@ -55,13 +55,9 @@ class EgoVehicleControls:
             evc = h5_file["ego_vehicle_controls"]
             return cls(
                 acc_pedal=evc["acceleration_pedal/ratio/unitless/value"][:],
-                brake_pedal_pressed=evc[
-                    "brake_pedal_pressed/is_brake_pedal_pressed/unitless/value"
-                ][:],
+                brake_pedal_pressed=evc["brake_pedal_pressed/is_brake_pedal_pressed/unitless/value"][:],
                 steering_angle=evc["steering_wheel_angle/angle/radians/value"][:],
-                steering_angle_rate=evc["steering_wheel_angle/angle_rate/radians_per_second/value"][
-                    :
-                ],
+                steering_angle_rate=evc["steering_wheel_angle/angle_rate/radians_per_second/value"][:],
                 steering_wheel_torque=evc["steer_wheel_torque/torque/newton_meters/value"][:],
                 turn_indicator=evc["turn_indicator_status/state"][:],
                 timestamp=evc["timestamp/nanoseconds/value"][:],

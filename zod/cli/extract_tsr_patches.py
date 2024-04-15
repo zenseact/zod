@@ -59,9 +59,7 @@ def cli_dummy(
         help="Path to the output directory.",
     ),
     version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
-    padding_factor: Optional[float] = typer.Option(
-        None, help="Factor to multiply the padding with."
-    ),
+    padding_factor: Optional[float] = typer.Option(None, help="Factor to multiply the padding with."),
     padding_px_y: Optional[int] = typer.Option(None, help="Padding in y direction."),
     padding_px_x: Optional[int] = typer.Option(None, help="Padding in x direction."),
     num_workers: Optional[int] = typer.Option(None, help="Number of workers to use."),
@@ -74,11 +72,7 @@ def cli_dummy(
         padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)
     ), "Cannot specify both padding and padding_factor"
 
-    padding = (
-        (padding_px_x, padding_px_y)
-        if (padding_px_x is not None and padding_px_y is not None)
-        else None
-    )
+    padding = (padding_px_x, padding_px_y) if (padding_px_x is not None and padding_px_y is not None) else None
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
@@ -170,9 +164,7 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
     if constants.AnnotationProject.TRAFFIC_SIGNS not in frame.info.annotations:
         return []
 
-    traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(
-        constants.AnnotationProject.TRAFFIC_SIGNS
-    )
+    traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(constants.AnnotationProject.TRAFFIC_SIGNS)
 
     if len(traffic_signs) == 0:
         return []
@@ -228,9 +220,7 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
                 "center_y": float(center_y),
                 "original_width": float(traffic_sign.bounding_box.dimension[0]),
                 "original_height": float(traffic_sign.bounding_box.dimension[1]),
-                "annotation": {
-                    key: val for key, val in traffic_sign.__dict__.items() if key != "bounding_box"
-                },
+                "annotation": {key: val for key, val in traffic_sign.__dict__.items() if key != "bounding_box"},
             }
         )
 
@@ -259,16 +249,12 @@ def main(args: Args):
         chunksize=1 if args.num_workers == 1 else 100,
     )
     # flatten the returned list
-    traffic_sign_frames: List[Dict[str, Any]] = [
-        frame for frames in traffic_sign_frames for frame in frames
-    ]
+    traffic_sign_frames: List[Dict[str, Any]] = [frame for frames in traffic_sign_frames for frame in frames]
 
     train_frame_ids = set(zod_frames.get_split(constants.TRAIN))
     val_frame_ids = set(zod_frames.get_split(constants.VAL))
 
-    train_frames = [
-        f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids
-    ]
+    train_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids]
     val_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in val_frame_ids]
 
     # write it to a json file

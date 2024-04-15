@@ -55,9 +55,7 @@ def project_lidar_to_image(
     return xyd_array, final_mask
 
 
-def draw_projections_as_points(
-    image: np.ndarray, points: np.ndarray, clip_to: float = None
-) -> np.ndarray:
+def draw_projections_as_points(image: np.ndarray, points: np.ndarray, clip_to: float = None) -> np.ndarray:
     """Draw projected points from pointcloud to image plane as colored points.
 
     Args:

@@ -1,4 +1,5 @@
 """ZOD Frames module."""
+
 import json
 import os.path as osp
 from abc import ABC, abstractmethod

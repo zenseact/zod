@@ -13,9 +13,7 @@ from zod.data_classes.info import Information
 app = typer.Typer(help="ZOD Download Verifyer", no_args_is_help=True)
 
 
-def _verify_info(
-    info: Information, separate_lidar: bool
-) -> Dict[str, Dict[str, Union[bool, List[bool]]]]:
+def _verify_info(info: Information, separate_lidar: bool) -> Dict[str, Dict[str, Union[bool, List[bool]]]]:
     """Verify the given infos."""
     stats = defaultdict(dict)
     stats["general"] = {
@@ -57,9 +55,7 @@ def _print_results(verified_infos):
     groups = sorted(set().union(*verified_infos))
     for group in groups:
         keys = sorted(set().union(*(v[group] for v in verified_infos)))
-        stats = {
-            k: [d[group][k] for d in verified_infos if group in d and k in d[group]] for k in keys
-        }
+        stats = {k: [d[group][k] for d in verified_infos if group in d and k in d[group]] for k in keys}
         print(f"\n\n{group.upper():^45}\n{'-' * 55}")
         print(f"{'Data':<20} {'Downloaded (%)':<15} {'Expected (count)':<20}")
         print("-" * 55)
