@@ -11,18 +11,15 @@ from itertools import repeat
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from zod.cli.utils import Version
-
-try:
-    import cv2
-except ImportError:
-    pass  # TODO: rewrite to use PIL
+import numpy as np
 import typer
+from PIL import Image
 from tqdm.contrib.concurrent import process_map
 
 import zod.anno.parser as parser
 import zod.constants as constants
 from zod import ZodFrames
+from zod.cli.utils import Version
 from zod.data_classes.frame import ZodFrame
 
 SUMMARY = """
@@ -154,7 +151,7 @@ def _process_frame(
     new_cropped_frames = []
     # load the image
     image_path = frame.info.get_key_camera_frame(constants.Anonymization.BLUR).filepath
-    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    image = np.array(Image.open(image_path))
     for traffic_sign in traffic_signs:
         if settings.exclude_unclear and traffic_sign.unclear:
             continue
@@ -177,9 +174,8 @@ def _process_frame(
         )
 
         if settings.overwrite or not os.path.exists(output_file):
-            # save the image
-            cv2.imwrite(output_file, cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR))
-
+            pil_image = Image.fromarray(cropped_image)
+            pil_image.save(output_file)
         original_widht = traffic_sign.bounding_box.dimension[0]
         original_height = traffic_sign.bounding_box.dimension[1]
         center_x = padding[0] + original_widht // 2
