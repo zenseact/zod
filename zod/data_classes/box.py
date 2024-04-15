@@ -1,4 +1,5 @@
 """ZOD Object detection containers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

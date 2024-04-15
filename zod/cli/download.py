@@ -1,4 +1,5 @@
 """This script is to be used to download the Zenseact Open Dataset."""
+
 import contextlib
 import os
 import os.path as osp
