@@ -59,8 +59,7 @@ class ZodSequence:
 
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        anno = self.info.annotations[project]
-        return anno and anno.read()  # read if not None
+        return self.info.annotations[project].read()
 
     def get_lidar(self, start: int = 0, end: int = None) -> List[LidarData]:
         """Get the point clouds."""
