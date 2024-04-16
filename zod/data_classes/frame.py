@@ -15,10 +15,10 @@ from .sensor import CameraFrame, LidarData, LidarFrame
 class ZodFrame:
     def __init__(self, info: Information):
         self.info: Information = info  # Holds all the paths to the files
-        self._ego_motion: EgoMotion = None  # This is the lightweight version of oxts
-        self._oxts: EgoMotion = None
-        self._calibration: Calibration = None
-        self._metadata: FrameMetaData = None
+        self._ego_motion: Optional[EgoMotion] = None  # This is the lightweight version of oxts
+        self._oxts: Optional[EgoMotion] = None
+        self._calibration: Optional[Calibration] = None
+        self._metadata: Optional[FrameMetaData] = None
 
     @property
     def ego_motion(self) -> EgoMotion:
