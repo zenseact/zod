@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 
 import numpy as np
 
-from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
+from zod.constants import AnnotationProject, Anonymization, Camera, Lidar, NotAnnotatedError
 from zod.utils.compensation import motion_compensate_scanwise
 
 from .calibration import Calibration
@@ -48,9 +48,14 @@ class ZodFrame:
             self._metadata = FrameMetaData.from_json_path(self.info.metadata_path)
         return self._metadata
 
+    def is_annotated(self, project: AnnotationProject) -> bool:
+        """Check if the frame is annotated for a given project."""
+        return project in self.info.annotations
+
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        assert project in self.info.annotations, f"Project {project} not available."
+        if not self.is_annotated(project):
+            raise NotAnnotatedError(f"Project {project} is not annotated for frame {self.info.id}.")
         return self.info.annotations[project].read()
 
     def get_camera_frame(self, anonymization: Anonymization = Anonymization.BLUR) -> CameraFrame:

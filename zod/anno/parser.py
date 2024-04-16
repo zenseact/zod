@@ -49,23 +49,20 @@ def parse_lane_markings_annotation(annotation_path: str) -> List[LaneAnnotation]
     return [parse_lane_annotation(marker) for marker in annotations]
 
 
-def parse_ego_road_annotation(annotation_path: str) -> List[Dict]:
+def parse_ego_road_annotation(annotation_path: str) -> List[EgoRoadAnnotation]:
     """Parse the egoroad annotation from the annotation string."""
     annotations = _read_annotation_file(annotation_path)
-    polygons = []
-    for annotation in annotations:
-        if "class" in annotation["properties"]:
-            polygons.append(EgoRoadAnnotation.from_dict(annotation))
-        else:
-            # TODO: what does it mean if we end up here?
-            pass
-    return polygons
+    parsed_annos = []
+    for anno in annotations:
+        if "EgoRoad" in anno["properties"]["class"]:  # discard Barrier and RoadEdge
+            parsed_annos.append(EgoRoadAnnotation.from_dict(anno))
+    return parsed_annos
 
 
 def parse_road_condition_annotation(annotation_path) -> RoadConditionAnnotation:
     with open(annotation_path, "r") as file:
         annotation = json.load(file)
-    return RoadConditionAnnotation.from_dict(annotation["properties"])
+    return RoadConditionAnnotation.from_dict(annotation)
 
 
 ANNOTATION_PARSERS = {
