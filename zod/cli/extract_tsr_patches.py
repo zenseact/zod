@@ -110,9 +110,7 @@ def extract_tsr_patches(
     train_frame_ids = set(zod_frames.get_split(constants.TRAIN))
     val_frame_ids = set(zod_frames.get_split(constants.VAL))
 
-    train_frames = [
-        f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids
-    ]
+    train_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids]
     val_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in val_frame_ids]
 
     # write it to a json file
@@ -128,9 +126,7 @@ def extract_tsr_patches(
     )
 
 
-def _process_frame(
-    frame: ZodFrame, settings: Settings, train_ids: Set[str]
-) -> List[Dict[str, Any]]:
+def _process_frame(frame: ZodFrame, settings: Settings, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
 
     # not all frames have traffic signs

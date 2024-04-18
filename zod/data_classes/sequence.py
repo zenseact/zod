@@ -76,7 +76,6 @@ class ZodSequence:
             time.timestamp(),
         )
 
-
     def get_aggregated_lidar(self, start: int = 0, end: int = None, timestamp: Optional[float] = None) -> LidarData:
         """Get the aggregated point cloud."""
         lidar_scans = self.get_lidar(start, end)
