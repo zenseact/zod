@@ -51,6 +51,7 @@ all = [
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.3.7"
 pre-commit = ">=2"
+pytest = ">=7"
 
 [build-system]
 requires = ["poetry-core"]

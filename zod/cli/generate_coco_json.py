@@ -11,6 +11,7 @@ from tqdm.contrib.concurrent import process_map
 
 from zod import ZodFrames
 from zod.anno.object import OBJECT_CLASSES, ObjectAnnotation
+from zod.cli.utils import Version
 from zod.constants import AnnotationProject, Anonymization
 from zod.data_classes.frame import ZodFrame
 from zod.utils.utils import str_from_datetime
@@ -138,7 +139,7 @@ def convert_to_coco(
         "Converting ZOD to COCO format. " f"Version: {version}, anonymization: {anonymization}, classes: {classes}"
     )
 
-    zod_frames = ZodFrames(dataset_root, version)
+    zod_frames = ZodFrames(str(dataset_root), version.value)
 
     base_name = f"zod_{version}_{anonymization}"
     if use_png:

@@ -4,7 +4,6 @@ Will create a dataset from the original zod frames by cropping out the relevant 
 in each image and storing them for later use.
 """
 
-import argparse
 import json
 import os
 from dataclasses import dataclass
@@ -12,16 +11,15 @@ from itertools import repeat
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-try:
-    import cv2
-except ImportError:
-    pass  # TODO: rewrite to use PIL
+import numpy as np
 import typer
+from PIL import Image
 from tqdm.contrib.concurrent import process_map
 
 import zod.anno.parser as parser
 import zod.constants as constants
 from zod import ZodFrames
+from zod.cli.utils import Version
 from zod.data_classes.frame import ZodFrame
 
 SUMMARY = """
@@ -38,7 +36,16 @@ Images are saved in the following folder structure:
 """
 
 
-def cli_dummy(
+@dataclass
+class Settings:
+    output_dir: Path
+    padding_factor: Optional[float]
+    padding_px: Optional[Tuple[int, int]]
+    overwrite: bool
+    exclude_unclear: bool
+
+
+def extract_tsr_patches(
     dataset_root: Path = typer.Option(
         ...,
         exists=True,
@@ -67,6 +74,9 @@ def cli_dummy(
     exclude_unclear: bool = typer.Option(False, help="Whether to exclude unclear traffic signs."),
 ):
     """Create a dataset for traffic sign classification."""
+    print("Will create dataset from", dataset_root)
+    print("Will save dataset to", output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     assert not (
         padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)
@@ -74,90 +84,53 @@ def cli_dummy(
 
     padding = (padding_px_x, padding_px_y) if (padding_px_x is not None and padding_px_y is not None) else None
 
-    if not output_dir.exists():
-        output_dir.mkdir(parents=True)
-
-    args = Args(
-        dataset_root=dataset_root,
-        output_folder=output_dir,
-        num_workers=num_workers,
+    settings = Settings(
+        output_dir=output_dir,
         padding_factor=padding_factor,
         padding_px=padding,
         overwrite=overwrite,
         exclude_unclear=exclude_unclear,
-        version=version,
-    )
-    main(args)
-
-
-@dataclass
-class Args:
-    """Script args."""
-
-    dataset_root: str
-    output_folder: str
-    num_workers: Optional[int]
-    padding_factor: Optional[float]
-    padding_px: Optional[Tuple[int, int]]
-    overwrite: bool
-    exclude_unclear: bool
-    version: str = "full"
-
-
-def _parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--output-folder",
-        type=str,
-        required=True,
-        help="Where the dataset should be saved.",
-    )
-    parser.add_argument(
-        "--dataset-root",
-        type=str,
-        required=True,
-        help="Path to the root of the dataset to use.",
-    )
-    parser.add_argument("--num-workers", type=int, help="Number of workers to use.")
-    parser.add_argument(
-        "--padding-factor",
-        type=float,
-        help="Factor to multiply the padding with.",
-    )
-    parser.add_argument(
-        "--padding-px",
-        type=int,
-        nargs="+",
-        help="Padding in x and y direction.",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Whether to overwrite existing files.",
-    )
-    parser.add_argument(
-        "--exclude-unclear",
-        action="store_true",
-        help="Whether to exclude unclear traffic signs.",
-    )
-    parser.add_argument(
-        "--version",
-        type=str,
-        default="full",
-        help="Version of the dataset to use. One of: full, mini.",
     )
 
-    args = parser.parse_args()
+    zod_frames = ZodFrames(str(dataset_root), version=version.value)
+    print(f"Will process {len(zod_frames)} full frames.")
 
-    assert not (
-        args.padding_factor is not None and args.padding_px is not None
-    ), "Cannot specify both padding and padding_factor"
+    results = process_map(
+        _process_frame,
+        zod_frames,
+        repeat(settings),
+        repeat(zod_frames.get_split(constants.TRAIN)),
+        desc="Processing frames in ZOD",
+        max_workers=num_workers,
+        chunksize=1 if num_workers == 1 else 100,
+    )
+    # flatten the returned list
+    traffic_sign_frames: List[Dict[str, Any]] = [frame for frames in results for frame in frames]
 
-    return Args(**vars(args))
+    train_frame_ids = set(zod_frames.get_split(constants.TRAIN))
+    val_frame_ids = set(zod_frames.get_split(constants.VAL))
+
+    train_frames = [
+        f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids
+    ]
+    val_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in val_frame_ids]
+
+    # write it to a json file
+    with open(os.path.join(output_dir, "dataset.json"), "w") as f:
+        json.dump({constants.TRAIN: train_frames, constants.VAL: val_frames}, f)
+
+    print(
+        SUMMARY.format(
+            len(traffic_sign_frames),
+            output_dir,
+            padding_factor if padding_factor is not None else padding,
+        )
+    )
 
 
-def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dict[str, Any]]:
+def _process_frame(
+    frame: ZodFrame, settings: Settings, train_ids: Set[str]
+) -> List[Dict[str, Any]]:
     """Process a single frame."""
 
     # not all frames have traffic signs
@@ -172,16 +145,14 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
     new_cropped_frames = []
     # load the image
     image_path = frame.info.get_key_camera_frame(constants.Anonymization.BLUR).filepath
-    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    image = np.array(Image.open(image_path))
     for traffic_sign in traffic_signs:
-        if args.exclude_unclear and traffic_sign.unclear:
+        if settings.exclude_unclear and traffic_sign.unclear:
             continue
         cls_name = "unclear" if traffic_sign.unclear else traffic_sign.traffic_sign_class
         train_or_val = constants.TRAIN if frame.info.id in train_ids else constants.VAL
-        cls_folder = os.path.join(args.output_folder, train_or_val, cls_name)
-
-        if not os.path.exists(cls_folder):
-            os.makedirs(cls_folder)
+        cls_folder = settings.output_dir / train_or_val / cls_name
+        cls_folder.mkdir(parents=True, exist_ok=True)
 
         new_frame_id = f"{frame.info.id}_{traffic_sign.uuid}"
         output_file = os.path.join(
@@ -192,14 +163,13 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
         # crop out the correct patch
         cropped_image, padding = traffic_sign.bounding_box.crop_from_image(
             image,
-            padding_factor=args.padding_factor,
-            padding=args.padding_px,
+            padding_factor=settings.padding_factor,
+            padding=settings.padding_px,
         )
 
-        if args.overwrite or not os.path.exists(output_file):
-            # save the image
-            cv2.imwrite(output_file, cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR))
-
+        if settings.overwrite or not os.path.exists(output_file):
+            pil_image = Image.fromarray(cropped_image)
+            pil_image.save(output_file)
         original_widht = traffic_sign.bounding_box.dimension[0]
         original_height = traffic_sign.bounding_box.dimension[1]
         center_x = padding[0] + original_widht // 2
@@ -227,48 +197,5 @@ def _process_frame(frame: ZodFrame, args: Args, train_ids: Set[str]) -> List[Dic
     return new_cropped_frames
 
 
-def main(args: Args):
-    """Run the main script."""
-
-    print("Will create dataset from", args.dataset_root)
-    print("Will save dataset to", args.output_folder)
-
-    if not os.path.exists((args.output_folder)):
-        os.makedirs(args.output_folder)
-        os.chmod(args.output_folder, 0o775)
-    zod_frames = ZodFrames(args.dataset_root, version=args.version)
-    print(f"Will process {len(zod_frames)} full frames.")
-
-    traffic_sign_frames = process_map(
-        _process_frame,
-        zod_frames,
-        repeat(args),
-        repeat(zod_frames.get_split(constants.TRAIN)),
-        desc="Processing frames in ZOD",
-        max_workers=args.num_workers,
-        chunksize=1 if args.num_workers == 1 else 100,
-    )
-    # flatten the returned list
-    traffic_sign_frames: List[Dict[str, Any]] = [frame for frames in traffic_sign_frames for frame in frames]
-
-    train_frame_ids = set(zod_frames.get_split(constants.TRAIN))
-    val_frame_ids = set(zod_frames.get_split(constants.VAL))
-
-    train_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids]
-    val_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in val_frame_ids]
-
-    # write it to a json file
-    with open(os.path.join(args.output_folder, "dataset.json"), "w") as f:
-        json.dump({constants.TRAIN: train_frames, constants.VAL: val_frames}, f)
-
-    print(
-        SUMMARY.format(
-            len(traffic_sign_frames),
-            args.output_folder,
-            args.padding_factor if args.padding_factor is not None else args.padding_px,
-        )
-    )
-
-
 if __name__ == "__main__":
-    main(_parse_args())
+    typer.run(extract_tsr_patches)

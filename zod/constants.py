@@ -86,6 +86,10 @@ class AnnotationProject(Enum):
     ROAD_CONDITION = "road_condition"
 
 
+class NotAnnotatedError(Exception):
+    """Error that is raised when a project is not annotated for the requested id."""
+
+
 ### Coordinate Frames ###
 
 

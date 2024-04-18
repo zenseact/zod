@@ -13,13 +13,13 @@ from .vehicle_data import VehicleData
 
 
 class ZodSequence:
-    def __init__(self, info: Information):
+    def __init__(self, info: Information) -> None:
         self.info: Information = info  # holds all the paths to the files
-        self._ego_motion: EgoMotion = None  # this is the light-weight version of oxts
-        self._oxts: EgoMotion = None
-        self._calibration: Calibration = None
-        self._metadata: SequenceMetadata = None
-        self._vehicle_data: VehicleData = None
+        self._ego_motion: Optional[EgoMotion] = None  # this is the light-weight version of oxts
+        self._oxts: Optional[EgoMotion] = None
+        self._calibration: Optional[Calibration] = None
+        self._metadata: Optional[SequenceMetadata] = None
+        self._vehicle_data: Optional[VehicleData] = None
 
     @property
     def ego_motion(self) -> EgoMotion:
@@ -59,10 +59,9 @@ class ZodSequence:
 
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
-        anno = self.info.annotations[project]
-        return anno and anno.read()  # read if not None
+        return self.info.annotations[project].read()
 
-    def get_lidar(self, start: int = 0, end: int = None) -> List[LidarData]:
+    def get_lidar(self, start: int = 0, end: Optional[int] = None) -> List[LidarData]:
         """Get the point clouds."""
         return [lidar_frame.read() for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]]
 
@@ -76,6 +75,7 @@ class ZodSequence:
             self.calibration.lidars[Lidar.VELODYNE],
             time.timestamp(),
         )
+
 
     def get_aggregated_lidar(self, start: int = 0, end: int = None, timestamp: Optional[float] = None) -> LidarData:
         """Get the aggregated point cloud."""
