@@ -1,4 +1,5 @@
 """This script is to be used to download the Zenseact Open Dataset."""
+
 import contextlib
 import os
 import os.path as osp
@@ -137,8 +138,7 @@ def _download(download_path: str, dbx: ResumableDropbox, info: DownloadExtractIn
     )
     if pbar.n > info.size:
         tqdm.write(
-            f"Error! File {download_path} already exists and is larger than expected. "
-            "Please delete and try again."
+            f"Error! File {download_path} already exists and is larger than expected. " "Please delete and try again."
         )
     if pbar.n > 0:
         # this means we are retrying or resuming a previously interrupted download
@@ -146,9 +146,7 @@ def _download(download_path: str, dbx: ResumableDropbox, info: DownloadExtractIn
     # Retry download if partial file exists (e.g. due to network error)
     while pbar.n < info.size:
         try:
-            _, response = dbx.sharing_get_shared_link_file(
-                url=info.url, path=info.file_path, start=pbar.n
-            )
+            _, response = dbx.sharing_get_shared_link_file(url=info.url, path=info.file_path, start=pbar.n)
             with open(download_path, "ab") as f:
                 with contextlib.closing(response):
                     for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
@@ -333,9 +331,7 @@ def _print_summary(download_settings, filter_settings, subset):
         print("    version: mini\n    (other settings are ignored for mini)")
     else:
         print(filter_settings)
-        if subset == SubDataset.FRAMES and (
-            filter_settings.num_scans_before == filter_settings.num_scans_after == 0
-        ):
+        if subset == SubDataset.FRAMES and (filter_settings.num_scans_before == filter_settings.num_scans_after == 0):
             typer.secho(
                 "Note! The current settings will only download the core lidar frames. "
                 "If you need surrounding scans, set --num-scans-before and/or --num-scans-after.",
@@ -389,9 +385,7 @@ def download(
         False, help="Extract already downloaded archives", rich_help_panel=GEN
     ),
     parallel: bool = typer.Option(True, help="Download files in parallel", rich_help_panel=GEN),
-    max_workers: int = typer.Option(
-        None, help="Max number of workers for parallel downloads", rich_help_panel=GEN
-    ),
+    max_workers: int = typer.Option(None, help="Max number of workers for parallel downloads", rich_help_panel=GEN),
     no_confirm: bool = typer.Option(
         False,
         "-y",

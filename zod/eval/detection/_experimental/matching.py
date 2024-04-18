@@ -182,14 +182,10 @@ def greedy_match(
             matches.append((valid_gt.pop(best_match_idx), pred))
 
     if len(unmatched_predictions) > 0:
-        dont_care_matches = match_dont_care_objects(
-            dont_care_gt, unmatched_predictions, calibration
-        )
+        dont_care_matches = match_dont_care_objects(dont_care_gt, unmatched_predictions, calibration)
 
         # Remove the matched false positives from the unmatched predictions.
-        unmatched_predictions = [
-            pred for pred in unmatched_predictions if (pred not in dont_care_matches)
-        ]
+        unmatched_predictions = [pred for pred in unmatched_predictions if (pred not in dont_care_matches)]
 
     # return the matches, the unmatched predictions and the remaining valid ground truth objects
     return MatchedFrame(
@@ -256,9 +252,7 @@ def optimal_match(
     match_to_dont_care = match_dont_care_objects(dont_care_gt, unmatched_predictions, calibration)
 
     # Remove the matched false positives from the unmatched predictions.
-    unmatched_predictions = [
-        pred for pred in unmatched_predictions if pred not in match_to_dont_care
-    ]
+    unmatched_predictions = [pred for pred in unmatched_predictions if pred not in match_to_dont_care]
 
     # return the matches, the unmatched predictions and the remaining valid ground truth objects
     return MatchedFrame(

@@ -1,4 +1,5 @@
 """Utilities for creating point cloud input representation."""
+
 from dataclasses import dataclass
 from typing import List, Tuple
 
@@ -93,18 +94,16 @@ def _create_pointcloud_input_pixor(
         A PIXOR style BEV projection of the input point cloud.
 
     """
-    point_indices_c = np.cast["int32"](
-        (points[:, 2] - settings.pixor_z_min) / settings.grid_cell_size
-    )
+    point_indices_c = np.cast["int32"]((points[:, 2] - settings.pixor_z_min) / settings.grid_cell_size)
     point_indices_c = 1 + np.clip(
         point_indices_c,
         a_min=-1,
         a_max=settings.grid_channels - 3,
     )
     point_indices_cxy = tuple(
-        np.transpose(
-            np.concatenate([np.expand_dims(point_indices_c, axis=-1), point_indices_xy], axis=-1)
-        ).reshape(3, -1)
+        np.transpose(np.concatenate([np.expand_dims(point_indices_c, axis=-1), point_indices_xy], axis=-1)).reshape(
+            3, -1
+        )
     )
 
     n_points = points.shape[0]
@@ -112,9 +111,7 @@ def _create_pointcloud_input_pixor(
     point_indices_intensity_c = np.repeat(settings.grid_channels - 1, n_points)
     point_indices_intensity_cxy = tuple(
         np.transpose(
-            np.concatenate(
-                [np.expand_dims(point_indices_intensity_c, axis=-1), point_indices_xy], axis=-1
-            )
+            np.concatenate([np.expand_dims(point_indices_intensity_c, axis=-1), point_indices_xy], axis=-1)
         ).reshape(3, -1)
     )
 

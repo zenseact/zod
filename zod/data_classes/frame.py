@@ -67,9 +67,7 @@ class ZodFrame:
         anonymization: Anonymization = Anonymization.BLUR,
     ) -> np.ndarray:
         """Get the image."""
-        return self.info.get_key_camera_frame(
-            camera=Camera.FRONT, anonymization=anonymization
-        ).read()
+        return self.info.get_key_camera_frame(camera=Camera.FRONT, anonymization=anonymization).read()
 
     def get_lidar_frames(
         self,
@@ -92,9 +90,7 @@ class ZodFrame:
         lidar_calib = self.calibration.lidars[Lidar.VELODYNE]
         return motion_compensate_scanwise(data, self.ego_motion, lidar_calib, timestamp)
 
-    def get_aggregated_lidar(
-        self, num_before: int, num_after: int = 0, timestamp: Optional[float] = None
-    ) -> LidarData:
+    def get_aggregated_lidar(self, num_before: int, num_after: int = 0, timestamp: Optional[float] = None) -> LidarData:
         """Get an aggregated point cloud around the keyframe."""
         key_lidar_frame = self.info.get_key_lidar_frame()
         key_lidar_data = key_lidar_frame.read()
@@ -109,9 +105,7 @@ class ZodFrame:
                 continue
             lidar_data = lidar_frame.read()
             _adjust_lidar_core_time(lidar_data)
-            lidar_data = motion_compensate_scanwise(
-                lidar_data, self.ego_motion, lidar_calib, timestamp
-            )
+            lidar_data = motion_compensate_scanwise(lidar_data, self.ego_motion, lidar_calib, timestamp)
             to_aggregate.append(lidar_data)
         # Aggregate the scans
         key_lidar_data.extend(*to_aggregate)

@@ -1,4 +1,5 @@
 """Module to perform OxTS extraction and visualize GPS track projection on image plane."""
+
 import cv2
 import numpy as np
 
@@ -8,9 +9,7 @@ from zod.data_classes.ego_motion import EgoMotion
 from zod.utils.geometry import get_points_in_camera_fov, project_3d_to_2d_kannala, transform_points
 
 
-def visualize_oxts_on_image(
-    oxts: EgoMotion, key_timestamp, calibs: Calibration, image, camera=Camera.FRONT
-):
+def visualize_oxts_on_image(oxts: EgoMotion, key_timestamp, calibs: Calibration, image, camera=Camera.FRONT):
     """Visualize oxts track on image plane."""
 
     # get pose at key frame

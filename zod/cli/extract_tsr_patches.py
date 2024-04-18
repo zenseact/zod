@@ -65,10 +65,8 @@ def extract_tsr_patches(
         resolve_path=True,
         help="Path to the output directory.",
     ),
-    version: Version = typer.Option(..., help="Version of the dataset to use."),
-    padding_factor: Optional[float] = typer.Option(
-        None, help="Factor to multiply the padding with."
-    ),
+    version: str = typer.Option("full", help="Version of the dataset to use. One of: full, small."),
+    padding_factor: Optional[float] = typer.Option(None, help="Factor to multiply the padding with."),
     padding_px_y: Optional[int] = typer.Option(None, help="Padding in y direction."),
     padding_px_x: Optional[int] = typer.Option(None, help="Padding in x direction."),
     num_workers: Optional[int] = typer.Option(None, help="Number of workers to use."),
@@ -83,11 +81,9 @@ def extract_tsr_patches(
     assert not (
         padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)
     ), "Cannot specify both padding and padding_factor"
-    padding = (
-        (padding_px_x, padding_px_y)
-        if (padding_px_x is not None and padding_px_y is not None)
-        else None
-    )
+
+    padding = (padding_px_x, padding_px_y) if (padding_px_x is not None and padding_px_y is not None) else None
+
     settings = Settings(
         output_dir=output_dir,
         padding_factor=padding_factor,
@@ -114,9 +110,7 @@ def extract_tsr_patches(
     train_frame_ids = set(zod_frames.get_split(constants.TRAIN))
     val_frame_ids = set(zod_frames.get_split(constants.VAL))
 
-    train_frames = [
-        f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids
-    ]
+    train_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in train_frame_ids]
     val_frames = [f for f in traffic_sign_frames if f["frame_id"].split("_")[0] in val_frame_ids]
 
     # write it to a json file
@@ -132,18 +126,14 @@ def extract_tsr_patches(
     )
 
 
-def _process_frame(
-    frame: ZodFrame, settings: Settings, train_ids: Set[str]
-) -> List[Dict[str, Any]]:
+def _process_frame(frame: ZodFrame, settings: Settings, train_ids: Set[str]) -> List[Dict[str, Any]]:
     """Process a single frame."""
 
     # not all frames have traffic signs
     if constants.AnnotationProject.TRAFFIC_SIGNS not in frame.info.annotations:
         return []
 
-    traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(
-        constants.AnnotationProject.TRAFFIC_SIGNS
-    )
+    traffic_signs: List[parser.TrafficSignAnnotation] = frame.get_annotation(constants.AnnotationProject.TRAFFIC_SIGNS)
 
     if len(traffic_signs) == 0:
         return []
@@ -196,9 +186,7 @@ def _process_frame(
                 "center_y": float(center_y),
                 "original_width": float(traffic_sign.bounding_box.dimension[0]),
                 "original_height": float(traffic_sign.bounding_box.dimension[1]),
-                "annotation": {
-                    key: val for key, val in traffic_sign.__dict__.items() if key != "bounding_box"
-                },
+                "annotation": {key: val for key, val in traffic_sign.__dict__.items() if key != "bounding_box"},
             }
         )
 

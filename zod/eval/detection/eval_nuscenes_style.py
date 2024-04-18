@@ -88,10 +88,7 @@ def evaluate_nuscenes_style(
     gt_boxes = _filter_eval_boxes_on_ranges(gt_boxes, class_ranges)
     det_boxes = _filter_eval_boxes_on_ranges(det_boxes, class_ranges)
 
-    metrics = {
-        dist_th: _nuscenes_evaluate(gt_boxes, det_boxes, dist_th=dist_th)
-        for dist_th in detection_cfg.dist_ths
-    }
+    metrics = {dist_th: _nuscenes_evaluate(gt_boxes, det_boxes, dist_th=dist_th) for dist_th in detection_cfg.dist_ths}
 
     evaluated_clses = set(metrics[detection_cfg.dist_ths[0]].keys())
     for zod_cls in evaluated_clses:
@@ -104,9 +101,7 @@ def evaluate_nuscenes_style(
             )
         # They evaluate the tp across only one threshold
         for metric in VALID_TP_METRICS:
-            detection_metrics.add_label_tp(
-                zod_cls, metric, metrics[detection_cfg.dist_th_tp][zod_cls][metric]
-            )
+            detection_metrics.add_label_tp(zod_cls, metric, metrics[detection_cfg.dist_th_tp][zod_cls][metric])
 
     if verbose:
         _print_nuscenes_metrics(detection_metrics)
@@ -169,25 +164,19 @@ def _nuscenes_evaluate(
             dist_th=dist_th,
         )
 
-        metrics[cls] = {
-            metric: calc_tp(md, min_recall=0.1, metric_name=metric) for metric in VALID_TP_METRICS
-        }
+        metrics[cls] = {metric: calc_tp(md, min_recall=0.1, metric_name=metric) for metric in VALID_TP_METRICS}
         metrics[cls]["ap"] = calc_ap(md, min_recall=min_recall, min_precision=min_precision)
     return metrics
 
 
-def _filter_eval_boxes_on_ranges(
-    boxes: EvalBoxes, class_ranges: Dict[str, int], verbose: bool = False
-) -> EvalBoxes:
+def _filter_eval_boxes_on_ranges(boxes: EvalBoxes, class_ranges: Dict[str, int], verbose: bool = False) -> EvalBoxes:
     """Filter out boxes that are outside of the range of the classes."""
     filtered_boxes = EvalBoxes()
 
     def _filter(box: DetectionBox):
         return (
             box.detection_name in class_ranges
-            and class_ranges[box.detection_name][0]
-            < box.ego_dist
-            <= class_ranges[box.detection_name][1]
+            and class_ranges[box.detection_name][0] < box.ego_dist <= class_ranges[box.detection_name][1]
         )
 
     for frame_id in boxes.sample_tokens:
@@ -231,9 +220,7 @@ def _print_nuscenes_metrics(metrics: DetectionMetrics):
 def _serialize(detection_metrics: DetectionMetrics) -> Dict[str, float]:
     # Only serialize the classes that were evaluated (had GT)
     classes = list(detection_metrics.mean_dist_aps.keys())
-    tp_metrics = {
-        name: detection_metrics.tp_errors[metric] for metric, name in VALID_TP_METRICS.items()
-    }
+    tp_metrics = {name: detection_metrics.tp_errors[metric] for metric, name in VALID_TP_METRICS.items()}
     class_aps = {f"{cls}/mAP": detection_metrics.mean_dist_aps[cls] for cls in classes}
     class_tps = {
         f"{cls}/{name}": detection_metrics._label_tp_errors[cls][metric]

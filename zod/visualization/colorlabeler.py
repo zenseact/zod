@@ -74,10 +74,7 @@ class ColorLabeler:
 
     def label_to_color(self, label):
         """Convert label to color."""
-        return tuple(
-            int(val)
-            for val in self.color_map_image_[int((label * 255) // self.mapsize) % 255, 0, :]
-        )
+        return tuple(int(val) for val in self.color_map_image_[int((label * 255) // self.mapsize) % 255, 0, :])
 
     def label_to_color_norm(self, value):
         """Convert label to cv2 color."""

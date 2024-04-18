@@ -36,20 +36,13 @@ def calc_iou(box1_corners, box2_corners):
     inner_bottom_coord = min(box1_corners[1][1], box2_corners[1][1])
 
     # compute the area of intersection rectangle
-    inter_area = abs(
-        max((inner_right_coord - inner_left_coord, 0))
-        * max((inner_bottom_coord - inner_top_coord), 0)
-    )
+    inter_area = abs(max((inner_right_coord - inner_left_coord, 0)) * max((inner_bottom_coord - inner_top_coord), 0))
     if inter_area == 0:
         return 0
     # compute the area of both the prediction and ground-truth
     # rectangles
-    box1_area = abs(
-        (box1_corners[0][0] - box1_corners[1][0]) * (box1_corners[0][1] - box1_corners[1][1])
-    )
-    box2_area = abs(
-        (box2_corners[0][0] - box2_corners[1][0]) * (box2_corners[0][1] - box2_corners[1][1])
-    )
+    box1_area = abs((box1_corners[0][0] - box1_corners[1][0]) * (box1_corners[0][1] - box1_corners[1][1]))
+    box2_area = abs((box2_corners[0][0] - box2_corners[1][0]) * (box2_corners[0][1] - box2_corners[1][1]))
 
     # compute the intersection over union by taking the intersection
     # area and dividing it by the sum of prediction + ground-truth
@@ -58,9 +51,7 @@ def calc_iou(box1_corners, box2_corners):
     return iou
 
 
-def overlay_object_2d_box_on_image(
-    image, box2d: Box2D, color=(0, 0, 100), scale_factor=None, line_thickness=2
-):
+def overlay_object_2d_box_on_image(image, box2d: Box2D, color=(0, 0, 100), scale_factor=None, line_thickness=2):
     """Visualize 2D box of annotated object on the image."""
     left_up = apply_scale(box2d.corners[0].astype(int), scale_factor)
     right_bottom = apply_scale(box2d.corners[2].astype(int), scale_factor)

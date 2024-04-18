@@ -63,10 +63,7 @@ class ZodSequence:
 
     def get_lidar(self, start: int = 0, end: Optional[int] = None) -> List[LidarData]:
         """Get the point clouds."""
-        return [
-            lidar_frame.read()
-            for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]
-        ]
+        return [lidar_frame.read() for lidar_frame in self.info.get_lidar_frames(Lidar.VELODYNE)[start:end]]
 
     def get_compensated_lidar(self, time: datetime) -> LidarData:
         """Get the point cloud at a given timestamp."""
@@ -79,9 +76,7 @@ class ZodSequence:
             time.timestamp(),
         )
 
-    def get_aggregated_lidar(
-        self, start: int = 0, end: Optional[int] = None, timestamp: Optional[float] = None
-    ) -> LidarData:
+    def get_aggregated_lidar(self, start: int = 0, end: int = None, timestamp: Optional[float] = None) -> LidarData:
         """Get the aggregated point cloud."""
         lidar_scans = self.get_lidar(start, end)
         if timestamp is None:

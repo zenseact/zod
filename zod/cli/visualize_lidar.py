@@ -40,18 +40,14 @@ def _visualize(data: LidarData, boxes: List[Box3D] = None):
     if boxes:
         o3d_boxes = []
         for box in boxes:
-            o3d_box = o3d.geometry.OrientedBoundingBox.create_from_points(
-                o3d.utility.Vector3dVector(box.corners)
-            )
+            o3d_box = o3d.geometry.OrientedBoundingBox.create_from_points(o3d.utility.Vector3dVector(box.corners))
             o3d_box.color = (0.98, 0.63, 0.01)
             o3d_boxes.append(o3d_box)
         o3d.visualization.draw_geometries(
             [pcd, *o3d_boxes, o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)]
         )
     else:
-        o3d.visualization.draw_geometries(
-            [pcd, o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)]
-        )
+        o3d.visualization.draw_geometries([pcd, o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)])
 
 
 @app.command(no_args_is_help=True)
@@ -61,9 +57,7 @@ def frames(
     frame_id: int = typer.Option(..., help="Frame id to visualize"),
     num_before: int = typer.Option(0, help="Number of frames before the given frame id"),
     num_after: int = typer.Option(0, help="Number of frames after the given frame id"),
-    with_bounding_boxes: bool = typer.Option(
-        False, help="if bounding boxes of center-frame are to be rendered"
-    ),
+    with_bounding_boxes: bool = typer.Option(False, help="if bounding boxes of center-frame are to be rendered"),
 ):
     """Visualize the lidar data for a given frame id."""
     zod_frames = ZodFrames(dataset_root=dataset_root, version=version)
@@ -96,9 +90,7 @@ def sequences(
     data = frame.get_aggregated_lidar(start=start, end=end)
     if downsampling > 1:
         typer.echo(f"Will subsample the point-cloud with a factor {downsampling}")
-        indexes = np.random.choice(
-            data.points.shape[0], size=data.points.shape[0] // downsampling, replace=False
-        )
+        indexes = np.random.choice(data.points.shape[0], size=data.points.shape[0] // downsampling, replace=False)
         data.points = data.points[indexes]
         data.intensity = data.intensity[indexes]
         data.timestamps = data.timestamps[indexes]

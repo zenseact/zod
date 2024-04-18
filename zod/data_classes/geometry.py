@@ -33,9 +33,7 @@ class Pose:
         return Pose(np.linalg.inv(self.transform))
 
     @classmethod
-    def from_translation_rotation(
-        cls, translation: np.ndarray, rotation_matrix: np.ndarray
-    ) -> Pose:
+    def from_translation_rotation(cls, translation: np.ndarray, rotation_matrix: np.ndarray) -> Pose:
         """Create a pose from a translation and a rotation."""
         transform = np.eye(4, 4)
         transform[:3, :3] = rotation_matrix

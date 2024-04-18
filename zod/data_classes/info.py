@@ -69,9 +69,7 @@ class Information(JSONSerializable):
         assert (
             camera_name in self.camera_frames
         ), f"Camera {camera_name} not found. Available cameras: {self.camera_frames.keys()}"
-        assert (
-            lidar in self.lidar_frames
-        ), f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
+        assert lidar in self.lidar_frames, f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
 
         for camera_frame in self.camera_frames[camera_name]:
             # Get the closest lidar frame in time
