@@ -5,7 +5,7 @@ except ImportError:
     exit(1)
 
 from zod.cli.download import app as download_app
-from zod.cli.extract_tsr_patches import cli_dummy as tsr_dummy
+from zod.cli.extract_tsr_patches import extract_tsr_patches
 from zod.cli.generate_coco_json import convert_to_coco
 from zod.cli.verify import app as verify_app
 from zod.cli.visualize_lidar import app as visualize_lidar_app
@@ -15,7 +15,7 @@ visualize_app.add_typer(visualize_lidar_app, name="lidar")
 
 convert_app = typer.Typer(help="Convert ZOD to a different format.", no_args_is_help=True)
 convert_app.command("coco", no_args_is_help=True)(convert_to_coco)
-convert_app.command("tsr-patches", no_args_is_help=True)(tsr_dummy)
+convert_app.command("tsr-patches", no_args_is_help=True)(extract_tsr_patches)
 
 
 def add_child(parent: typer.Typer, child: typer.Typer, name: str):
