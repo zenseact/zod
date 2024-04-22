@@ -1,5 +1,7 @@
 """Top-level package for Zenseact Open Dataset (ZOD)."""
 
+import importlib.metadata as importlib_metadata
+
 from ._zod_dataset import ZodDataset as ZodDataset  # For type hinting
 from .anno.ego_road import EgoRoadAnnotation as EgoRoadAnnotation
 from .anno.lane import LaneAnnotation as LaneAnnotation
@@ -15,13 +17,6 @@ from .data_classes.sequence import ZodSequence as ZodSequence
 from .zod_drives import ZodDrives as ZodDrives
 from .zod_frames import ZodFrames as ZodFrames
 from .zod_sequences import ZodSequences as ZodSequences
-
-try:
-    # importlib.metadata is present in Python 3.8 and later
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    # use the shim package importlib-metadata pre-3.8
-    import importlib_metadata as importlib_metadata
 
 try:
     __version__ = importlib_metadata.version(__package__ or __name__)

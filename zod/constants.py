@@ -2,13 +2,7 @@
 
 import typing
 from enum import Enum
-from typing import Union
-
-# Python 3.7 compatibility
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
+from typing import Literal, Union
 
 # Dataset paths
 FRAMES = "single_frames"
