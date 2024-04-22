@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, List, Optional
 
-from zod.constants import AnnotationProject, Lidar
+from zod.constants import AnnotationProject, Lidar, NotAnnotatedError
 from zod.utils.compensation import motion_compensate_scanwise
 
 from .calibration import Calibration
@@ -57,8 +57,14 @@ class ZodSequence:
             self._vehicle_data = VehicleData.from_hdf5(self.info.vehicle_data_path)
         return self._vehicle_data
 
+    def is_annotated(self, project: AnnotationProject) -> bool:
+        """Check if the frame is annotated for a given project."""
+        return project in self.info.annotations
+
     def get_annotation(self, project: AnnotationProject) -> List[Any]:
         """Get the annotation for a given project."""
+        if not self.is_annotated(project):
+            raise NotAnnotatedError(f"Project {project} is not annotated for sequence {self.info.id}.")
         return self.info.annotations[project].read()
 
     def get_lidar(self, start: int = 0, end: Optional[int] = None) -> List[LidarData]:
