@@ -1,6 +1,11 @@
 """Top-level package for Zenseact Open Dataset (ZOD)."""
 
 from ._zod_dataset import ZodDataset as ZodDataset  # For type hinting
+from .anno.ego_road import EgoRoadAnnotation as EgoRoadAnnotation
+from .anno.lane import LaneAnnotation as LaneAnnotation
+from .anno.object import ObjectAnnotation as ObjectAnnotation
+from .anno.road_condition import RoadConditionAnnotation as RoadConditionAnnotation
+from .anno.tsr.traffic_sign import TrafficSignAnnotation as TrafficSignAnnotation
 from .constants import AnnotationProject as AnnotationProject
 from .constants import Anonymization as Anonymization
 from .constants import Camera as Camera
