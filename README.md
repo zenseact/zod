@@ -78,6 +78,7 @@ This dataset is the property of Zenseact AB (© 2023 Zenseact AB) and is license
 
 > For this dataset, Zenseact AB has taken all reasonable measures to remove all personally identifiable information, including faces and license plates. To the extent that you like to request the removal of specific images from the dataset, please contact [privacy@zenseact.com](mailto:privacy@zenseact.com).
 
+The purpose of Zenseact AB is to save lives in road traffic. We encourage use of this dataset with the intention of avoiding losses in road traffic. ZOD is not intended for military use.
 
 **Development kit**:
 This development kit is the property of Zenseact AB (© 2023 Zenseact AB) and is licensed under [MIT](https://opensource.org/licenses/MIT).
