@@ -305,6 +305,18 @@ class LidarFrame(SensorFrame):
 
 
 @dataclass
+class RadarFrames(JSONSerializable):
+    """Class to store information about a radar sequence file."""
+
+    filepath: str
+    time: datetime # time of the sequence key frame
+
+    def read(self) -> RadarData:
+        """Read the radar data."""
+        return RadarData.from_npy(self.filepath)
+
+
+@dataclass
 class CameraFrame(SensorFrame):
     """Class to store information about a camera frame."""
 

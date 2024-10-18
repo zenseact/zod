@@ -95,9 +95,13 @@ class Lidar(Enum):
     VELODYNE = "velodyne"
 
 
+class Radar(Enum):
+    FRONT = "front"
+
+
 Ego = Literal["ego"]
 EGO = typing.get_args(Ego)[0]
-CoordinateFrame = Union[Camera, Lidar, Ego]
+CoordinateFrame = Union[Camera, Lidar, Radar, Ego]
 
 
 # ZodFrame properties
