@@ -219,22 +219,22 @@ class RadarData:
             ],
         )
 
-        data["radar_range"]=self.radar_range
-        data["azimuth_angle"]=self.azimuth_angle
-        data["elevation_angle"]=self.elevation_angle
-        data["range_rate"]=self.range_rate
-        data["amplitude"]=self.amplitude
-        data["validity"]=self.validity
-        data["mode"]=self.mode
-        data["quality"]=self.quality
-        data["scan_index"]=self.scan_index
+        data["radar_range"] = self.radar_range
+        data["azimuth_angle"] = self.azimuth_angle
+        data["elevation_angle"] = self.elevation_angle
+        data["range_rate"] = self.range_rate
+        data["amplitude"] = self.amplitude
+        data["validity"] = self.validity
+        data["mode"] = self.mode
+        data["quality"] = self.quality
+        data["scan_index"] = self.scan_index
         if len(self.timestamp) == 1:
-            data["timestamp"]=self.timestamp
+            data["timestamp"] = self.timestamp
         else:
             times = np.empty(len(self.radar_range), dtype=np.int64)
             for i in range(len(self.timestamp)):
-                times[self.scan_index==i] = self.timestamp[i]
-            data["timestamp"]=times
+                times[self.scan_index == i] = self.timestamp[i]
+            data["timestamp"] = times
 
         np.save(path, data)
 
@@ -309,7 +309,7 @@ class RadarFrames(JSONSerializable):
     """Class to store information about a radar sequence file."""
 
     filepath: str
-    time: datetime # time of the sequence key frame
+    time: datetime  # time of the sequence key frame
 
     def read(self) -> RadarData:
         """Read the radar data."""
