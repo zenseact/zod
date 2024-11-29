@@ -29,7 +29,7 @@ class Information(JSONSerializable):
     annotations: Dict[AnnotationProject, AnnotationFile]
     camera_frames: Dict[str, List[CameraFrame]]  # key is a combination of Camera and Anonymization
     lidar_frames: Dict[Lidar, List[LidarFrame]]
-    radar_frames: Dict[Radar, RadarFrames]
+    radar_frames: Optional[Dict[Radar, List[RadarFrames]]] = None
 
     @property
     def all_frames(self) -> Iterator[SensorFrame]:
@@ -133,4 +133,6 @@ class Information(JSONSerializable):
         return self.lidar_frames[lidar]
 
     def get_radar_frames(self, radar: Radar) -> RadarFrames:
+        if self.radar_frames is None:
+            raise ValueError("No radar frames available.")
         return self.radar_frames[radar]
