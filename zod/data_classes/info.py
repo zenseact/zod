@@ -134,7 +134,8 @@ class Information(JSONSerializable):
 
     def get_radar_frames(self, radar: Radar) -> RadarFrames:
         if self.radar_frames is None:
-            raise ValueError(
-                "No radar frames available.\nPlease download the latest version of ZOD to access radar data. Radar is available for ZOD Sequences and Drives only."
-            )
+            err = "No radar frames available!"
+            err += "\nPlease download the latest version of ZOD to access radar data. "
+            err += "\nRadar is available for ZOD Sequences and Drives only."
+            raise ValueError(err)
         return self.radar_frames[radar]
