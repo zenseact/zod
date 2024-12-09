@@ -5,10 +5,10 @@ from itertools import chain
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from zod.anno.parser import AnnotationFile
-from zod.constants import AnnotationProject, Anonymization, Camera, Lidar
+from zod.constants import AnnotationProject, Anonymization, Camera, Lidar, Radar
 
 from ._serializable import JSONSerializable
-from .sensor import CameraFrame, LidarFrame, SensorFrame
+from .sensor import CameraFrame, LidarFrame, RadarFrames, SensorFrame
 
 
 @dataclass
@@ -29,6 +29,7 @@ class Information(JSONSerializable):
     annotations: Dict[AnnotationProject, AnnotationFile]
     camera_frames: Dict[str, List[CameraFrame]]  # key is a combination of Camera and Anonymization
     lidar_frames: Dict[Lidar, List[LidarFrame]]
+    radar_frames: Optional[Dict[Radar, List[RadarFrames]]] = None
 
     @property
     def all_frames(self) -> Iterator[SensorFrame]:
@@ -130,3 +131,11 @@ class Information(JSONSerializable):
 
     def get_lidar_frames(self, lidar: Lidar = Lidar.VELODYNE) -> List[LidarFrame]:
         return self.lidar_frames[lidar]
+
+    def get_radar_frames(self, radar: Radar) -> RadarFrames:
+        if self.radar_frames is None:
+            err = "No radar frames available!"
+            err += "\nPlease download the latest version of ZOD to access radar data. "
+            err += "\nRadar is available for ZOD Sequences and Drives only."
+            raise ValueError(err)
+        return self.radar_frames[radar]
