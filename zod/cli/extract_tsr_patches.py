@@ -78,9 +78,9 @@ def extract_tsr_patches(
     print("Will save dataset to", output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    assert not (
-        padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)
-    ), "Cannot specify both padding and padding_factor"
+    assert not (padding_factor is not None and (padding_px_x is not None or padding_px_y is not None)), (
+        "Cannot specify both padding and padding_factor"
+    )
 
     padding = (padding_px_x, padding_px_y) if (padding_px_x is not None and padding_px_y is not None) else None
 

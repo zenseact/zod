@@ -67,9 +67,9 @@ class Information(JSONSerializable):
             A tuple of the camera frame and the closest lidar frame.
         """
         camera_name = f"{camera.value}_{anonymization.value}"
-        assert (
-            camera_name in self.camera_frames
-        ), f"Camera {camera_name} not found. Available cameras: {self.camera_frames.keys()}"
+        assert camera_name in self.camera_frames, (
+            f"Camera {camera_name} not found. Available cameras: {self.camera_frames.keys()}"
+        )
         assert lidar in self.lidar_frames, f"Lidar {lidar} not found. Available lidars: {self.lidar_frames.keys()}"
 
         for camera_frame in self.camera_frames[camera_name]:

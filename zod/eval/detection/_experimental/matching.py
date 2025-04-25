@@ -285,12 +285,12 @@ def match_one_frame(
         A list of tuples. Each tuple contains the ground truth object and the prediction.
     """
     # check that all objects are in the evaluation frame
-    assert all(
-        gt.box3d.frame == EVALUATION_FRAME for gt in ground_truth if gt.box3d is not None
-    ), "All ground truth objects must be in the evaluation frame."
-    assert all(
-        pred.box3d.frame == EVALUATION_FRAME for pred in predictions
-    ), "All predictions must be in the evaluation frame."
+    assert all(gt.box3d.frame == EVALUATION_FRAME for gt in ground_truth if gt.box3d is not None), (
+        "All ground truth objects must be in the evaluation frame."
+    )
+    assert all(pred.box3d.frame == EVALUATION_FRAME for pred in predictions), (
+        "All predictions must be in the evaluation frame."
+    )
 
     if method == "greedy":
         return greedy_match(

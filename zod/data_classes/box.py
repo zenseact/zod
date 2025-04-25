@@ -244,9 +244,9 @@ class Box2D:
             tuple: padding in all four directions | (left,  top,  right, bottom)
         """
 
-        assert not (
-            padding is not None and padding_factor is not None
-        ), "Cannot specify both padding and padding_factor"
+        assert not (padding is not None and padding_factor is not None), (
+            "Cannot specify both padding and padding_factor"
+        )
 
         if padding is not None:
             padding_x, padding_y = padding

@@ -33,9 +33,9 @@ class EgoMotion:
             [N, 4, 4] array of interpolated poses for each timestamp.
         """
         selfmin, selfmax = np.min(self.timestamps), np.max(self.timestamps)
-        assert (selfmin <= np.min(target_ts)) and (
-            selfmax >= np.max(target_ts)
-        ), f"targets not between pose timestamps, must be [{selfmin}, {selfmax}]"
+        assert (selfmin <= np.min(target_ts)) and (selfmax >= np.max(target_ts)), (
+            f"targets not between pose timestamps, must be [{selfmin}, {selfmax}]"
+        )
 
         if np.isin(target_ts, self.timestamps).all():
             return self.poses[self.timestamps.searchsorted(target_ts)]

@@ -135,9 +135,7 @@ def convert_to_coco(
         if cls not in OBJECT_CLASSES:
             typer.echo(f"ERROR: Invalid class: {cls}.")
             raise typer.Exit(1)
-    typer.echo(
-        "Converting ZOD to COCO format. " f"Version: {version}, anonymization: {anonymization}, classes: {classes}"
-    )
+    typer.echo(f"Converting ZOD to COCO format. Version: {version}, anonymization: {anonymization}, classes: {classes}")
 
     zod_frames = ZodFrames(str(dataset_root), version.value)
 
