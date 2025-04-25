@@ -59,6 +59,7 @@ class FilterSettings:
     images: bool
     blur: bool
     dnat: bool
+    radar: bool
     lidar: bool
     oxts: bool
     infos: bool
@@ -138,7 +139,7 @@ def _download(download_path: str, dbx: ResumableDropbox, info: DownloadExtractIn
     )
     if pbar.n > info.size:
         tqdm.write(
-            f"Error! File {download_path} already exists and is larger than expected. " "Please delete and try again."
+            f"Error! File {download_path} already exists and is larger than expected. Please delete and try again."
         )
     if pbar.n > 0:
         # this means we are retrying or resuming a previously interrupted download
@@ -251,6 +252,8 @@ def _filter_entry(entry: dropbox.files.Metadata, settings: FilterSettings) -> bo
         return False
     if not settings.vehicle_data and "vehicle_data" in entry.name:
         return False
+    if not settings.radar and "radar" in entry.name:
+        return False
     if "lidar" in entry.name:
         if not settings.lidar:
             return False
@@ -302,6 +305,10 @@ def _download_dataset(dl_settings: DownloadSettings, filter_settings: FilterSett
     else:
         for info in files_to_download:
             _download_and_extract(dbx, info)
+
+    print("Download complete. We recommend running 'zod verify' to ensure everything is correct.")
+    if not dl_settings.rm and not dl_settings.dry_run:
+        print("After verifying you can remove the downloads directory.")
 
 
 def _list_folder(url, dbx: ResumableDropbox, path: str):
@@ -402,6 +409,7 @@ def download(
     lidar: bool = typer.Option(True, help="Download lidar data", rich_help_panel=FIL),
     oxts: bool = typer.Option(True, help="Download oxts data", rich_help_panel=FIL),
     infos: bool = typer.Option(True, help="Download infos", rich_help_panel=FIL),
+    radar: bool = typer.Option(True, help="Download radar data", rich_help_panel=SEQ),
     vehicle_data: bool = typer.Option(True, help="Download the vehicle data", rich_help_panel=SEQ),
     dnat: bool = typer.Option(False, help="Download DNAT images", rich_help_panel=FRA),
     num_scans_before: int = typer.Option(
@@ -429,6 +437,7 @@ def download(
         blur=blur,
         dnat=dnat,
         lidar=lidar,
+        radar=radar,
         oxts=oxts,
         infos=infos,
         vehicle_data=vehicle_data,
