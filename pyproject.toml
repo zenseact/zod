@@ -1,59 +1,56 @@
-[tool.poetry]
+[project]
 name = "zod"
-version = "0.6.1"
+version = "0.7.0"
 description = "Zenseact Open Dataset"
-authors = ["Zenseact <opendataset@zenseact.com>"]
-license = "MIT"
+authors = [{ name = "Zenseact", email = "opendataset@zenseact.com" }]
+requires-python = ">=3.9"
 readme = "README.md"
-homepage = "https://zod.zenseact.com"
-repository = "https://github.com/zenseact/zod"
-
-[tool.poetry.scripts]
-zod = "zod.cli.main:app"
-
-[tool.poetry.dependencies]
-python = "^3.8"
-tqdm = ">=4.60"
-numpy = "^1.19"
-scipy = "^1.5"
-pillow = ">=7"
-h5py = ">=3.1"
-pyquaternion = ">=0.9"
-numpy-quaternion = ">=2022.4.2"
-dataclass-wizard = ">=0.22.2"
-# Optional dependencies
-typer = { extras = ["all"], version = ">=0.7.0", optional = true }
-dropbox = { version = ">=11.36.0", optional = true }
-opencv-python = { version = "^4", optional = true }
-matplotlib = { version = "^3", optional = true }
-plotly = { version = "^5", optional = true }
-dash-bootstrap-components = { version = "^1.1", optional = true }
-pandas = { version = "^1.3", optional = true }
-notebook = { version = ">=5", optional = true }
-imageio = { version = "^2", optional = true }
-
-[tool.poetry.extras]
-cli = ["typer", "dropbox"]
-all = [
-    "typer",
-    "dropbox",
-    "opencv-python",
-    "matplotlib",
-    "plotly",
-    "dash-bootstrap-components",
-    "pandas",
-    "notebook",
-    "imageio",
+license = "MIT"
+dependencies = [
+    "tqdm>=4.60",
+    "numpy>=1.19",
+    "scipy>=1.5",
+    "pillow>=7",
+    "h5py>=3.1",
+    "pyquaternion>=0.9",
+    "numpy-quaternion>=2022.4.2",
+    "dataclass-wizard>=0.22,!=0.31,!=0.32", #https://github.com/rnag/dataclass-wizard/issues/159
 ]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.3.7"
-pre-commit = ">=2"
-pytest = ">=7"
+[project.optional-dependencies]
+cli = [
+    "typer[all]>=0.15.0",
+    "dropbox>=11.36.0",
+]
+all = [
+    "typer[all]>=0.15.0",
+    "dropbox>=11.36.0",
+    "opencv-python>=4,<5",
+    "matplotlib>=3,<4",
+    "plotly>=5,<6",
+    "dash-bootstrap-components~=1.1",
+    "pandas~=1.3",
+    "notebook>=5",
+    "imageio>=2,<3",
+]
+
+[project.urls]
+Homepage = "https://zod.zenseact.com"
+Repository = "https://github.com/zenseact/zod"
+
+[project.scripts]
+zod = "zod.cli.main:app"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11",
+    "pre-commit>=3",
+    "pytest>=8",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
