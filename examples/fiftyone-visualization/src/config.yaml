@@ -1,0 +1,8 @@
+dataset_root: "/mnt/zod" # point this to the root directory of the zod dataset you are using
+pcd_files_dir: "/mnt/zod/pcd_files" # directory where converted pcd files will be stored
+dataset_version: "full"  # "mini" or "full"
+dataset_split: "val" # "train", "val", or "all"
+dataset_name: "zod_val" # you can change this to anything you would like
+dataset_persistent: True # if true, dataset will be saved locally for later use
+test_run: True # if true, it will run for only the first 10 samples
+mapbox_token: "" # optional, provide a Mapbox API token for map functionality in FiftyOne.
