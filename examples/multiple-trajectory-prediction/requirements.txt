@@ -1,0 +1,6 @@
+torch
+torchvision
+pypdf
+pytorch_lightning
+zod[cli]
+opencv-python
