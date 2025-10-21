@@ -122,7 +122,7 @@ class BEVBox:
         )
 
         # Add arrow in the direction of the object
-        arrow_length = int(np.cast["float32"](dimension[0]) * 0.8)
+        arrow_length = int(np.asarray(dimension[0]) * 0.8, dtype="float32")
         end_point = np.array([arrow_length, 0, 0])
         end_point = rotation.rotate(end_point)[:2] + position
         fig.add_annotation(
@@ -156,6 +156,6 @@ class BEVBox:
     @staticmethod
     def _create_od_vis_background(input_array: np.ndarray) -> np.ndarray:
         """Create a gray occupancy grid as background to visualize over."""
-        occupancy = np.maximum.reduce(np.cast["float32"](np.abs(input_array) > 0.0), axis=0, keepdims=True)
+        occupancy = np.maximum.reduce(np.asarray(np.abs(input_array) > 0.0, dtype="float32"), axis=0, keepdims=True)
         vis_bg = np.transpose(np.repeat(occupancy * 77, 3, axis=0), [2, 1, 0])
         return vis_bg
