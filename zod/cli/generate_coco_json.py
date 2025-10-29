@@ -137,7 +137,7 @@ def convert_to_coco(
             raise typer.Exit(1)
     typer.echo(f"Converting ZOD to COCO format. Version: {version}, anonymization: {anonymization}, classes: {classes}")
 
-    zod_frames = ZodFrames(str(dataset_root), version.value)
+    zod_frames = ZodFrames(str(dataset_root), version)
 
     base_name = f"zod_{version}_{anonymization}"
     if use_png:
